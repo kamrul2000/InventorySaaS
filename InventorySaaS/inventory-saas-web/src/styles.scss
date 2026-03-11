@@ -1,0 +1,181 @@
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  color-scheme: light;
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+// Page container
+.page-container {
+  padding: 24px;
+}
+
+// Card grid for dashboard
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+// Form container
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+// Status badges
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+
+  &.active, &.status-active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.inactive, &.status-inactive {
+    background-color: #fafafa;
+    color: #9e9e9e;
+  }
+
+  &.pending, &.status-pending {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+
+  &.status-draft {
+    background-color: #e0e0e0;
+    color: #424242;
+  }
+
+  &.status-submitted {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+
+  &.status-approved {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.status-confirmed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.status-received {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+  }
+
+  &.status-delivered {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+  }
+
+  &.status-cancelled {
+    background-color: #fce4ec;
+    color: #c62828;
+  }
+
+  &.status-stockin {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.status-stockout {
+    background-color: #fce4ec;
+    color: #c62828;
+  }
+
+  &.status-transfer {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+
+  &.status-adjustment {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+}
+
+// Snackbar styles
+.snackbar-success {
+  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+.snackbar-error {
+  --mdc-snackbar-container-color: #c62828;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+.snackbar-warning {
+  --mdc-snackbar-container-color: #e65100;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+.snackbar-info {
+  --mdc-snackbar-container-color: #1565c0;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+// Utility classes
+.full-width {
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+.mat-elevation-z2 {
+  overflow: auto;
+}
+
+// Table responsiveness
+table[mat-table] {
+  width: 100%;
+}
+
+// Material overrides for consistent spacing
+mat-card {
+  margin-bottom: 16px;
+}
+
+// Divider within menus
+mat-divider {
+  margin: 4px 0;
+}

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet --version)",
+      "Bash(npm --version)",
+      "Bash(ng version:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(rm -f Class1.cs)",
+      "Bash(mkdir -p Common/Enums Common/Interfaces Entities/Tenant Entities/Identity Entities/Product Entities/Warehouse Entities/Inventory Entities/Supplier Entities/Customer Entities/Purchase Entities/Sales Entities/Notification Entities/Audit Exceptions)",
+      "Bash(npx ng:*)",
+      "Bash(dotnet build:*)"
+    ]
+  }
+}

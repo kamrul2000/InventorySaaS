@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/InventorySaaS.API/InventorySaaS.API.csproj" />
+    <Project Path="src/InventorySaaS.Application/InventorySaaS.Application.csproj" />
+    <Project Path="src/InventorySaaS.Domain/InventorySaaS.Domain.csproj" />
+    <Project Path="src/InventorySaaS.Infrastructure/InventorySaaS.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InventorySaaS.IntegrationTests/InventorySaaS.IntegrationTests.csproj" />
+    <Project Path="tests/InventorySaaS.UnitTests/InventorySaaS.UnitTests.csproj" />
+  </Folder>
+</Solution>
