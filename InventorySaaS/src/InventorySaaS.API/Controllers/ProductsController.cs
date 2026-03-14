@@ -52,10 +52,12 @@ public class ProductsController : ControllerBase
             request.UnitOfMeasureId,
             request.CostPrice,
             request.SellingPrice,
-            request.ReorderLevel,
+            request.ReorderLevel ?? 0,
             request.Barcode,
             request.TrackExpiry,
-            request.MinimumOrderQuantity));
+            request.MinimumOrderQuantity ?? 1,
+            request.BrandName,
+            request.UnitName));
         return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Errors);
     }
 

@@ -20,13 +20,15 @@ public record CreateProductRequest(
     string? Description,
     Guid CategoryId,
     Guid? BrandId,
-    Guid UnitOfMeasureId,
+    Guid? UnitOfMeasureId,
     decimal CostPrice,
     decimal SellingPrice,
-    int ReorderLevel,
+    int? ReorderLevel,
     string? Barcode,
     bool TrackExpiry,
-    int MinimumOrderQuantity);
+    int? MinimumOrderQuantity,
+    string? BrandName,
+    string? UnitName);
 
 public record UpdateProductRequest(
     string? Name,
