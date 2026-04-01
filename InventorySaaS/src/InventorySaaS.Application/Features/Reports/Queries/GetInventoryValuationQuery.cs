@@ -20,10 +20,9 @@ public class GetInventoryValuationQueryHandler : IRequestHandler<GetInventoryVal
     public async Task<Result<List<InventoryValuationDto>>> Handle(GetInventoryValuationQuery request, CancellationToken cancellationToken)
     {
         var valuations = await _context.InventoryBalances
-            .Include(ib => ib.Product)
-                .ThenInclude(p => p.Category)
+            .AsNoTracking()
             .Where(ib => ib.QuantityOnHand > 0)
-            .GroupBy(ib => ib.Product.Category.Name)
+            .GroupBy(ib => ib.Product.Category != null ? ib.Product.Category.Name : "Uncategorized")
             .Select(g => new InventoryValuationDto(
                 g.Key,
                 g.Select(ib => ib.ProductId).Distinct().Count(),

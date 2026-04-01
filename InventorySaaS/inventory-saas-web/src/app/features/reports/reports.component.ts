@@ -7,9 +7,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { ReportService } from '../../core/services/report.service';
 import { WarehouseService } from '../../core/services/warehouse.service';
 import { CategoryService } from '../../core/services/category.service';
+import { NotificationService } from '../../core/services/notification.service';
 import {
   StockSummaryReportDto, LowStockReportDto, ExpiryReportDto,
   InventoryValuationDto, WarehouseDto, CategoryDto,
@@ -21,9 +24,16 @@ import {
   imports: [
     CommonModule, FormsModule, MatTabsModule, MatTableModule,
     MatFormFieldModule, MatSelectModule, MatCardModule, MatProgressSpinnerModule,
+    MatButtonModule, MatIconModule,
   ],
   template: `
-    <h1>Reports</h1>
+    <div class="page-header">
+      <h1>Reports</h1>
+      <button mat-flat-button color="primary" (click)="exportPdf()" [disabled]="exporting">
+        <mat-icon>picture_as_pdf</mat-icon>
+        {{ exporting ? 'Generating...' : 'Export PDF' }}
+      </button>
+    </div>
 
     <div class="filters">
       <mat-form-field appearance="outline">
@@ -124,7 +134,8 @@ import {
     </mat-tab-group>
   `,
   styles: [`
-    h1 { margin-bottom: 16px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .page-header h1 { margin: 0; }
     .filters { display: flex; gap: 16px; margin-bottom: 16px; }
     .full-width { width: 100%; }
     .loading-center { display: flex; justify-content: center; padding: 48px; }
@@ -139,6 +150,7 @@ export class ReportsComponent implements OnInit {
   categoryFilter = '';
   activeTab = 0;
   loading = false;
+  exporting = false;
 
   stockSummary: StockSummaryReportDto[] = [];
   lowStock: LowStockReportDto[] = [];
@@ -150,10 +162,13 @@ export class ReportsComponent implements OnInit {
   expiryColumns = ['productName', 'sku', 'warehouseName', 'batchNumber', 'expiryDate', 'quantity', 'daysUntilExpiry'];
   valuationColumns = ['categoryName', 'productCount', 'totalCostValue', 'totalSellingValue'];
 
+  private tabNames = ['Stock_Summary', 'Low_Stock', 'Expiry', 'Inventory_Valuation'];
+
   constructor(
     private reportService: ReportService,
     private warehouseService: WarehouseService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private notification: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -197,5 +212,47 @@ export class ReportsComponent implements OnInit {
         });
         break;
     }
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    let download$;
+
+    switch (this.activeTab) {
+      case 0:
+        download$ = this.reportService.downloadStockSummaryPdf({
+          warehouseId: this.warehouseFilter || undefined,
+          categoryId: this.categoryFilter || undefined,
+        });
+        break;
+      case 1:
+        download$ = this.reportService.downloadLowStockPdf();
+        break;
+      case 2:
+        download$ = this.reportService.downloadExpiryPdf();
+        break;
+      case 3:
+        download$ = this.reportService.downloadInventoryValuationPdf();
+        break;
+      default:
+        return;
+    }
+
+    download$.subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.tabNames[this.activeTab]}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+        this.notification.success('PDF exported successfully');
+      },
+      error: () => {
+        this.exporting = false;
+        this.notification.error('Failed to export PDF');
+      },
+    });
   }
 }

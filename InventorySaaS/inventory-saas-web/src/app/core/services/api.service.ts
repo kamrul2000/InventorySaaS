@@ -45,4 +45,16 @@ export class ApiService {
   delete(url: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}${url}`);
   }
+
+  getBlob(url: string, params?: { [key: string]: string | number | boolean }): Observable<Blob> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          httpParams = httpParams.set(key, value.toString());
+        }
+      });
+    }
+    return this.http.get(`${this.baseUrl}${url}`, { params: httpParams, responseType: 'blob' });
+  }
 }

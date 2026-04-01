@@ -23,8 +23,7 @@ public class GetExpiryReportQueryHandler : IRequestHandler<GetExpiryReportQuery,
         var now = DateTime.UtcNow;
 
         var query = _context.InventoryBalances
-            .Include(ib => ib.Product)
-            .Include(ib => ib.Warehouse)
+            .AsNoTracking()
             .Where(ib =>
                 ib.ExpiryDate != null &&
                 ib.ExpiryDate <= expiryThreshold &&
@@ -46,7 +45,7 @@ public class GetExpiryReportQueryHandler : IRequestHandler<GetExpiryReportQuery,
             ib.BatchNumber,
             ib.ExpiryDate!.Value,
             ib.QuantityOnHand,
-            (int)(ib.ExpiryDate!.Value - now).TotalDays));
+            EF.Functions.DateDiffDay(now, ib.ExpiryDate!.Value)));
 
         projectedQuery = projectedQuery.OrderBy(x => x.DaysUntilExpiry);
 

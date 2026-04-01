@@ -8,6 +8,7 @@ using ITokenService = InventorySaaS.Application.Interfaces.ITokenService;
 using InventorySaaS.Infrastructure.Services.BackgroundJobs;
 using InventorySaaS.Infrastructure.Services.Email;
 using InventorySaaS.Infrastructure.Services.Storage;
+using InventorySaaS.Infrastructure.Services.Reports;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,9 @@ public static class DependencyInjection
 
         // Email
         services.AddScoped<IEmailService, SmtpEmailService>();
+
+        // PDF Reports
+        services.AddScoped<IPdfReportService, PdfReportService>();
 
         // Background jobs
         services.AddScoped<InventoryAlertJob>();

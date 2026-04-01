@@ -109,6 +109,7 @@ public class CreateSalesOrderCommandHandler : IRequestHandler<CreateSalesOrderCo
 
             itemDtos.Add(new SalesOrderItemDto(
                 orderItem.Id,
+                item.ProductId,
                 product.Name,
                 product.Sku,
                 orderItem.Quantity,

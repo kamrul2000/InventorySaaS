@@ -107,6 +107,7 @@ public class ReturnSalesOrderCommandHandler : IRequestHandler<ReturnSalesOrderCo
 
         var itemDtos = so.Items.Select(i => new SalesOrderItemDto(
             i.Id,
+            i.ProductId,
             i.Product.Name,
             i.Product.Sku,
             i.Quantity,

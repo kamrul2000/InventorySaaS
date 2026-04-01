@@ -161,6 +161,10 @@ export class StockInComponent implements OnInit {
     this.saving = true;
 
     const data = { ...this.form.value };
+    if (!data.locationId) data.locationId = null;
+    if (!data.batchNumber) data.batchNumber = null;
+    if (!data.lotNumber) data.lotNumber = null;
+    if (!data.notes) data.notes = null;
     if (data.expiryDate) {
       data.expiryDate = new Date(data.expiryDate).toISOString();
     }

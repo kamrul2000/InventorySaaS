@@ -13,6 +13,7 @@ public record SalesOrderDto(
 
 public record SalesOrderItemDto(
     Guid Id,
+    Guid ProductId,
     string ProductName,
     string ProductSku,
     int Quantity,

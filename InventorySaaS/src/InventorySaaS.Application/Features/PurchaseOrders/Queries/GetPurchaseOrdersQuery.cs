@@ -55,6 +55,7 @@ public class GetPurchaseOrdersQueryHandler : IRequestHandler<GetPurchaseOrdersQu
             po.TotalAmount,
             po.Items.Select(i => new PurchaseOrderItemDto(
                 i.Id,
+                i.ProductId,
                 i.Product.Name,
                 i.Product.Sku,
                 i.Quantity,

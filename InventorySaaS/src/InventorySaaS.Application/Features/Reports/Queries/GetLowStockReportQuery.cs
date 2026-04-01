@@ -20,8 +20,7 @@ public class GetLowStockReportQueryHandler : IRequestHandler<GetLowStockReportQu
     public async Task<Result<PaginatedList<LowStockReportDto>>> Handle(GetLowStockReportQuery request, CancellationToken cancellationToken)
     {
         var query = _context.InventoryBalances
-            .Include(ib => ib.Product)
-            .Include(ib => ib.Warehouse)
+            .AsNoTracking()
             .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel && ib.QuantityOnHand > 0)
             .AsQueryable();
 

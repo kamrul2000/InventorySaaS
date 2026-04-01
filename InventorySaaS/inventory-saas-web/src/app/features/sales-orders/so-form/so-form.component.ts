@@ -74,47 +74,44 @@ import { CustomerDto, WarehouseDto, ProductDto } from '../../../core/models/doma
               </button>
             </h3>
 
-            <table mat-table [dataSource]="items.controls" class="full-width">
-              <ng-container matColumnDef="product">
-                <th mat-header-cell *matHeaderCellDef>Product</th>
-                <td mat-cell *matCellDef="let item; let i = index" [formGroupName]="i">
-                  <mat-select formControlName="productId" class="inline-select">
-                    @for (p of products; track p.id) {
-                      <mat-option [value]="p.id">{{ p.name }}</mat-option>
-                    }
-                  </mat-select>
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="quantity">
-                <th mat-header-cell *matHeaderCellDef>Qty</th>
-                <td mat-cell *matCellDef="let item; let i = index" [formGroupName]="i">
-                  <input matInput formControlName="quantity" type="number" class="inline-input" (input)="calculateLineTotal(i)">
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="unitPrice">
-                <th mat-header-cell *matHeaderCellDef>Unit Price</th>
-                <td mat-cell *matCellDef="let item; let i = index" [formGroupName]="i">
-                  <input matInput formControlName="unitPrice" type="number" step="0.01" class="inline-input" (input)="calculateLineTotal(i)">
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="lineTotal">
-                <th mat-header-cell *matHeaderCellDef>Total</th>
-                <td mat-cell *matCellDef="let item; let i = index" [formGroupName]="i">
-                  {{ items.at(i).get('lineTotal')?.value | currency }}
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="remove">
-                <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let item; let i = index">
-                  <button mat-icon-button color="warn" type="button" (click)="removeItem(i)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="itemColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: itemColumns;"></tr>
-            </table>
+            <div formArrayName="items">
+              <table class="items-table full-width">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of items.controls; track $index) {
+                    <tr [formGroupName]="$index">
+                      <td>
+                        <mat-select formControlName="productId" class="inline-select">
+                          @for (p of products; track p.id) {
+                            <mat-option [value]="p.id">{{ p.name }}</mat-option>
+                          }
+                        </mat-select>
+                      </td>
+                      <td>
+                        <input matInput formControlName="quantity" type="number" class="inline-input" (input)="calculateLineTotal($index)">
+                      </td>
+                      <td>
+                        <input matInput formControlName="unitPrice" type="number" step="0.01" class="inline-input" (input)="calculateLineTotal($index)">
+                      </td>
+                      <td>{{ items.at($index).get('lineTotal')?.value | currency }}</td>
+                      <td>
+                        <button mat-icon-button color="warn" type="button" (click)="removeItem($index)">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
 
             <div class="total-row">
               <strong>Grand Total: {{ grandTotal | currency }}</strong>
@@ -137,8 +134,11 @@ import { CustomerDto, WarehouseDto, ProductDto } from '../../../core/models/doma
     .form-grid mat-form-field { width: 100%; }
     h3 { display: flex; align-items: center; gap: 12px; margin: 24px 0 16px; }
     .full-width { width: 100%; }
-    .inline-input { width: 100px; }
+    .inline-input { width: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
     .inline-select { width: 200px; }
+    .items-table { border-collapse: collapse; }
+    .items-table th, .items-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+    .items-table th { font-weight: 500; color: rgba(0,0,0,.54); }
     .total-row { text-align: right; padding: 16px 0; font-size: 1.1rem; }
     .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
   `],

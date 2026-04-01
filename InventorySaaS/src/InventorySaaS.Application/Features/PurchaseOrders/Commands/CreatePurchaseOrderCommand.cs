@@ -106,6 +106,7 @@ public class CreatePurchaseOrderCommandHandler : IRequestHandler<CreatePurchaseO
 
             itemDtos.Add(new PurchaseOrderItemDto(
                 orderItem.Id,
+                item.ProductId,
                 product.Name,
                 product.Sku,
                 orderItem.Quantity,

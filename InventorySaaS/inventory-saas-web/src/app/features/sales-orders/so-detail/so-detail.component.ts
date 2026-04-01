@@ -134,7 +134,15 @@ export class SoDetailComponent implements OnInit {
 
   deliver(): void {
     if (!this.order) return;
-    this.soService.deliver(this.order.id).subscribe({
+    const data = {
+      salesOrderId: this.order.id,
+      items: this.order.items.map((item: any) => ({
+        productId: item.productId,
+        quantity: item.quantity - (item.deliveredQuantity || 0),
+      })),
+      notes: null,
+    };
+    this.soService.deliver(this.order.id, data).subscribe({
       next: () => { this.notification.success('Order delivered'); this.ngOnInit(); },
     });
   }

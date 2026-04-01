@@ -23,9 +23,7 @@ public class GetStockSummaryQueryHandler : IRequestHandler<GetStockSummaryQuery,
     public async Task<Result<PaginatedList<StockSummaryReportDto>>> Handle(GetStockSummaryQuery request, CancellationToken cancellationToken)
     {
         var query = _context.InventoryBalances
-            .Include(ib => ib.Product)
-                .ThenInclude(p => p.Category)
-            .Include(ib => ib.Warehouse)
+            .AsNoTracking()
             .Where(ib => ib.QuantityOnHand > 0)
             .AsQueryable();
 
@@ -46,7 +44,7 @@ public class GetStockSummaryQueryHandler : IRequestHandler<GetStockSummaryQuery,
         var projectedQuery = query.Select(ib => new StockSummaryReportDto(
             ib.Product.Name,
             ib.Product.Sku,
-            ib.Product.Category.Name,
+            ib.Product.Category != null ? ib.Product.Category.Name : "Uncategorized",
             ib.Warehouse.Name,
             ib.QuantityOnHand,
             ib.UnitCost,

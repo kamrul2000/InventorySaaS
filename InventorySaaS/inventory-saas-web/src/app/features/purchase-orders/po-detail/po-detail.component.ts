@@ -141,7 +141,20 @@ export class PoDetailComponent implements OnInit {
 
   receiveGoods(): void {
     if (!this.order) return;
-    this.poService.receiveGoods(this.order.id).subscribe({
+    const data = {
+      purchaseOrderId: this.order.id,
+      items: this.order.items.map((item: any) => ({
+        productId: item.productId,
+        quantity: item.quantity - (item.receivedQuantity || 0),
+        rejectedQuantity: 0,
+        locationId: null,
+        batchNumber: null,
+        lotNumber: null,
+        expiryDate: null,
+      })),
+      notes: null,
+    };
+    this.poService.receiveGoods(this.order.id, data).subscribe({
       next: () => { this.notification.success('Goods received'); this.ngOnInit(); },
     });
   }

@@ -39,4 +39,20 @@ export class ReportService {
   }): Observable<InventoryValuationDto[]> {
     return this.api.get<InventoryValuationDto[]>(`${this.endpoint}/valuation`, params as Record<string, string | number | boolean>);
   }
+
+  downloadStockSummaryPdf(params?: { warehouseId?: string; categoryId?: string }): Observable<Blob> {
+    return this.api.getBlob(`${this.endpoint}/stock-summary/pdf`, params as Record<string, string | number | boolean>);
+  }
+
+  downloadLowStockPdf(): Observable<Blob> {
+    return this.api.getBlob(`${this.endpoint}/low-stock/pdf`);
+  }
+
+  downloadExpiryPdf(params?: { daysAhead?: number }): Observable<Blob> {
+    return this.api.getBlob(`${this.endpoint}/expiry/pdf`, params as Record<string, string | number | boolean>);
+  }
+
+  downloadInventoryValuationPdf(): Observable<Blob> {
+    return this.api.getBlob(`${this.endpoint}/inventory-valuation/pdf`);
+  }
 }

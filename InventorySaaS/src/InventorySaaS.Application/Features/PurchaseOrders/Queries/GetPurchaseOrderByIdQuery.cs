@@ -32,6 +32,7 @@ public class GetPurchaseOrderByIdQueryHandler : IRequestHandler<GetPurchaseOrder
 
         var itemDtos = po.Items.Select(i => new PurchaseOrderItemDto(
             i.Id,
+            i.ProductId,
             i.Product.Name,
             i.Product.Sku,
             i.Quantity,
