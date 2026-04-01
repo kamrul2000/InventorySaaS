@@ -27,8 +27,7 @@ public class GetExpiryReportQueryHandler : IRequestHandler<GetExpiryReportQuery,
             .Where(ib =>
                 ib.ExpiryDate != null &&
                 ib.ExpiryDate <= expiryThreshold &&
-                ib.QuantityOnHand > 0)
-            .AsQueryable();
+                ib.QuantityOnHand > 0);
 
         if (!string.IsNullOrWhiteSpace(request.Pagination.SearchTerm))
         {
@@ -38,22 +37,33 @@ public class GetExpiryReportQueryHandler : IRequestHandler<GetExpiryReportQuery,
                 ib.Product.Sku.ToLower().Contains(searchTerm));
         }
 
-        var projectedQuery = query.Select(ib => new ExpiryReportDto(
-            ib.Product.Name,
-            ib.Product.Sku,
-            ib.Warehouse.Name,
-            ib.BatchNumber,
-            ib.ExpiryDate!.Value,
-            ib.QuantityOnHand,
-            EF.Functions.DateDiffDay(now, ib.ExpiryDate!.Value)));
+        // Project DB columns only (no date math in SQL)
+        var dbQuery = query
+            .OrderBy(ib => ib.ExpiryDate)
+            .Select(ib => new
+            {
+                ib.Product.Name,
+                ib.Product.Sku,
+                WarehouseName = ib.Warehouse.Name,
+                ib.BatchNumber,
+                ExpiryDate = ib.ExpiryDate!.Value,
+                ib.QuantityOnHand,
+            });
 
-        projectedQuery = projectedQuery.OrderBy(x => x.DaysUntilExpiry);
+        var totalCount = await dbQuery.CountAsync(cancellationToken);
+        var items = await dbQuery
+            .Skip((request.Pagination.PageNumber - 1) * request.Pagination.PageSize)
+            .Take(request.Pagination.PageSize)
+            .ToListAsync(cancellationToken);
 
-        var result = await PaginatedList<ExpiryReportDto>.CreateAsync(
-            projectedQuery,
-            request.Pagination.PageNumber,
-            request.Pagination.PageSize,
-            cancellationToken);
+        // Compute DaysUntilExpiry in memory
+        var dtos = items.Select(i => new ExpiryReportDto(
+            i.Name, i.Sku, i.WarehouseName, i.BatchNumber,
+            i.ExpiryDate, i.QuantityOnHand,
+            (int)(i.ExpiryDate - now).TotalDays)).ToList();
+
+        var result = new PaginatedList<ExpiryReportDto>(
+            dtos, totalCount, request.Pagination.PageNumber, request.Pagination.PageSize);
 
         return Result<PaginatedList<ExpiryReportDto>>.Success(result);
     }
