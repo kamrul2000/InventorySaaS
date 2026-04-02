@@ -1,80 +1,147 @@
-<div class="register-container">
-  <mat-card class="register-card">
-    <mat-card-header>
-      <mat-card-title>Create Account</mat-card-title>
-      <mat-card-subtitle>Register your company on InventorySaaS</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Company Name</mat-label>
-          <input matInput formControlName="companyName" placeholder="Enter company name">
-          @if (registerForm.get('companyName')?.hasError('required') && registerForm.get('companyName')?.touched) {
-            <mat-error>Company name is required</mat-error>
+<div class="register-page">
+  <div class="register-card">
+    <!-- Logo -->
+    <div class="logo-section">
+      <img src="inapplogo.PNG" alt="InApp Logo" class="logo-img" />
+      <div class="logo-text">
+        <span class="brand-name">In<span class="brand-highlight">App</span></span>
+        <span class="brand-tagline">Inventory App</span>
+      </div>
+    </div>
+
+    <h1 class="register-title">Create your account</h1>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <!-- Company Name -->
+      <div class="form-group">
+        <label class="form-label" for="companyName">Company name</label>
+        <input
+          id="companyName"
+          type="text"
+          class="form-input"
+          formControlName="companyName"
+          placeholder="Your company name"
+          [class.input-error]="registerForm.get('companyName')?.invalid && registerForm.get('companyName')?.touched"
+        />
+        @if (registerForm.get('companyName')?.hasError('required') && registerForm.get('companyName')?.touched) {
+          <span class="error-text">Company name is required</span>
+        }
+      </div>
+
+      <!-- Name Row -->
+      <div class="form-row">
+        <div class="form-group half">
+          <label class="form-label" for="firstName">First name</label>
+          <input
+            id="firstName"
+            type="text"
+            class="form-input"
+            formControlName="adminFirstName"
+            placeholder="Your first name"
+            [class.input-error]="registerForm.get('adminFirstName')?.invalid && registerForm.get('adminFirstName')?.touched"
+          />
+          @if (registerForm.get('adminFirstName')?.hasError('required') && registerForm.get('adminFirstName')?.touched) {
+            <span class="error-text">First name is required</span>
           }
-        </mat-form-field>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>First Name</mat-label>
-            <input matInput formControlName="adminFirstName" placeholder="First name">
-            @if (registerForm.get('adminFirstName')?.hasError('required') && registerForm.get('adminFirstName')?.touched) {
-              <mat-error>First name is required</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Last Name</mat-label>
-            <input matInput formControlName="adminLastName" placeholder="Last name">
-            @if (registerForm.get('adminLastName')?.hasError('required') && registerForm.get('adminLastName')?.touched) {
-              <mat-error>Last name is required</mat-error>
-            }
-          </mat-form-field>
         </div>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Email</mat-label>
-          <input matInput formControlName="adminEmail" type="email" placeholder="Admin email">
-          <mat-icon matSuffix>email</mat-icon>
-          @if (registerForm.get('adminEmail')?.hasError('required') && registerForm.get('adminEmail')?.touched) {
-            <mat-error>Email is required</mat-error>
+        <div class="form-group half">
+          <label class="form-label" for="lastName">Last name</label>
+          <input
+            id="lastName"
+            type="text"
+            class="form-input"
+            formControlName="adminLastName"
+            placeholder="Your last name"
+            [class.input-error]="registerForm.get('adminLastName')?.invalid && registerForm.get('adminLastName')?.touched"
+          />
+          @if (registerForm.get('adminLastName')?.hasError('required') && registerForm.get('adminLastName')?.touched) {
+            <span class="error-text">Last name is required</span>
           }
-          @if (registerForm.get('adminEmail')?.hasError('email') && registerForm.get('adminEmail')?.touched) {
-            <mat-error>Invalid email format</mat-error>
-          }
-        </mat-form-field>
+        </div>
+      </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Phone (optional)</mat-label>
-          <input matInput formControlName="phone" placeholder="Phone number">
-        </mat-form-field>
+      <!-- Email -->
+      <div class="form-group">
+        <label class="form-label" for="email">Email address</label>
+        <input
+          id="email"
+          type="email"
+          class="form-input"
+          formControlName="adminEmail"
+          placeholder="Your email address"
+          [class.input-error]="registerForm.get('adminEmail')?.invalid && registerForm.get('adminEmail')?.touched"
+        />
+        @if (registerForm.get('adminEmail')?.hasError('required') && registerForm.get('adminEmail')?.touched) {
+          <span class="error-text">Email is required</span>
+        }
+        @if (registerForm.get('adminEmail')?.hasError('email') && registerForm.get('adminEmail')?.touched) {
+          <span class="error-text">Please enter a valid email</span>
+        }
+      </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Password</mat-label>
-          <input matInput formControlName="adminPassword" [type]="hidePassword ? 'password' : 'text'" placeholder="Min 8 characters">
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
-            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+      <!-- Phone -->
+      <div class="form-group">
+        <label class="form-label" for="phone">Phone <span class="optional-text">(optional)</span></label>
+        <input
+          id="phone"
+          type="tel"
+          class="form-input"
+          formControlName="phone"
+          placeholder="Your phone number"
+        />
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="password-wrapper">
+          <input
+            id="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            class="form-input"
+            formControlName="adminPassword"
+            placeholder="Create a password"
+            [class.input-error]="registerForm.get('adminPassword')?.invalid && registerForm.get('adminPassword')?.touched"
+          />
+          <button type="button" class="toggle-password" (click)="hidePassword = !hidePassword">
+            <svg *ngIf="hidePassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            <svg *ngIf="!hidePassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
-          @if (registerForm.get('adminPassword')?.hasError('required') && registerForm.get('adminPassword')?.touched) {
-            <mat-error>Password is required</mat-error>
-          }
-          @if (registerForm.get('adminPassword')?.hasError('minlength') && registerForm.get('adminPassword')?.touched) {
-            <mat-error>Password must be at least 8 characters</mat-error>
-          }
-        </mat-form-field>
+        </div>
+        @if (registerForm.get('adminPassword')?.hasError('required') && registerForm.get('adminPassword')?.touched) {
+          <span class="error-text">Password is required</span>
+        }
+        @if (registerForm.get('adminPassword')?.hasError('minlength') && registerForm.get('adminPassword')?.touched) {
+          <span class="error-text">Password must be at least 8 characters</span>
+        }
+        <span class="hint-text">Must be at least 8 characters</span>
+      </div>
 
-        <button mat-flat-button color="primary" class="full-width register-btn" type="submit"
-                [disabled]="registerForm.invalid || isLoading">
-          @if (isLoading) {
-            <mat-spinner diameter="20"></mat-spinner>
-          } @else {
-            Register
-          }
-        </button>
-      </form>
-    </mat-card-content>
-    <mat-card-actions align="end">
-      <a mat-button routerLink="/auth/login">Already have an account? Sign In</a>
-    </mat-card-actions>
-  </mat-card>
+      <!-- Terms Checkbox -->
+      <div class="terms-row">
+        <mat-checkbox color="primary" formControlName="agreeTerms">
+          <span class="terms-text">I agree to the <a href="javascript:void(0)" class="terms-link">terms and privacy</a></span>
+        </mat-checkbox>
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="sign-up-btn"
+        [disabled]="registerForm.invalid || isLoading"
+        [class.btn-loading]="isLoading"
+      >
+        @if (isLoading) {
+          <mat-spinner diameter="22" color="accent"></mat-spinner>
+        } @else {
+          Sign up
+        }
+      </button>
+    </form>
+
+    <!-- Login Link -->
+    <p class="login-text">
+      Already have an account? <a routerLink="/auth/login" class="login-link">Sign in</a>
+    </p>
+  </div>
 </div>

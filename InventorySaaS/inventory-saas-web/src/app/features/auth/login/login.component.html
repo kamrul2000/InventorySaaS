@@ -20,7 +20,7 @@
           type="email"
           class="form-input"
           formControlName="email"
-          placeholder="name@example.com"
+          placeholder="Your email address"
           [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
         />
         @if (loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) {
