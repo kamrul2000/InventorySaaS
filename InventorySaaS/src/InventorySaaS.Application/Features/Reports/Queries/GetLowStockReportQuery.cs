@@ -21,8 +21,9 @@ public class GetLowStockReportQueryHandler : IRequestHandler<GetLowStockReportQu
     {
         var query = _context.InventoryBalances
             .AsNoTracking()
-            .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel && ib.QuantityOnHand > 0)
-            .AsQueryable();
+            .Include(ib => ib.Product)
+            .Include(ib => ib.Warehouse)
+            .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel && ib.QuantityOnHand > 0);
 
         if (!string.IsNullOrWhiteSpace(request.Pagination.SearchTerm))
         {
@@ -32,21 +33,24 @@ public class GetLowStockReportQueryHandler : IRequestHandler<GetLowStockReportQu
                 ib.Product.Sku.ToLower().Contains(searchTerm));
         }
 
-        var projectedQuery = query.Select(ib => new LowStockReportDto(
+        var orderedQuery = query.OrderByDescending(ib => ib.Product.ReorderLevel - ib.QuantityOnHand);
+
+        var totalCount = await orderedQuery.CountAsync(cancellationToken);
+        var items = await orderedQuery
+            .Skip((request.Pagination.PageNumber - 1) * request.Pagination.PageSize)
+            .Take(request.Pagination.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var dtos = items.Select(ib => new LowStockReportDto(
             ib.Product.Name,
             ib.Product.Sku,
             ib.Warehouse.Name,
             ib.QuantityOnHand,
             ib.Product.ReorderLevel,
-            ib.Product.ReorderLevel - ib.QuantityOnHand));
+            ib.Product.ReorderLevel - ib.QuantityOnHand)).ToList();
 
-        projectedQuery = projectedQuery.OrderByDescending(x => x.Deficit);
-
-        var result = await PaginatedList<LowStockReportDto>.CreateAsync(
-            projectedQuery,
-            request.Pagination.PageNumber,
-            request.Pagination.PageSize,
-            cancellationToken);
+        var result = new PaginatedList<LowStockReportDto>(
+            dtos, totalCount, request.Pagination.PageNumber, request.Pagination.PageSize);
 
         return Result<PaginatedList<LowStockReportDto>>.Success(result);
     }

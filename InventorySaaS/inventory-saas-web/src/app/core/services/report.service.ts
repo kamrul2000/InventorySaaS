@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   ExpiryReportDto,
@@ -18,26 +18,29 @@ export class ReportService {
     warehouseId?: string;
     categoryId?: string;
   }): Observable<StockSummaryReportDto[]> {
-    return this.api.get<StockSummaryReportDto[]>(`${this.endpoint}/stock-summary`, params as Record<string, string | number | boolean>);
+    return this.api.get<any>(`${this.endpoint}/stock-summary`, params as Record<string, string | number | boolean>)
+      .pipe(map(r => r.items ?? r));
   }
 
   lowStock(params?: {
     warehouseId?: string;
   }): Observable<LowStockReportDto[]> {
-    return this.api.get<LowStockReportDto[]>(`${this.endpoint}/low-stock`, params as Record<string, string | number | boolean>);
+    return this.api.get<any>(`${this.endpoint}/low-stock`, params as Record<string, string | number | boolean>)
+      .pipe(map(r => r.items ?? r));
   }
 
   expiry(params?: {
     warehouseId?: string;
     daysAhead?: number;
   }): Observable<ExpiryReportDto[]> {
-    return this.api.get<ExpiryReportDto[]>(`${this.endpoint}/expiry`, params as Record<string, string | number | boolean>);
+    return this.api.get<any>(`${this.endpoint}/expiry`, params as Record<string, string | number | boolean>)
+      .pipe(map(r => r.items ?? r));
   }
 
   inventoryValuation(params?: {
     warehouseId?: string;
   }): Observable<InventoryValuationDto[]> {
-    return this.api.get<InventoryValuationDto[]>(`${this.endpoint}/valuation`, params as Record<string, string | number | boolean>);
+    return this.api.get<InventoryValuationDto[]>(`${this.endpoint}/inventory-valuation`, params as Record<string, string | number | boolean>);
   }
 
   downloadStockSummaryPdf(params?: { warehouseId?: string; categoryId?: string }): Observable<Blob> {

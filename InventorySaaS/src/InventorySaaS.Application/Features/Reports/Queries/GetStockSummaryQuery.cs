@@ -24,8 +24,9 @@ public class GetStockSummaryQueryHandler : IRequestHandler<GetStockSummaryQuery,
     {
         var query = _context.InventoryBalances
             .AsNoTracking()
-            .Where(ib => ib.QuantityOnHand > 0)
-            .AsQueryable();
+            .Include(ib => ib.Product).ThenInclude(p => p.Category)
+            .Include(ib => ib.Warehouse)
+            .Where(ib => ib.QuantityOnHand > 0);
 
         if (request.WarehouseId.HasValue)
             query = query.Where(ib => ib.WarehouseId == request.WarehouseId.Value);
@@ -41,28 +42,34 @@ public class GetStockSummaryQueryHandler : IRequestHandler<GetStockSummaryQuery,
                 ib.Product.Sku.ToLower().Contains(searchTerm));
         }
 
-        var projectedQuery = query.Select(ib => new StockSummaryReportDto(
+        var orderedQuery = request.Pagination.SortBy?.ToLowerInvariant() switch
+        {
+            "value" => request.Pagination.SortDescending
+                ? query.OrderByDescending(ib => ib.QuantityOnHand * ib.UnitCost)
+                : query.OrderBy(ib => ib.QuantityOnHand * ib.UnitCost),
+            "quantity" => request.Pagination.SortDescending
+                ? query.OrderByDescending(ib => ib.QuantityOnHand)
+                : query.OrderBy(ib => ib.QuantityOnHand),
+            _ => query.OrderBy(ib => ib.Product.Name)
+        };
+
+        var totalCount = await orderedQuery.CountAsync(cancellationToken);
+        var items = await orderedQuery
+            .Skip((request.Pagination.PageNumber - 1) * request.Pagination.PageSize)
+            .Take(request.Pagination.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var dtos = items.Select(ib => new StockSummaryReportDto(
             ib.Product.Name,
             ib.Product.Sku,
-            ib.Product.Category != null ? ib.Product.Category.Name : "Uncategorized",
+            ib.Product.Category?.Name ?? "Uncategorized",
             ib.Warehouse.Name,
             ib.QuantityOnHand,
             ib.UnitCost,
-            ib.QuantityOnHand * ib.UnitCost));
+            ib.QuantityOnHand * ib.UnitCost)).ToList();
 
-        projectedQuery = request.Pagination.SortBy?.ToLowerInvariant() switch
-        {
-            "product" => request.Pagination.SortDescending ? projectedQuery.OrderByDescending(x => x.ProductName) : projectedQuery.OrderBy(x => x.ProductName),
-            "value" => request.Pagination.SortDescending ? projectedQuery.OrderByDescending(x => x.TotalValue) : projectedQuery.OrderBy(x => x.TotalValue),
-            "quantity" => request.Pagination.SortDescending ? projectedQuery.OrderByDescending(x => x.QuantityOnHand) : projectedQuery.OrderBy(x => x.QuantityOnHand),
-            _ => projectedQuery.OrderBy(x => x.ProductName)
-        };
-
-        var result = await PaginatedList<StockSummaryReportDto>.CreateAsync(
-            projectedQuery,
-            request.Pagination.PageNumber,
-            request.Pagination.PageSize,
-            cancellationToken);
+        var result = new PaginatedList<StockSummaryReportDto>(
+            dtos, totalCount, request.Pagination.PageNumber, request.Pagination.PageSize);
 
         return Result<PaginatedList<StockSummaryReportDto>>.Success(result);
     }

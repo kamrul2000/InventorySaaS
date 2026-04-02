@@ -198,8 +198,8 @@ public class PdfReportService : IPdfReportService
     private static void TableCell(TableDescriptor table, string text, bool alignRight = false, bool bold = false)
     {
         var cell = table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3);
+        if (alignRight) cell = cell.AlignRight();
         var textDescriptor = cell.Text(text).FontSize(8);
-        if (alignRight) cell.AlignRight();
         if (bold) textDescriptor.Bold();
     }
 }
