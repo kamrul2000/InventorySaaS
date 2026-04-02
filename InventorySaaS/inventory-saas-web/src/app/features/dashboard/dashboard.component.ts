@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
+import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DashboardService } from '../../core/services/dashboard.service';
+import { AuthService } from '../../core/services/auth.service';
 import { DashboardDto } from '../../core/models/domain.models';
 
 @Component({
@@ -12,7 +13,7 @@ import { DashboardDto } from '../../core/models/domain.models';
   standalone: true,
   imports: [
     CommonModule,
-    MatCardModule,
+    RouterModule,
     MatIconModule,
     MatTableModule,
     MatProgressSpinnerModule,
@@ -23,13 +24,21 @@ import { DashboardDto } from '../../core/models/domain.models';
 export class DashboardComponent implements OnInit {
   data: DashboardDto | null = null;
   loading = true;
+  userName = '';
 
   txColumns = ['transactionNumber', 'type', 'productName', 'quantity', 'date'];
   alertColumns = ['productName', 'sku', 'warehouseName', 'currentStock', 'reorderLevel'];
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    this.authService.currentUser$.subscribe((user) => {
+      this.userName = user?.firstName ?? 'User';
+    });
+
     this.dashboardService.get().subscribe({
       next: (data) => {
         this.data = data;

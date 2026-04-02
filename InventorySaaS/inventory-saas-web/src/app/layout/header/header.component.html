@@ -1,34 +1,81 @@
-<mat-toolbar color="primary">
-  <button mat-icon-button (click)="toggleSidenav.emit()">
-    <mat-icon>menu</mat-icon>
-  </button>
-  <span class="app-title">InventorySaaS</span>
-  <span class="spacer"></span>
-
-  <button mat-icon-button [routerLink]="'/notifications'"
-          [matBadge]="unreadCount > 0 ? unreadCount : null"
-          matBadgeColor="warn"
-          matBadgeSize="small">
-    <mat-icon>notifications</mat-icon>
-  </button>
-
-  <button mat-icon-button [matMenuTriggerFor]="userMenu">
-    <mat-icon>account_circle</mat-icon>
-  </button>
-  <mat-menu #userMenu="matMenu">
-    <div class="user-info" mat-menu-item disabled>
-      <strong>{{ currentUser?.firstName }} {{ currentUser?.lastName }}</strong>
-      <br>
-      <small>{{ currentUser?.email }}</small>
-    </div>
-    <mat-divider></mat-divider>
-    <button mat-menu-item routerLink="/settings">
-      <mat-icon>settings</mat-icon>
-      <span>Settings</span>
+<header class="top-header">
+  <div class="header-left">
+    <button class="menu-toggle" (click)="toggleSidenav.emit()">
+      <mat-icon>menu</mat-icon>
     </button>
-    <button mat-menu-item (click)="logout()">
-      <mat-icon>logout</mat-icon>
-      <span>Logout</span>
+  </div>
+
+  <div class="header-right">
+    <!-- Notification Bell -->
+    <button class="icon-btn" [matMenuTriggerFor]="notifMenu" (menuOpened)="onNotifOpened()">
+      <mat-icon>notifications_none</mat-icon>
+      @if (unreadCount > 0) {
+        <span class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+      }
     </button>
-  </mat-menu>
-</mat-toolbar>
+
+    <!-- Notification Dropdown -->
+    <mat-menu #notifMenu="matMenu" xPosition="before" class="notif-dropdown">
+      <div class="notif-panel" (click)="$event.stopPropagation()">
+        @if (recentNotifications.length === 0) {
+          <div class="notif-empty">No notifications yet</div>
+        } @else {
+          @for (n of recentNotifications; track n.id) {
+            <div class="notif-item" [class.notif-unread]="!n.isRead" (click)="onNotifClick(n)">
+              <div class="notif-avatar" [class]="'notif-type-' + n.type.toLowerCase()">
+                <mat-icon>{{ notifIcon(n.type) }}</mat-icon>
+              </div>
+              <div class="notif-content">
+                <div class="notif-title">{{ n.title }}</div>
+                <div class="notif-message">{{ n.message }}</div>
+                <div class="notif-time">{{ timeAgo(n.createdAt) }}</div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+      @if (unreadCount > 0) {
+        <div class="notif-footer" (click)="$event.stopPropagation()">
+          <button class="mark-all-btn" (click)="markAllRead()">Mark all as read</button>
+        </div>
+      }
+    </mat-menu>
+
+    <!-- User Avatar Trigger -->
+    <button class="avatar-trigger" [matMenuTriggerFor]="userMenu">
+      <div class="header-avatar">
+        {{ userInitials }}
+      </div>
+    </button>
+
+    <mat-menu #userMenu="matMenu" xPosition="before" class="profile-dropdown">
+      <!-- Profile Section -->
+      <div class="dropdown-profile" (click)="$event.stopPropagation()">
+        <div class="dropdown-avatar">
+          {{ userInitials }}
+        </div>
+        <div class="dropdown-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</div>
+        <div class="dropdown-email">{{ currentUser?.email }}</div>
+      </div>
+
+      <div class="dropdown-divider"></div>
+
+      <!-- Menu Links -->
+      <button mat-menu-item class="dropdown-item" routerLink="/dashboard">
+        Home
+      </button>
+      <button mat-menu-item class="dropdown-item" routerLink="/reports">
+        Activity
+      </button>
+      <button mat-menu-item class="dropdown-item" routerLink="/settings">
+        Account Settings
+      </button>
+
+      <div class="dropdown-divider"></div>
+
+      <button mat-menu-item class="dropdown-item logout-item" (click)="logout()">
+        Logout
+      </button>
+    </mat-menu>
+  </div>
+</header>

@@ -4,6 +4,8 @@ import { roleGuard } from './core/guards/role.guard';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { ProductListComponent } from './features/products/product-list/product-list.component';
 import { ProductFormComponent } from './features/products/product-form/product-form.component';
@@ -31,6 +33,8 @@ export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'auth/login', component: LoginComponent },
   { path: 'auth/register', component: RegisterComponent },
+  { path: 'auth/forgot-password', component: ForgotPasswordComponent },
+  { path: 'auth/reset-password', component: ResetPasswordComponent },
   {
     path: '',
     component: MainLayoutComponent,
@@ -58,7 +62,7 @@ export const routes: Routes = [
       { path: 'sales-orders/new', component: SoFormComponent },
       { path: 'sales-orders/:id', component: SoDetailComponent },
       { path: 'reports', component: ReportsComponent },
-      { path: 'notifications', component: NotificationsComponent },
+      // { path: 'notifications', component: NotificationsComponent },
       {
         path: 'users',
         component: UserListComponent,

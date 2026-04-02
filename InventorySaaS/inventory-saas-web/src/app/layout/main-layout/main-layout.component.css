@@ -1,19 +1,25 @@
 .layout-container {
-  display: flex;
-  flex-direction: column;
   height: 100vh;
 }
 .sidenav-container {
-  flex: 1;
+  height: 100%;
 }
 .sidenav {
   width: 260px;
+  border-right: 1px solid #f0f0f0;
+  box-shadow: none;
+}
+/* Override Material sidenav background */
+:host ::ng-deep .mat-drawer {
+  background: #fff;
 }
 .content {
   display: flex;
   flex-direction: column;
+  background: #f5f5f5;
 }
 .page-container {
   padding: 24px;
   flex: 1;
+  overflow-y: auto;
 }

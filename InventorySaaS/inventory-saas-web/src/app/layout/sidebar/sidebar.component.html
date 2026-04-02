@@ -1,11 +1,41 @@
-<div class="sidebar-header">
-  <h2>InventorySaaS</h2>
+<div class="sidebar-wrapper">
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <img src="inapplogo.PNG" alt="InApp Logo" class="logo-img" />
+    <div class="logo-text">
+      <span class="brand-name">In<span class="brand-highlight">App</span></span>
+      <span class="brand-tagline">Inventory App</span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <span class="nav-section-label">MAIN</span>
+      @for (item of mainNavItems; track item.route) {
+        <a class="nav-item" [routerLink]="item.route" routerLinkActive="active">
+          <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </div>
+
+    <div class="nav-section">
+      <span class="nav-section-label">ACCOUNT</span>
+      @for (item of accountNavItems; track item.route) {
+        <a class="nav-item" [routerLink]="item.route" routerLinkActive="active">
+          <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </div>
+  </nav>
+
+  <!-- Logout -->
+  <div class="sidebar-footer">
+    <button class="nav-item logout-btn" (click)="onLogout()">
+      <mat-icon class="nav-icon">logout</mat-icon>
+      <span class="nav-label">Logout</span>
+    </button>
+  </div>
 </div>
-<mat-nav-list>
-  @for (item of visibleNavItems; track item.route) {
-    <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link">
-      <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-      <span matListItemTitle>{{ item.label }}</span>
-    </a>
-  }
-</mat-nav-list>

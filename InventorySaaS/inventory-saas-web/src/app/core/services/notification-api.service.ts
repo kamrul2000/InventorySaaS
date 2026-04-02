@@ -15,7 +15,11 @@ export class NotificationApiService {
     pageSize?: number;
     isRead?: boolean;
   }): Observable<PaginatedList<NotificationDto>> {
-    return this.api.getList<NotificationDto>(this.endpoint, params as Record<string, string | number | boolean>);
+    const queryParams: Record<string, string | number | boolean> = {};
+    if (params?.pageNumber != null) queryParams['pageNumber'] = params.pageNumber;
+    if (params?.pageSize != null) queryParams['pageSize'] = params.pageSize;
+    if (params?.isRead === false) queryParams['unreadOnly'] = true;
+    return this.api.getList<NotificationDto>(this.endpoint, queryParams);
   }
 
   markRead(id: string): Observable<void> {
@@ -23,6 +27,6 @@ export class NotificationApiService {
   }
 
   markAllRead(): Observable<void> {
-    return this.api.post<void>(`${this.endpoint}/mark-all-read`, {});
+    return this.api.put<void>(`${this.endpoint}/read-all`, {});
   }
 }
