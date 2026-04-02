@@ -16,34 +16,8 @@ import { WarehouseDto } from '../../../core/models/domain.models';
   selector: 'app-warehouse-list',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
-  template: `
-    <div class="page-header">
-      <h1>Warehouses</h1>
-      <button mat-flat-button color="primary" (click)="addWarehouse()">
-        <mat-icon>add</mat-icon> Add Warehouse
-      </button>
-    </div>
-    <app-data-table
-      [columns]="columns"
-      [data]="warehouses"
-      [totalCount]="totalCount"
-      [pageSize]="pageSize"
-      [loading]="loading"
-      (pageChange)="onPageChange($event)"
-      (sortChange)="onSortChange($event)"
-      (searchChange)="onSearch($event)"
-      (rowAction)="onRowAction($event)">
-    </app-data-table>
-  `,
-  styles: [`
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h1 { margin: 0; }
-  `],
+  templateUrl: './warehouse-list.component.html',
+  styleUrl: './warehouse-list.component.css',
 })
 export class WarehouseListComponent implements OnInit {
   columns: TableColumn[] = [

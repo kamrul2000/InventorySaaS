@@ -16,29 +16,8 @@ import { SupplierDto } from '../../../core/models/domain.models';
   selector: 'app-supplier-list',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
-  template: `
-    <div class="page-header">
-      <h1>Suppliers</h1>
-      <button mat-flat-button color="primary" (click)="addSupplier()">
-        <mat-icon>add</mat-icon> Add Supplier
-      </button>
-    </div>
-    <app-data-table
-      [columns]="columns"
-      [data]="suppliers"
-      [totalCount]="totalCount"
-      [pageSize]="pageSize"
-      [loading]="loading"
-      (pageChange)="onPageChange($event)"
-      (sortChange)="onSortChange($event)"
-      (searchChange)="onSearch($event)"
-      (rowAction)="onRowAction($event)">
-    </app-data-table>
-  `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .page-header h1 { margin: 0; }
-  `],
+  templateUrl: './supplier-list.component.html',
+  styleUrl: './supplier-list.component.css',
 })
 export class SupplierListComponent implements OnInit {
   columns: TableColumn[] = [

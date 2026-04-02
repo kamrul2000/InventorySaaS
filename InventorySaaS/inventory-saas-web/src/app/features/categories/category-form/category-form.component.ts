@@ -24,47 +24,8 @@ import { CategoryDto } from '../../../core/models/domain.models';
     MatCheckboxModule,
     MatButtonModule,
   ],
-  template: `
-    <h2 mat-dialog-title>{{ isEditMode ? 'Edit Category' : 'New Category' }}</h2>
-    <mat-dialog-content>
-      <form [formGroup]="form">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Name</mat-label>
-          <input matInput formControlName="name">
-          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-            <mat-error>Name is required</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="3"></textarea>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Parent Category</mat-label>
-          <mat-select formControlName="parentCategoryId">
-            <mat-option [value]="null">-- None --</mat-option>
-            @for (cat of parentCategories; track cat.id) {
-              <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-checkbox formControlName="isActive">Active</mat-checkbox>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="dialogRef.close()">Cancel</button>
-      <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || saving">
-        {{ isEditMode ? 'Update' : 'Create' }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .full-width { width: 100%; }
-    mat-dialog-content { min-width: 400px; }
-  `],
+  templateUrl: './category-form.component.html',
+  styleUrl: './category-form.component.css',
 })
 export class CategoryFormComponent implements OnInit {
   form: FormGroup;

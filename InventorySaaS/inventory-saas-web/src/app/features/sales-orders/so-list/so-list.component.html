@@ -1,0 +1,29 @@
+<div class="page-header">
+  <h1>Sales Orders</h1>
+  <button mat-flat-button color="primary" (click)="create()">
+    <mat-icon>add</mat-icon> Create SO
+  </button>
+</div>
+<div class="filters">
+  <mat-form-field appearance="outline">
+    <mat-label>Status</mat-label>
+    <mat-select [(ngModel)]="statusFilter" (selectionChange)="loadOrders()">
+      <mat-option value="">All</mat-option>
+      <mat-option value="Draft">Draft</mat-option>
+      <mat-option value="Confirmed">Confirmed</mat-option>
+      <mat-option value="Delivered">Delivered</mat-option>
+      <mat-option value="Cancelled">Cancelled</mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+<app-data-table
+  [columns]="columns"
+  [data]="orders"
+  [totalCount]="totalCount"
+  [pageSize]="pageSize"
+  [loading]="loading"
+  (pageChange)="onPageChange($event)"
+  (sortChange)="onSortChange($event)"
+  (searchChange)="onSearch($event)"
+  (rowAction)="onRowAction($event)">
+</app-data-table>

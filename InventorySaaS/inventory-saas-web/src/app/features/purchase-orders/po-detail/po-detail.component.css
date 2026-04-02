@@ -1,0 +1,13 @@
+.loading-center { display: flex; justify-content: center; padding: 48px; }
+.detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.detail-header h1 { margin: 0 16px 0 0; display: inline; }
+.actions { display: flex; gap: 8px; }
+.info-grid { margin-bottom: 24px; }
+.items-card { margin-top: 16px; }
+.full-width { width: 100%; }
+.status-badge { padding: 4px 12px; border-radius: 12px; font-size: 0.875rem; font-weight: 500; }
+.status-draft { background: #e0e0e0; color: #424242; }
+.status-submitted { background: #e3f2fd; color: #1565c0; }
+.status-approved { background: #e8f5e9; color: #2e7d32; }
+.status-received { background: #f3e5f5; color: #7b1fa2; }
+.status-cancelled { background: #fce4ec; color: #c62828; }

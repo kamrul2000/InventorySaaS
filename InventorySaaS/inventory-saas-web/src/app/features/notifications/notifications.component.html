@@ -1,0 +1,28 @@
+<div class="page-header">
+  <h1>Notifications</h1>
+  <button mat-stroked-button color="primary" (click)="markAllRead()" [disabled]="notifications.length === 0">
+    <mat-icon>done_all</mat-icon> Mark All as Read
+  </button>
+</div>
+
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else {
+  @if (notifications.length === 0) {
+    <div class="empty-state">
+      <mat-icon>notifications_none</mat-icon>
+      <p>No notifications</p>
+    </div>
+  } @else {
+    <mat-list>
+      @for (n of notifications; track n.id) {
+        <mat-list-item [class.unread]="!n.isRead" (click)="markRead(n)">
+          <mat-icon matListItemIcon>{{ getIcon(n.type) }}</mat-icon>
+          <div matListItemTitle>{{ n.title }}</div>
+          <div matListItemLine>{{ n.message }}</div>
+          <div matListItemMeta>{{ n.createdAt | date:'short' }}</div>
+        </mat-list-item>
+      }
+    </mat-list>
+  }
+}

@@ -16,29 +16,8 @@ import { CustomerDto } from '../../../core/models/domain.models';
   selector: 'app-customer-list',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
-  template: `
-    <div class="page-header">
-      <h1>Customers</h1>
-      <button mat-flat-button color="primary" (click)="addCustomer()">
-        <mat-icon>add</mat-icon> Add Customer
-      </button>
-    </div>
-    <app-data-table
-      [columns]="columns"
-      [data]="customers"
-      [totalCount]="totalCount"
-      [pageSize]="pageSize"
-      [loading]="loading"
-      (pageChange)="onPageChange($event)"
-      (sortChange)="onSortChange($event)"
-      (searchChange)="onSearch($event)"
-      (rowAction)="onRowAction($event)">
-    </app-data-table>
-  `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .page-header h1 { margin: 0; }
-  `],
+  templateUrl: './customer-list.component.html',
+  styleUrl: './customer-list.component.css',
 })
 export class CustomerListComponent implements OnInit {
   columns: TableColumn[] = [

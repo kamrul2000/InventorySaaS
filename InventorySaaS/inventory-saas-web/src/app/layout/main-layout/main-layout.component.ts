@@ -16,45 +16,8 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     HeaderComponent,
     SidebarComponent,
   ],
-  template: `
-    <div class="layout-container">
-      <app-header (toggleSidenav)="sidenav.toggle()"></app-header>
-      <mat-sidenav-container class="sidenav-container">
-        <mat-sidenav #sidenav
-                     [mode]="isMobile ? 'over' : 'side'"
-                     [opened]="!isMobile"
-                     class="sidenav">
-          <app-sidebar></app-sidebar>
-        </mat-sidenav>
-        <mat-sidenav-content class="content">
-          <div class="page-container">
-            <router-outlet></router-outlet>
-          </div>
-        </mat-sidenav-content>
-      </mat-sidenav-container>
-    </div>
-  `,
-  styles: [`
-    .layout-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    .sidenav-container {
-      flex: 1;
-    }
-    .sidenav {
-      width: 260px;
-    }
-    .content {
-      display: flex;
-      flex-direction: column;
-    }
-    .page-container {
-      padding: 24px;
-      flex: 1;
-    }
-  `],
+  templateUrl: './main-layout.component.html',
+  styleUrl: './main-layout.component.css',
 })
 export class MainLayoutComponent {
   @ViewChild('sidenav') sidenav!: MatSidenav;

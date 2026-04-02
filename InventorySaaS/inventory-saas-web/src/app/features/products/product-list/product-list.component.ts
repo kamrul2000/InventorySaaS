@@ -16,34 +16,8 @@ import { ProductDto } from '../../../core/models/domain.models';
   selector: 'app-product-list',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
-  template: `
-    <div class="page-header">
-      <h1>Products</h1>
-      <button mat-flat-button color="primary" (click)="addProduct()">
-        <mat-icon>add</mat-icon> Add Product
-      </button>
-    </div>
-    <app-data-table
-      [columns]="columns"
-      [data]="products"
-      [totalCount]="totalCount"
-      [pageSize]="pageSize"
-      [loading]="loading"
-      (pageChange)="onPageChange($event)"
-      (sortChange)="onSortChange($event)"
-      (searchChange)="onSearch($event)"
-      (rowAction)="onRowAction($event)">
-    </app-data-table>
-  `,
-  styles: [`
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h1 { margin: 0; }
-  `],
+  templateUrl: './product-list.component.html',
+  styleUrl: './product-list.component.css',
 })
 export class ProductListComponent implements OnInit {
   columns: TableColumn[] = [

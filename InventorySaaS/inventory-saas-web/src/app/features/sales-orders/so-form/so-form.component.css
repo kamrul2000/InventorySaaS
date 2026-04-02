@@ -1,0 +1,12 @@
+.form-container { max-width: 900px; margin: 0 auto; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0 16px; }
+.form-grid mat-form-field { width: 100%; }
+h3 { display: flex; align-items: center; gap: 12px; margin: 24px 0 16px; }
+.full-width { width: 100%; }
+.inline-input { width: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+.inline-select { width: 200px; }
+.items-table { border-collapse: collapse; }
+.items-table th, .items-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+.items-table th { font-weight: 500; color: rgba(0,0,0,.54); }
+.total-row { text-align: right; padding: 16px 0; font-size: 1.1rem; }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }

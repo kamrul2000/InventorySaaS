@@ -14,35 +14,8 @@ import { User } from '../../../core/models/auth.models';
   selector: 'app-user-list',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
-  template: `
-    <div class="page-header">
-      <h1>User Management</h1>
-      <div class="actions">
-        <button mat-flat-button color="primary" (click)="addUser()">
-          <mat-icon>add</mat-icon> Add User
-        </button>
-        <button mat-stroked-button color="primary" (click)="inviteUser()">
-          <mat-icon>mail</mat-icon> Invite User
-        </button>
-      </div>
-    </div>
-    <app-data-table
-      [columns]="columns"
-      [data]="users"
-      [totalCount]="totalCount"
-      [pageSize]="pageSize"
-      [loading]="loading"
-      (pageChange)="onPageChange($event)"
-      (sortChange)="onSortChange($event)"
-      (searchChange)="onSearch($event)"
-      (rowAction)="onRowAction($event)">
-    </app-data-table>
-  `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .page-header h1 { margin: 0; }
-    .actions { display: flex; gap: 8px; }
-  `],
+  templateUrl: './user-list.component.html',
+  styleUrl: './user-list.component.css',
 })
 export class UserListComponent implements OnInit {
   columns: TableColumn[] = [

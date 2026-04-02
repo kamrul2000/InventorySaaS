@@ -16,42 +16,8 @@ import { SalesOrderDto } from '../../../core/models/domain.models';
   selector: 'app-so-list',
   standalone: true,
   imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule, DataTableComponent],
-  template: `
-    <div class="page-header">
-      <h1>Sales Orders</h1>
-      <button mat-flat-button color="primary" (click)="create()">
-        <mat-icon>add</mat-icon> Create SO
-      </button>
-    </div>
-    <div class="filters">
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
-        <mat-select [(ngModel)]="statusFilter" (selectionChange)="loadOrders()">
-          <mat-option value="">All</mat-option>
-          <mat-option value="Draft">Draft</mat-option>
-          <mat-option value="Confirmed">Confirmed</mat-option>
-          <mat-option value="Delivered">Delivered</mat-option>
-          <mat-option value="Cancelled">Cancelled</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-    <app-data-table
-      [columns]="columns"
-      [data]="orders"
-      [totalCount]="totalCount"
-      [pageSize]="pageSize"
-      [loading]="loading"
-      (pageChange)="onPageChange($event)"
-      (sortChange)="onSortChange($event)"
-      (searchChange)="onSearch($event)"
-      (rowAction)="onRowAction($event)">
-    </app-data-table>
-  `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .page-header h1 { margin: 0; }
-    .filters { margin-bottom: 16px; }
-  `],
+  templateUrl: './so-list.component.html',
+  styleUrl: './so-list.component.css',
 })
 export class SoListComponent implements OnInit {
   columns: TableColumn[] = [

@@ -1,0 +1,29 @@
+.register-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--mat-sys-surface-variant);
+}
+.register-card {
+  width: 100%;
+  max-width: 500px;
+  padding: 24px;
+}
+.full-width {
+  width: 100%;
+}
+.half-width {
+  width: 48%;
+}
+.form-row {
+  display: flex;
+  gap: 4%;
+}
+.register-btn {
+  margin-top: 16px;
+  height: 48px;
+}
+mat-card-header {
+  margin-bottom: 24px;
+}

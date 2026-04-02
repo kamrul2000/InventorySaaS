@@ -1,0 +1,17 @@
+<div class="page-header">
+  <h1>Warehouses</h1>
+  <button mat-flat-button color="primary" (click)="addWarehouse()">
+    <mat-icon>add</mat-icon> Add Warehouse
+  </button>
+</div>
+<app-data-table
+  [columns]="columns"
+  [data]="warehouses"
+  [totalCount]="totalCount"
+  [pageSize]="pageSize"
+  [loading]="loading"
+  (pageChange)="onPageChange($event)"
+  (sortChange)="onSortChange($event)"
+  (searchChange)="onSearch($event)"
+  (rowAction)="onRowAction($event)">
+</app-data-table>

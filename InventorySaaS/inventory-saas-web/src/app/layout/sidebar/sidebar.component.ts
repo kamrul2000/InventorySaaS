@@ -16,41 +16,8 @@ interface NavItem {
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterModule, MatListModule, MatIconModule],
-  template: `
-    <div class="sidebar-header">
-      <h2>InventorySaaS</h2>
-    </div>
-    <mat-nav-list>
-      @for (item of visibleNavItems; track item.route) {
-        <a mat-list-item [routerLink]="item.route" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          <span matListItemTitle>{{ item.label }}</span>
-        </a>
-      }
-    </mat-nav-list>
-  `,
-  styles: [`
-    :host {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    .sidebar-header {
-      padding: 16px;
-      text-align: center;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-    }
-    .sidebar-header h2 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 500;
-      color: var(--mat-sys-primary);
-    }
-    .active-link {
-      background-color: var(--mat-sys-primary-container) !important;
-      color: var(--mat-sys-on-primary-container) !important;
-    }
-  `],
+  templateUrl: './sidebar.component.html',
+  styleUrl: './sidebar.component.css',
 })
 export class SidebarComponent {
   private navItems: NavItem[] = [

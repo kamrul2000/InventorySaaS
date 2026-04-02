@@ -1,0 +1,11 @@
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.page-header h1 { margin: 0; }
+.actions { display: flex; gap: 8px; }
+.filters { margin-bottom: 16px; }
+.full-width { width: 100%; }
+.loading-center { display: flex; justify-content: center; padding: 48px; }
+.status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+.status-stockin { background: #e8f5e9; color: #2e7d32; }
+.status-stockout { background: #fce4ec; color: #c62828; }
+.status-transfer { background: #e3f2fd; color: #1565c0; }
+.status-adjustment { background: #fff3e0; color: #e65100; }

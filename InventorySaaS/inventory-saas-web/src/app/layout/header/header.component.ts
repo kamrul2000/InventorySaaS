@@ -24,55 +24,8 @@ import { User } from '../../core/models/auth.models';
     MatMenuModule,
     MatDivider,
   ],
-  template: `
-    <mat-toolbar color="primary">
-      <button mat-icon-button (click)="toggleSidenav.emit()">
-        <mat-icon>menu</mat-icon>
-      </button>
-      <span class="app-title">InventorySaaS</span>
-      <span class="spacer"></span>
-
-      <button mat-icon-button [routerLink]="'/notifications'"
-              [matBadge]="unreadCount > 0 ? unreadCount : null"
-              matBadgeColor="warn"
-              matBadgeSize="small">
-        <mat-icon>notifications</mat-icon>
-      </button>
-
-      <button mat-icon-button [matMenuTriggerFor]="userMenu">
-        <mat-icon>account_circle</mat-icon>
-      </button>
-      <mat-menu #userMenu="matMenu">
-        <div class="user-info" mat-menu-item disabled>
-          <strong>{{ currentUser?.firstName }} {{ currentUser?.lastName }}</strong>
-          <br>
-          <small>{{ currentUser?.email }}</small>
-        </div>
-        <mat-divider></mat-divider>
-        <button mat-menu-item routerLink="/settings">
-          <mat-icon>settings</mat-icon>
-          <span>Settings</span>
-        </button>
-        <button mat-menu-item (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          <span>Logout</span>
-        </button>
-      </mat-menu>
-    </mat-toolbar>
-  `,
-  styles: [`
-    .spacer {
-      flex: 1 1 auto;
-    }
-    .app-title {
-      margin-left: 8px;
-      font-size: 1.1rem;
-    }
-    .user-info {
-      line-height: 1.4;
-      white-space: normal;
-    }
-  `],
+  templateUrl: './header.component.html',
+  styleUrl: './header.component.css',
 })
 export class HeaderComponent implements OnInit {
   @Output() toggleSidenav = new EventEmitter<void>();

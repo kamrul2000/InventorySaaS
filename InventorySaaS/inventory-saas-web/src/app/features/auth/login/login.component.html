@@ -1,0 +1,86 @@
+<div class="login-page">
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="logo-section">
+      <img src="logo.png" alt="InApp Logo" class="logo-img" />
+      <div class="logo-text">
+        <span class="brand-name">In<span class="brand-highlight">App</span></span>
+        <span class="brand-tagline">Inventory App</span>
+      </div>
+    </div>
+
+    <h1 class="login-title">Sign in to your account</h1>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <!-- Email -->
+      <div class="form-group">
+        <label class="form-label" for="email">Email address</label>
+        <input
+          id="email"
+          type="email"
+          class="form-input"
+          formControlName="email"
+          placeholder="name@example.com"
+          [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+        />
+        @if (loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) {
+          <span class="error-text">Email is required</span>
+        }
+        @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+          <span class="error-text">Please enter a valid email</span>
+        }
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <div class="label-row">
+          <label class="form-label" for="password">Password</label>
+          <a class="forgot-link" href="javascript:void(0)">Forgot Password?</a>
+        </div>
+        <div class="password-wrapper">
+          <input
+            id="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            class="form-input"
+            formControlName="password"
+            placeholder="Password"
+            [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          />
+          <button type="button" class="toggle-password" (click)="hidePassword = !hidePassword">
+            <svg *ngIf="hidePassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            <svg *ngIf="!hidePassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+          <span class="error-text">Password is required</span>
+        }
+      </div>
+
+      <!-- Remember Me -->
+      <div class="remember-row">
+        <mat-checkbox color="primary" formControlName="rememberMe">
+          <span class="remember-text">Remember me</span>
+        </mat-checkbox>
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="sign-in-btn"
+        [disabled]="loginForm.invalid || isLoading"
+        [class.btn-loading]="isLoading"
+      >
+        @if (isLoading) {
+          <mat-spinner diameter="22" color="accent"></mat-spinner>
+        } @else {
+          Sign in
+        }
+      </button>
+    </form>
+
+    <!-- Register Link -->
+    <p class="register-text">
+      Don't have an account? <a routerLink="/auth/register" class="register-link">Sign up</a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<div class="layout-container">
+  <app-header (toggleSidenav)="sidenav.toggle()"></app-header>
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav #sidenav
+                 [mode]="isMobile ? 'over' : 'side'"
+                 [opened]="!isMobile"
+                 class="sidenav">
+      <app-sidebar></app-sidebar>
+    </mat-sidenav>
+    <mat-sidenav-content class="content">
+      <div class="page-container">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

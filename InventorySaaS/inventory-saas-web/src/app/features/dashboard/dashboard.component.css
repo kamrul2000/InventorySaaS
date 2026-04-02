@@ -1,0 +1,69 @@
+.dashboard h1 {
+  margin-bottom: 24px;
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card mat-card-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+.kpi-icon {
+  background: var(--mat-sys-primary-container);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+}
+.kpi-icon mat-icon {
+  color: var(--mat-sys-on-primary-container);
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+.kpi-card.warning .kpi-icon {
+  background: #fff3e0;
+}
+.kpi-card.warning .kpi-icon mat-icon {
+  color: #e65100;
+}
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.kpi-label {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.54);
+}
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+}
+.full-width {
+  width: 100%;
+}
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.status-stockin { background: #e8f5e9; color: #2e7d32; }
+.status-stockout { background: #fce4ec; color: #c62828; }
+.status-transfer { background: #e3f2fd; color: #1565c0; }
+.status-adjustment { background: #fff3e0; color: #e65100; }
+.text-warn { color: #e65100; font-weight: 500; }
