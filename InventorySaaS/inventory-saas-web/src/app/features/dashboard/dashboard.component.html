@@ -1,136 +1,249 @@
 <div class="dashboard">
-  <!-- Greeting -->
-  <div class="greeting-section">
-    <h1 class="greeting">Welcome back, {{ userName }}!</h1>
-    <p class="greeting-sub">Here's what's happening with your inventory today.</p>
-  </div>
-
   @if (loading) {
     <div class="loading-center">
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   } @else if (data) {
-    <!-- KPI Cards -->
-    <div class="kpi-grid">
-      <div class="kpi-card kpi-blue">
-        <div class="kpi-icon-wrap">
+    <!-- Top KPI Cards Row -->
+    <div class="kpi-row">
+      <div class="kpi-card kpi-sales">
+        <div class="kpi-icon-box">
+          <mat-icon>point_of_sale</mat-icon>
+        </div>
+        <div class="kpi-text">
+          <span class="kpi-label">Total Sales</span>
+          <span class="kpi-value">{{ data.totalSales | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-purchase">
+        <div class="kpi-icon-box">
+          <mat-icon>shopping_cart</mat-icon>
+        </div>
+        <div class="kpi-text">
+          <span class="kpi-label">Total Purchase</span>
+          <span class="kpi-value">{{ data.totalPurchases | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-inventory">
+        <div class="kpi-icon-box">
           <mat-icon>inventory_2</mat-icon>
         </div>
-        <div class="kpi-info">
-          <span class="kpi-value">{{ data.totalProducts }}</span>
-          <span class="kpi-label">Total Products</span>
-        </div>
-      </div>
-
-      <div class="kpi-card kpi-green">
-        <div class="kpi-icon-wrap">
-          <mat-icon>warehouse</mat-icon>
-        </div>
-        <div class="kpi-info">
-          <span class="kpi-value">{{ data.totalWarehouses }}</span>
-          <span class="kpi-label">Warehouses</span>
-        </div>
-      </div>
-
-      <div class="kpi-card kpi-orange">
-        <div class="kpi-icon-wrap">
-          <mat-icon>warning</mat-icon>
-        </div>
-        <div class="kpi-info">
-          <span class="kpi-value">{{ data.lowStockCount }}</span>
-          <span class="kpi-label">Low Stock Items</span>
-        </div>
-      </div>
-
-      <div class="kpi-card kpi-purple">
-        <div class="kpi-icon-wrap">
-          <mat-icon>attach_money</mat-icon>
-        </div>
-        <div class="kpi-info">
-          <span class="kpi-value">{{ data.totalInventoryValue | currency:'USD':'symbol':'1.0-0' }}</span>
+        <div class="kpi-text">
           <span class="kpi-label">Inventory Value</span>
+          <span class="kpi-value">{{ data.totalInventoryValue | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-orders">
+        <div class="kpi-icon-box">
+          <mat-icon>receipt_long</mat-icon>
+        </div>
+        <div class="kpi-text">
+          <span class="kpi-label">Total Orders</span>
+          <span class="kpi-value">{{ data.totalOrders }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Tables Section -->
-    <div class="tables-grid">
-      <!-- Recent Transactions -->
-      <div class="table-card">
-        <div class="table-header">
-          <h2 class="table-title">Recent Transactions</h2>
-          <a routerLink="/inventory" class="view-all">View all</a>
+    <!-- Secondary Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-value">{{ data.totalProducts }}</span>
+            <span class="stat-label">Total Products</span>
+          </div>
+          <div class="stat-icon stat-icon-blue">
+            <mat-icon>category</mat-icon>
+          </div>
         </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="data.recentTransactions" class="clean-table">
-            <ng-container matColumnDef="transactionNumber">
-              <th mat-header-cell *matHeaderCellDef>Number</th>
-              <td mat-cell *matCellDef="let row">{{ row.transactionNumber }}</td>
-            </ng-container>
-            <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef>Type</th>
-              <td mat-cell *matCellDef="let row">
-                <span class="status-pill" [class]="'pill-' + row.type.toLowerCase()">{{ row.type }}</span>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="productName">
-              <th mat-header-cell *matHeaderCellDef>Product</th>
-              <td mat-cell *matCellDef="let row">{{ row.productName }}</td>
-            </ng-container>
-            <ng-container matColumnDef="quantity">
-              <th mat-header-cell *matHeaderCellDef>Qty</th>
-              <td mat-cell *matCellDef="let row">{{ row.quantity }}</td>
-            </ng-container>
-            <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Date</th>
-              <td mat-cell *matCellDef="let row">{{ row.date | date:'mediumDate' }}</td>
-            </ng-container>
+        <div class="stat-bottom">
+          <span class="stat-link" routerLink="/products">View</span>
+        </div>
+      </div>
 
-            <tr mat-header-row *matHeaderRowDef="txColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: txColumns;"></tr>
-          </table>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-value">{{ data.totalWarehouses }}</span>
+            <span class="stat-label">Warehouses</span>
+          </div>
+          <div class="stat-icon stat-icon-green">
+            <mat-icon>warehouse</mat-icon>
+          </div>
+        </div>
+        <div class="stat-bottom">
+          <span class="stat-link" routerLink="/warehouses">View</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-value">{{ data.lowStockCount }}</span>
+            <span class="stat-label">Low Stock Items</span>
+          </div>
+          <div class="stat-icon stat-icon-orange">
+            <mat-icon>warning_amber</mat-icon>
+          </div>
+        </div>
+        <div class="stat-bottom">
+          <span class="stat-link" routerLink="/reports">View</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div>
+            <span class="stat-value">{{ data.expiringCount }}</span>
+            <span class="stat-label">Expiring Soon</span>
+          </div>
+          <div class="stat-icon stat-icon-red">
+            <mat-icon>event_busy</mat-icon>
+          </div>
+        </div>
+        <div class="stat-bottom">
+          <span class="stat-link" routerLink="/reports">View</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall Info Row -->
+    <div class="info-row">
+      <div class="info-card">
+        <h3 class="info-title">Overall Information</h3>
+        <div class="info-stats-grid">
+          <div class="info-stat-item">
+            <span class="info-stat-value">{{ data.totalSuppliers }}</span>
+            <span class="info-stat-label">Suppliers</span>
+          </div>
+          <div class="info-stat-item">
+            <span class="info-stat-value">{{ data.totalCustomers }}</span>
+            <span class="info-stat-label">Customers</span>
+          </div>
+          <div class="info-stat-item">
+            <span class="info-stat-value">{{ data.totalOrders }}</span>
+            <span class="info-stat-label">Orders</span>
+          </div>
+          <div class="info-stat-item">
+            <span class="info-stat-value">{{ data.totalProducts }}</span>
+            <span class="info-stat-label">Products</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="info-card info-card-wide">
+        <div class="card-header-row">
+          <h3 class="info-title">Recent Transactions</h3>
+          <a routerLink="/inventory" class="view-all-link">View All</a>
+        </div>
+        <div class="tx-list">
+          @for (tx of data.recentTransactions.slice(0, 6); track tx.transactionNumber) {
+            <div class="tx-item">
+              <div class="tx-type-icon" [class]="'tx-icon-' + tx.type.toLowerCase()">
+                <mat-icon>{{ getTxIcon(tx.type) }}</mat-icon>
+              </div>
+              <div class="tx-info">
+                <span class="tx-product">{{ tx.productName }}</span>
+                <span class="tx-detail">{{ tx.transactionNumber }} &middot; {{ tx.date | date:'mediumDate' }}</span>
+              </div>
+              <div class="tx-right">
+                <span class="tx-qty" [class]="tx.type === 'StockIn' ? 'qty-in' : 'qty-out'">
+                  {{ tx.type === 'StockIn' ? '+' : '-' }}{{ tx.quantity }}
+                </span>
+                <span class="tx-type-badge" [class]="'badge-' + tx.type.toLowerCase()">{{ tx.type }}</span>
+              </div>
+            </div>
+          }
           @if (data.recentTransactions.length === 0) {
             <div class="empty-state">No recent transactions</div>
           }
         </div>
       </div>
+    </div>
 
-      <!-- Stock Alerts -->
-      <div class="table-card">
-        <div class="table-header">
-          <h2 class="table-title">Stock Alerts</h2>
-          <a routerLink="/reports" class="view-all">View all</a>
+    <!-- Bottom Row: Top Products, Low Stock, Recent Sales -->
+    <div class="bottom-row">
+      <!-- Top Selling Products -->
+      <div class="list-card">
+        <div class="card-header-row">
+          <h3 class="info-title">Top Products</h3>
         </div>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="data.stockAlerts" class="clean-table">
-            <ng-container matColumnDef="productName">
-              <th mat-header-cell *matHeaderCellDef>Product</th>
-              <td mat-cell *matCellDef="let row">{{ row.productName }}</td>
-            </ng-container>
-            <ng-container matColumnDef="sku">
-              <th mat-header-cell *matHeaderCellDef>SKU</th>
-              <td mat-cell *matCellDef="let row">{{ row.sku }}</td>
-            </ng-container>
-            <ng-container matColumnDef="warehouseName">
-              <th mat-header-cell *matHeaderCellDef>Warehouse</th>
-              <td mat-cell *matCellDef="let row">{{ row.warehouseName }}</td>
-            </ng-container>
-            <ng-container matColumnDef="currentStock">
-              <th mat-header-cell *matHeaderCellDef>Current</th>
-              <td mat-cell *matCellDef="let row">
-                <span class="stock-warn">{{ row.currentStock }}</span>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="reorderLevel">
-              <th mat-header-cell *matHeaderCellDef>Reorder Level</th>
-              <td mat-cell *matCellDef="let row">{{ row.reorderLevel }}</td>
-            </ng-container>
+        <div class="product-list">
+          @for (p of data.topProducts; track p.sku) {
+            <div class="product-item">
+              <div class="product-avatar">
+                <mat-icon>inventory_2</mat-icon>
+              </div>
+              <div class="product-info">
+                <span class="product-name">{{ p.productName }}</span>
+                <span class="product-detail">{{ p.sellingPrice | currency:'USD':'symbol':'1.0-0' }} &middot; {{ p.totalQuantity | number }} Units</span>
+              </div>
+              <div class="product-badge">
+                {{ getStockPercent(p) }}%
+              </div>
+            </div>
+          }
+          @if (data.topProducts.length === 0) {
+            <div class="empty-state">No products yet</div>
+          }
+        </div>
+      </div>
 
-            <tr mat-header-row *matHeaderRowDef="alertColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: alertColumns;"></tr>
-          </table>
-          @if (data.stockAlerts.length === 0) {
-            <div class="empty-state">No stock alerts</div>
+      <!-- Low Stock Products -->
+      <div class="list-card">
+        <div class="card-header-row">
+          <h3 class="info-title">Low Stock Products</h3>
+          <a routerLink="/reports" class="view-all-link">View All</a>
+        </div>
+        <div class="product-list">
+          @for (p of data.lowStockProducts; track p.sku) {
+            <div class="product-item">
+              <div class="product-avatar low-stock-avatar">
+                <mat-icon>warning_amber</mat-icon>
+              </div>
+              <div class="product-info">
+                <span class="product-name">{{ p.productName }}</span>
+                <span class="product-detail">SKU: {{ p.sku }}</span>
+              </div>
+              <div class="low-stock-count">
+                <span class="low-count-value">{{ p.currentStock | number:'1.0-0' }}</span>
+                <span class="low-count-label">In Stock</span>
+              </div>
+            </div>
+          }
+          @if (data.lowStockProducts.length === 0) {
+            <div class="empty-state">No low stock items</div>
+          }
+        </div>
+      </div>
+
+      <!-- Recent Sales -->
+      <div class="list-card">
+        <div class="card-header-row">
+          <h3 class="info-title">Recent Sales</h3>
+          <a routerLink="/sales-orders" class="view-all-link">View All</a>
+        </div>
+        <div class="product-list">
+          @for (s of data.recentSalesOrders; track s.orderNumber) {
+            <div class="product-item">
+              <div class="product-avatar sales-avatar">
+                <mat-icon>receipt</mat-icon>
+              </div>
+              <div class="product-info">
+                <span class="product-name">{{ s.customerName }}</span>
+                <span class="product-detail">{{ s.orderNumber }} &middot; {{ s.totalAmount | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="sales-status" [class]="'status-' + s.status.toLowerCase()">
+                {{ s.status }}
+              </div>
+            </div>
+          }
+          @if (data.recentSalesOrders.length === 0) {
+            <div class="empty-state">No recent sales</div>
           }
         </div>
       </div>

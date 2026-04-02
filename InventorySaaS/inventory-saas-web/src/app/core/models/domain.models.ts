@@ -186,9 +186,14 @@ export interface DashboardDto {
   lowStockCount: number;
   expiringCount: number;
   totalInventoryValue: number;
+  totalSales: number;
+  totalPurchases: number;
+  totalOrders: number;
   recentTransactions: RecentTransactionDto[];
   topProducts: TopProductDto[];
   stockAlerts: StockAlertDto[];
+  recentSalesOrders: RecentSalesOrderDto[];
+  lowStockProducts: LowStockProductDto[];
 }
 
 export interface RecentTransactionDto {
@@ -204,12 +209,28 @@ export interface TopProductDto {
   sku: string;
   totalQuantity: number;
   totalValue: number;
+  sellingPrice: number;
 }
 
 export interface StockAlertDto {
   productName: string;
   sku: string;
   warehouseName: string;
+  currentStock: number;
+  reorderLevel: number;
+}
+
+export interface RecentSalesOrderDto {
+  orderNumber: string;
+  customerName: string;
+  status: string;
+  totalAmount: number;
+  orderDate: string;
+}
+
+export interface LowStockProductDto {
+  productName: string;
+  sku: string;
   currentStock: number;
   reorderLevel: number;
 }

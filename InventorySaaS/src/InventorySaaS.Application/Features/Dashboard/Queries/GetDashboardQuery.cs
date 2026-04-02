@@ -1,6 +1,7 @@
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.Dashboard.DTOs;
 using InventorySaaS.Application.Interfaces;
+using InventorySaaS.Domain.Common.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,6 +52,25 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
             .ToListAsync(cancellationToken);
         var totalInventoryValue = balances.Sum(b => (decimal)b.QuantityOnHand * b.UnitCost);
 
+        // Total sales (non-draft, non-cancelled)
+        var salesOrders = await _context.SalesOrders
+            .Where(so => so.Status != SalesOrderStatus.Draft && so.Status != SalesOrderStatus.Cancelled)
+            .Select(so => so.TotalAmount)
+            .ToListAsync(cancellationToken);
+        var totalSales = salesOrders.Sum();
+
+        // Total purchases (non-draft, non-cancelled)
+        var purchaseOrders = await _context.PurchaseOrders
+            .Where(po => po.Status != PurchaseOrderStatus.Draft && po.Status != PurchaseOrderStatus.Cancelled)
+            .Select(po => po.TotalAmount)
+            .ToListAsync(cancellationToken);
+        var totalPurchases = purchaseOrders.Sum();
+
+        // Total orders count (sales)
+        var totalOrders = await _context.SalesOrders
+            .Where(so => so.Status != SalesOrderStatus.Draft && so.Status != SalesOrderStatus.Cancelled)
+            .CountAsync(cancellationToken);
+
         // Recent transactions (last 10)
         var recentTransactions = await _context.InventoryTransactions
             .OrderByDescending(t => t.TransactionDate)
@@ -63,21 +83,22 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
                 t.TransactionDate))
             .ToListAsync(cancellationToken);
 
-        // Top products by total on-hand quantity (client-side grouping to avoid EF translation issues)
+        // Top products by total on-hand quantity
         var allBalances = await _context.InventoryBalances
             .Where(ib => ib.QuantityOnHand > 0)
-            .Select(ib => new { ib.Product.Name, ib.Product.Sku, ib.QuantityOnHand, ib.UnitCost })
+            .Select(ib => new { ib.Product.Name, ib.Product.Sku, ib.Product.SellingPrice, ib.QuantityOnHand, ib.UnitCost })
             .ToListAsync(cancellationToken);
 
         var topProducts = allBalances
-            .GroupBy(ib => new { ib.Name, ib.Sku })
+            .GroupBy(ib => new { ib.Name, ib.Sku, ib.SellingPrice })
             .Select(g => new TopProductDto(
                 g.Key.Name,
                 g.Key.Sku,
                 g.Sum(ib => ib.QuantityOnHand),
-                g.Sum(ib => (decimal)ib.QuantityOnHand * ib.UnitCost)))
+                g.Sum(ib => (decimal)ib.QuantityOnHand * ib.UnitCost),
+                g.Key.SellingPrice))
             .OrderByDescending(x => x.TotalQuantity)
-            .Take(10)
+            .Take(5)
             .ToList();
 
         // Stock alerts
@@ -93,6 +114,35 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
                 ib.Product.ReorderLevel))
             .ToListAsync(cancellationToken);
 
+        // Recent sales orders (last 5)
+        var recentSalesOrders = await _context.SalesOrders
+            .OrderByDescending(so => so.OrderDate)
+            .Take(5)
+            .Select(so => new RecentSalesOrderDto(
+                so.OrderNumber,
+                so.Customer.Name,
+                so.Status.ToString(),
+                so.TotalAmount,
+                so.OrderDate))
+            .ToListAsync(cancellationToken);
+
+        // Low stock products (distinct, top 5)
+        var lowStockRaw = await _context.InventoryBalances
+            .Where(ib => ib.QuantityOnHand > 0 && ib.QuantityOnHand <= ib.Product.ReorderLevel)
+            .Select(ib => new { ib.Product.Name, ib.Product.Sku, ib.QuantityOnHand, ib.Product.ReorderLevel })
+            .ToListAsync(cancellationToken);
+
+        var lowStockProducts = lowStockRaw
+            .GroupBy(x => new { x.Name, x.Sku })
+            .Select(g => new LowStockProductDto(
+                g.Key.Name,
+                g.Key.Sku,
+                g.Sum(x => x.QuantityOnHand),
+                g.Max(x => x.ReorderLevel)))
+            .OrderBy(x => x.CurrentStock)
+            .Take(5)
+            .ToList();
+
         var dashboard = new DashboardDto(
             totalProducts,
             totalWarehouses,
@@ -101,9 +151,14 @@ public class GetDashboardQueryHandler : IRequestHandler<GetDashboardQuery, Resul
             lowStockCount,
             expiringCount,
             totalInventoryValue,
+            totalSales,
+            totalPurchases,
+            totalOrders,
             recentTransactions,
             topProducts,
-            stockAlerts);
+            stockAlerts,
+            recentSalesOrders,
+            lowStockProducts);
 
         return Result<DashboardDto>.Success(dashboard);
     }
