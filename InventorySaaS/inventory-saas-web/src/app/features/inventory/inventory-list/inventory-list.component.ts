@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { InventoryBalanceDto, InventoryTransactionDto, WarehouseDto } from '../../../core/models/domain.models';
@@ -14,6 +17,9 @@ import { InventoryBalanceDto, InventoryTransactionDto, WarehouseDto } from '../.
     CommonModule,
     FormsModule,
     MatIconModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './inventory-list.component.html',
   styleUrl: './inventory-list.component.css',
@@ -31,6 +37,8 @@ export class InventoryListComponent implements OnInit {
   loadingBalances = false;
   loadingTransactions = false;
   activeTab = 0;
+  balanceColumns = ['productName', 'productSku', 'warehouseName', 'locationName', 'quantityOnHand', 'quantityReserved', 'quantityAvailable', 'unitCost'];
+  txColumns = ['transactionNumber', 'transactionType', 'productName', 'warehouseName', 'quantity', 'transactionDate'];
 
   constructor(
     private inventoryService: InventoryService,
@@ -87,13 +95,15 @@ export class InventoryListComponent implements OnInit {
     this.loadData();
   }
 
-  goBalancePage(page: number): void {
-    this.balancePage = page;
+  onBalancePage(event: PageEvent): void {
+    this.balancePage = event.pageIndex + 1;
+    this.pageSize = event.pageSize;
     this.loadBalances();
   }
 
-  goTxPage(page: number): void {
-    this.txPage = page;
+  onTxPage(event: PageEvent): void {
+    this.txPage = event.pageIndex + 1;
+    this.pageSize = event.pageSize;
     this.loadTransactions();
   }
 
