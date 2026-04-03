@@ -1,14 +1,50 @@
 .table-container {
   position: relative;
+  font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
 }
-.table-header {
+
+/* ─── Toolbar (Search) ─── */
+.table-toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
 }
-.search-field {
-  width: 300px;
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  width: 280px;
+  transition: border-color 0.15s;
 }
+.search-box:focus-within {
+  border-color: #e8602c;
+}
+.search-icon {
+  color: #a0aec0;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+.search-input {
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  color: #2d3748;
+  background: transparent;
+  width: 100%;
+  font-family: inherit;
+}
+.search-input::placeholder {
+  color: #a0aec0;
+}
+
+/* ─── Loading ─── */
 .loading-overlay {
   position: absolute;
   top: 0;
@@ -18,20 +54,111 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.75);
   z-index: 10;
+  border-radius: 12px;
 }
+
+/* ─── Table Wrap ─── */
+.table-wrap {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
 table {
   width: 100%;
 }
+
+/* ─── Header Cells ─── */
+:host ::ng-deep .mat-mdc-header-cell {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8602c;
+  background: #fff;
+  border-bottom: 2px solid #f0f0f0;
+  padding: 14px 16px;
+}
+
+/* ─── Body Cells ─── */
+:host ::ng-deep .mat-mdc-cell {
+  font-size: 13.5px;
+  color: #2d3748;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f5f5f5;
+}
+:host ::ng-deep .mat-mdc-row:hover {
+  background: #fef9f6;
+}
+
+/* ─── Boolean Badge ─── */
+.bool-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.bool-yes {
+  background: #e6fffa;
+  color: #2f855a;
+}
+.bool-no {
+  background: #f0f4f8;
+  color: #718096;
+}
+
+/* ─── Action Buttons ─── */
+.action-btns {
+  display: flex;
+  gap: 6px;
+}
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.action-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+.edit-btn {
+  background: #ebf5ff;
+  color: #3182ce;
+}
+.edit-btn:hover {
+  background: #3182ce;
+  color: #fff;
+}
+.delete-btn {
+  background: #fef2f2;
+  color: #e53e3e;
+}
+.delete-btn:hover {
+  background: #e53e3e;
+  color: #fff;
+}
+
+/* ─── No Data ─── */
 .no-data {
   text-align: center;
-  padding: 24px;
-  color: rgba(0, 0, 0, 0.54);
+  padding: 32px;
+  color: #a0aec0;
+  font-size: 14px;
 }
-.text-success {
-  color: #4caf50;
-}
-.text-muted {
-  color: #9e9e9e;
+
+/* ─── Paginator ─── */
+:host ::ng-deep .mat-mdc-paginator {
+  background: transparent;
+  border-top: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #718096;
 }

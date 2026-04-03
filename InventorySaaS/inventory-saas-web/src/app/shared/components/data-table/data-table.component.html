@@ -1,22 +1,21 @@
 <div class="table-container">
-  <div class="table-header">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Search</mat-label>
-      <input matInput
+  <div class="table-toolbar">
+    <div class="search-box">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input class="search-input"
              [(ngModel)]="searchValue"
              (input)="onSearch()"
-             placeholder="Type to search...">
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
+             placeholder="Search...">
+    </div>
   </div>
 
   @if (loading) {
     <div class="loading-overlay">
-      <mat-spinner diameter="40"></mat-spinner>
+      <mat-spinner diameter="36"></mat-spinner>
     </div>
   }
 
-  <div class="mat-elevation-z2">
+  <div class="table-wrap">
     <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSort($event)">
 
       @for (col of columns; track col.key) {
@@ -31,9 +30,11 @@
                 {{ row[col.key] | currency }}
               }
               @case ('boolean') {
-                <mat-icon [class]="row[col.key] ? 'text-success' : 'text-muted'">
-                  {{ row[col.key] ? 'check_circle' : 'cancel' }}
-                </mat-icon>
+                @if (row[col.key]) {
+                  <span class="bool-badge bool-yes">Active</span>
+                } @else {
+                  <span class="bool-badge bool-no">Inactive</span>
+                }
               }
               @default {
                 {{ row[col.key] }}
@@ -44,14 +45,16 @@
       }
 
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <th mat-header-cell *matHeaderCellDef>Action</th>
         <td mat-cell *matCellDef="let row">
-          <button mat-icon-button color="primary" (click)="onAction('edit', row)">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" (click)="onAction('delete', row)">
-            <mat-icon>delete</mat-icon>
-          </button>
+          <div class="action-btns">
+            <button class="action-btn edit-btn" (click)="onAction('edit', row)" title="Edit">
+              <mat-icon>edit_note</mat-icon>
+            </button>
+            <button class="action-btn delete-btn" (click)="onAction('delete', row)" title="Delete">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
         </td>
       </ng-container>
 
@@ -64,12 +67,12 @@
         </td>
       </tr>
     </table>
-
-    <mat-paginator [length]="totalCount"
-                   [pageSize]="pageSize"
-                   [pageSizeOptions]="[10, 25, 50]"
-                   (page)="onPage($event)"
-                   showFirstLastButtons>
-    </mat-paginator>
   </div>
+
+  <mat-paginator [length]="totalCount"
+                 [pageSize]="pageSize"
+                 [pageSizeOptions]="[10, 25, 50]"
+                 (page)="onPage($event)"
+                 showFirstLastButtons>
+  </mat-paginator>
 </div>
