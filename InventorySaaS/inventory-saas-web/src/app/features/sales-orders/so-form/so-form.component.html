@@ -1,99 +1,107 @@
-<div class="form-container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Create Sales Order</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Customer</mat-label>
-            <mat-select formControlName="customerId">
-              @for (c of customers; track c.id) {
-                <mat-option [value]="c.id">{{ c.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Create Sales Order</h1>
+      <p class="page-subtitle">Fill in the details for a new sales order</p>
+    </div>
+  </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Warehouse</mat-label>
-            <mat-select formControlName="warehouseId">
-              @for (wh of warehouses; track wh.id) {
-                <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Customer</label>
+          <select class="form-select" formControlName="customerId">
+            <option value="" disabled>Select customer</option>
+            @for (c of customers; track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Warehouse</label>
+          <select class="form-select" formControlName="warehouseId">
+            <option value="" disabled>Select warehouse</option>
+            @for (wh of warehouses; track wh.id) {
+              <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Delivery Date</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="deliveryDate">
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Delivery Date</label>
+          <input type="date" class="form-input" formControlName="deliveryDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shipping Address</label>
+          <input type="text" class="form-input" formControlName="shippingAddress" placeholder="Enter shipping address">
+        </div>
+      </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Shipping Address</mat-label>
-            <input matInput formControlName="shippingAddress">
-          </mat-form-field>
+      <div class="items-section" formArrayName="items">
+        <div class="section-header">
+          <h3 class="section-title">Line Items</h3>
+          <button type="button" class="btn-small" (click)="addItem()">
+            <mat-icon>add</mat-icon> Add Item
+          </button>
         </div>
 
-        <h3>
-          Line Items
-          <button mat-mini-fab color="primary" type="button" (click)="addItem()">
-            <mat-icon>add</mat-icon>
-          </button>
-        </h3>
-
-        <div formArrayName="items">
-          <table class="items-table full-width">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-                <th></th>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items.controls; track $index) {
+              <tr [formGroupName]="$index">
+                <td>
+                  <select class="item-select" formControlName="productId">
+                    <option value="" disabled>Select product</option>
+                    @for (p of products; track p.id) {
+                      <option [value]="p.id">{{ p.name }}</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <input class="item-input" formControlName="quantity" type="number" min="1" (input)="calculateLineTotal($index)">
+                </td>
+                <td>
+                  <input class="item-input" formControlName="unitPrice" type="number" step="0.01" min="0" (input)="calculateLineTotal($index)">
+                </td>
+                <td>{{ items.at($index).get('lineTotal')?.value | currency }}</td>
+                <td>
+                  <button type="button" class="btn-danger" (click)="removeItem($index)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              @for (item of items.controls; track $index) {
-                <tr [formGroupName]="$index">
-                  <td>
-                    <mat-select formControlName="productId" class="inline-select">
-                      @for (p of products; track p.id) {
-                        <mat-option [value]="p.id">{{ p.name }}</mat-option>
-                      }
-                    </mat-select>
-                  </td>
-                  <td>
-                    <input matInput formControlName="quantity" type="number" class="inline-input" (input)="calculateLineTotal($index)">
-                  </td>
-                  <td>
-                    <input matInput formControlName="unitPrice" type="number" step="0.01" class="inline-input" (input)="calculateLineTotal($index)">
-                  </td>
-                  <td>{{ items.at($index).get('lineTotal')?.value | currency }}</td>
-                  <td>
-                    <button mat-icon-button color="warn" type="button" (click)="removeItem($index)">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+            }
+          </tbody>
+        </table>
 
-        <div class="total-row">
-          <strong>Grand Total: {{ grandTotal | currency }}</strong>
+        <div class="totals-row">
+          <div class="totals-card">
+            <div class="total-line grand-total">
+              <span>Grand Total</span>
+              <span>{{ grandTotal | currency }}</span>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="form-actions">
-          <button mat-button type="button" (click)="cancel()">Cancel</button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving || items.length === 0">
-            @if (saving) { <mat-spinner diameter="20"></mat-spinner> } @else { Create Order }
-          </button>
-        </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || saving || items.length === 0">
+          @if (saving) { Saving... } @else { Create Order }
+        </button>
+      </div>
+    </form>
+  </div>
 </div>

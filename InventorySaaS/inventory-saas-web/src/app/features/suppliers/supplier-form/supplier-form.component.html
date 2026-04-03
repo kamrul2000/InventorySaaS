@@ -1,53 +1,76 @@
-<div class="form-container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ isEditMode ? 'Edit Supplier' : 'New Supplier' }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Name</mat-label>
-            <input matInput formControlName="name">
-            @if (form.get('name')?.hasError('required') && form.get('name')?.touched) { <mat-error>Required</mat-error> }
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Code</mat-label>
-            <input matInput formControlName="code">
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Contact Person</mat-label>
-            <input matInput formControlName="contactPerson">
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" type="email">
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Phone</mat-label>
-            <input matInput formControlName="phone">
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Address</mat-label>
-            <input matInput formControlName="address">
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>City</mat-label>
-            <input matInput formControlName="city">
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Country</mat-label>
-            <input matInput formControlName="country">
-          </mat-form-field>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ isEditMode ? 'Edit Supplier' : 'New Supplier' }}</h1>
+      <p class="page-subtitle">{{ isEditMode ? 'Update supplier details' : 'Add a new supplier to your directory' }}</p>
+    </div>
+    <button class="btn-primary" routerLink="/suppliers">
+      <mat-icon>list</mat-icon> Go to List
+    </button>
+  </div>
+
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Name *</label>
+          <input class="form-input" formControlName="name" placeholder="Supplier name">
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <div class="form-error">Name is required</div>
+          }
         </div>
-        <mat-checkbox formControlName="isActive">Active</mat-checkbox>
-        <div class="form-actions">
-          <button mat-button type="button" (click)="cancel()">Cancel</button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
-            @if (saving) { <mat-spinner diameter="20"></mat-spinner> } @else { {{ isEditMode ? 'Update' : 'Create' }} }
-          </button>
+        <div class="form-group">
+          <label class="form-label">Code</label>
+          <input class="form-input" formControlName="code" placeholder="Supplier code">
         </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Contact Person</label>
+          <input class="form-input" formControlName="contactPerson" placeholder="Contact person name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" formControlName="email" type="email" placeholder="email@example.com">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" formControlName="phone" placeholder="Phone number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input class="form-input" formControlName="address" placeholder="Street address">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input class="form-input" formControlName="city" placeholder="City">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <input class="form-input" formControlName="country" placeholder="Country">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isActive">
+          Active
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+          @if (saving) { Saving... } @else { {{ isEditMode ? 'Update' : 'Create' }} }
+        </button>
+        <button class="btn-secondary" type="button" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  </div>
 </div>

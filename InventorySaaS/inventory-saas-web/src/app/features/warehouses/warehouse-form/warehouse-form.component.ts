@@ -2,13 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -21,13 +15,7 @@ import { WarehouseLocationDto } from '../../../core/models/domain.models';
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCheckboxModule,
-    MatButtonModule,
     MatIconModule,
-    MatTableModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './warehouse-form.component.html',
@@ -39,7 +27,6 @@ export class WarehouseFormComponent implements OnInit {
   saving = false;
   warehouseId: string | null = null;
   locations: WarehouseLocationDto[] = [];
-  locationColumns = ['name', 'aisle', 'rack', 'bin'];
   showLocationForm = false;
   newLocation = { name: '', aisle: '', rack: '', bin: '' };
 

@@ -1,125 +1,153 @@
-<div class="form-container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ isEditMode ? 'Edit Warehouse' : 'New Warehouse' }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Name</mat-label>
-            <input matInput formControlName="name">
-            @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-              <mat-error>Name is required</mat-error>
-            }
-          </mat-form-field>
+<div class="page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ isEditMode ? 'Edit Warehouse' : 'Add Warehouse' }}</h1>
+      <p class="page-subtitle">{{ isEditMode ? 'Update warehouse details' : 'Add a new warehouse location' }}</p>
+    </div>
+    <button class="btn-primary" (click)="cancel()">
+      <mat-icon>list</mat-icon>
+      Go to Warehouse List
+    </button>
+  </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Code</mat-label>
-            <input matInput formControlName="code">
-            @if (form.get('code')?.hasError('required') && form.get('code')?.touched) {
-              <mat-error>Code is required</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Address</mat-label>
-            <input matInput formControlName="address">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>City</mat-label>
-            <input matInput formControlName="city">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Country</mat-label>
-            <input matInput formControlName="country">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Contact Person</mat-label>
-            <input matInput formControlName="contactPerson">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Phone</mat-label>
-            <input matInput formControlName="phone">
-          </mat-form-field>
+  <!-- Form Card -->
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Warehouse Name</label>
+          <input class="form-input" formControlName="name" placeholder="Enter warehouse name">
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <span class="form-error">Name is required</span>
+          }
         </div>
-
-        <div class="checkbox-row">
-          <mat-checkbox formControlName="isDefault">Default Warehouse</mat-checkbox>
+        <div class="form-group">
+          <label class="form-label">Code</label>
+          <input class="form-input" formControlName="code" placeholder="Enter warehouse code">
+          @if (form.get('code')?.hasError('required') && form.get('code')?.touched) {
+            <span class="form-error">Code is required</span>
+          }
         </div>
+      </div>
 
-        @if (isEditMode) {
-          <div class="locations-section">
-            <h3>
-              Locations
-              <button mat-mini-fab color="primary" type="button" (click)="addLocation()">
-                <mat-icon>add</mat-icon>
-              </button>
-            </h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input class="form-input" formControlName="address" placeholder="Enter address">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input class="form-input" formControlName="city" placeholder="Enter city">
+        </div>
+      </div>
 
-            @if (showLocationForm) {
-              <div class="location-form">
-                <mat-form-field appearance="outline">
-                  <mat-label>Location Name</mat-label>
-                  <input matInput [(ngModel)]="newLocation.name" [ngModelOptions]="{standalone: true}">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Aisle</mat-label>
-                  <input matInput [(ngModel)]="newLocation.aisle" [ngModelOptions]="{standalone: true}">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Rack</mat-label>
-                  <input matInput [(ngModel)]="newLocation.rack" [ngModelOptions]="{standalone: true}">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Bin</mat-label>
-                  <input matInput [(ngModel)]="newLocation.bin" [ngModelOptions]="{standalone: true}">
-                </mat-form-field>
-                <button mat-flat-button color="accent" type="button" (click)="saveLocation()">Save Location</button>
-                <button mat-button type="button" (click)="showLocationForm = false">Cancel</button>
-              </div>
-            }
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <input class="form-input" formControlName="country" placeholder="Enter country">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Person</label>
+          <input class="form-input" formControlName="contactPerson" placeholder="Enter contact person">
+        </div>
+      </div>
 
-            @if (locations.length > 0) {
-              <table mat-table [dataSource]="locations" class="full-width">
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef>Name</th>
-                  <td mat-cell *matCellDef="let loc">{{ loc.name }}</td>
-                </ng-container>
-                <ng-container matColumnDef="aisle">
-                  <th mat-header-cell *matHeaderCellDef>Aisle</th>
-                  <td mat-cell *matCellDef="let loc">{{ loc.aisle }}</td>
-                </ng-container>
-                <ng-container matColumnDef="rack">
-                  <th mat-header-cell *matHeaderCellDef>Rack</th>
-                  <td mat-cell *matCellDef="let loc">{{ loc.rack }}</td>
-                </ng-container>
-                <ng-container matColumnDef="bin">
-                  <th mat-header-cell *matHeaderCellDef>Bin</th>
-                  <td mat-cell *matCellDef="let loc">{{ loc.bin }}</td>
-                </ng-container>
-                <tr mat-header-row *matHeaderRowDef="locationColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: locationColumns;"></tr>
-              </table>
-            }
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" formControlName="phone" placeholder="Enter phone number">
+        </div>
+        <div class="form-group form-group-checkboxes">
+          <label class="form-label">Options</label>
+          <div class="checkbox-row">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isDefault">
+              <span>Default Warehouse</span>
+            </label>
           </div>
-        }
-
-        <div class="form-actions">
-          <button mat-button type="button" (click)="cancel()">Cancel</button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
-            @if (saving) {
-              <mat-spinner diameter="20"></mat-spinner>
-            } @else {
-              {{ isEditMode ? 'Update' : 'Create' }}
-            }
-          </button>
         </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+      </div>
+
+      <!-- Locations Section (Edit Mode Only) -->
+      @if (isEditMode) {
+        <div class="locations-section">
+          <div class="section-header">
+            <h3 class="section-title">Locations</h3>
+            <button class="btn-small" type="button" (click)="addLocation()">
+              <mat-icon>add</mat-icon> Add Location
+            </button>
+          </div>
+
+          @if (showLocationForm) {
+            <div class="location-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Location Name</label>
+                  <input class="form-input" [(ngModel)]="newLocation.name" [ngModelOptions]="{standalone: true}" placeholder="Location name">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Aisle</label>
+                  <input class="form-input" [(ngModel)]="newLocation.aisle" [ngModelOptions]="{standalone: true}" placeholder="Aisle">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Rack</label>
+                  <input class="form-input" [(ngModel)]="newLocation.rack" [ngModelOptions]="{standalone: true}" placeholder="Rack">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Bin</label>
+                  <input class="form-input" [(ngModel)]="newLocation.bin" [ngModelOptions]="{standalone: true}" placeholder="Bin">
+                </div>
+              </div>
+              <div class="location-actions">
+                <button class="btn-primary" type="button" (click)="saveLocation()">Save Location</button>
+                <button class="btn-secondary" type="button" (click)="showLocationForm = false">Cancel</button>
+              </div>
+            </div>
+          }
+
+          @if (locations.length > 0) {
+            <div class="locations-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Aisle</th>
+                    <th>Rack</th>
+                    <th>Bin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (loc of locations; track loc.name) {
+                    <tr>
+                      <td>{{ loc.name }}</td>
+                      <td>{{ loc.aisle }}</td>
+                      <td>{{ loc.rack }}</td>
+                      <td>{{ loc.bin }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else if (!showLocationForm) {
+            <div class="empty-state">No locations added yet</div>
+          }
+        </div>
+      }
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+          @if (saving) {
+            <mat-spinner diameter="18"></mat-spinner>
+          } @else {
+            {{ isEditMode ? 'Update Warehouse' : 'Add Warehouse' }}
+          }
+        </button>
+        <button class="btn-secondary" type="button" (click)="cancel()">Cancel</button>
+      </div>
+    </form>
+  </div>
 </div>

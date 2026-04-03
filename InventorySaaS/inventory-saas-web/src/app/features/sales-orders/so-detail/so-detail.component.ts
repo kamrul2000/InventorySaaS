@@ -1,11 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SalesOrderService } from '../../../core/services/sales-order.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SalesOrderDto } from '../../../core/models/domain.models';
@@ -13,17 +9,13 @@ import { SalesOrderDto } from '../../../core/models/domain.models';
 @Component({
   selector: 'app-so-detail',
   standalone: true,
-  imports: [
-    CommonModule, MatCardModule, MatTableModule, MatButtonModule,
-    MatIconModule, MatProgressSpinnerModule,
-  ],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './so-detail.component.html',
   styleUrl: './so-detail.component.css',
 })
 export class SoDetailComponent implements OnInit {
   order: SalesOrderDto | null = null;
   loading = true;
-  itemColumns = ['productName', 'productSku', 'quantity', 'deliveredQuantity', 'unitPrice', 'lineTotal'];
 
   constructor(
     private soService: SalesOrderService, private route: ActivatedRoute,

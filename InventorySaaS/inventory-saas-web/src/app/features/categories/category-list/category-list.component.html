@@ -1,17 +1,26 @@
-<div class="page-header">
-  <h1>Categories</h1>
-  <button mat-flat-button color="primary" (click)="openForm()">
-    <mat-icon>add</mat-icon> Add Category
-  </button>
+<div class="page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Categories</h1>
+      <p class="page-subtitle">Manage your product categories</p>
+    </div>
+    <button class="btn-primary" (click)="openForm()">
+      <mat-icon>add</mat-icon>
+      Add Category
+    </button>
+  </div>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="categories"
+    [totalCount]="totalCount"
+    [pageSize]="pageSize"
+    [loading]="loading"
+    (pageChange)="onPageChange($event)"
+    (sortChange)="onSortChange($event)"
+    (searchChange)="onSearch($event)"
+    (rowAction)="onRowAction($event)">
+  </app-data-table>
 </div>
-<app-data-table
-  [columns]="columns"
-  [data]="categories"
-  [totalCount]="totalCount"
-  [pageSize]="pageSize"
-  [loading]="loading"
-  (pageChange)="onPageChange($event)"
-  (sortChange)="onSortChange($event)"
-  (searchChange)="onSearch($event)"
-  (rowAction)="onRowAction($event)">
-</app-data-table>

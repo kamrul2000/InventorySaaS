@@ -1,11 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
+import { Router, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { ProductService } from '../../../core/services/product.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
@@ -18,11 +15,8 @@ import { ProductDto, WarehouseDto, WarehouseLocationDto } from '../../../core/mo
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
+    RouterModule,
+    MatIconModule,
   ],
   templateUrl: './stock-transfer.component.html',
   styleUrl: './stock-transfer.component.css',
@@ -37,7 +31,7 @@ export class StockTransferComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    public dialogRef: MatDialogRef<StockTransferComponent>,
+    private router: Router,
     private inventoryService: InventoryService,
     private productService: ProductService,
     private warehouseService: WarehouseService,
@@ -81,7 +75,7 @@ export class StockTransferComponent implements OnInit {
     this.inventoryService.transfer(this.form.value).subscribe({
       next: () => {
         this.notification.success('Transfer completed successfully');
-        this.dialogRef.close(true);
+        this.router.navigate(['/inventory']);
       },
       error: () => { this.saving = false; },
     });

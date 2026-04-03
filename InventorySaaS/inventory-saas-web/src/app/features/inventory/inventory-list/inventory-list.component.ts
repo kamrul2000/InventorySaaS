@@ -2,20 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog } from '@angular/material/dialog';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { InventoryBalanceDto, InventoryTransactionDto, WarehouseDto } from '../../../core/models/domain.models';
-import { StockInComponent } from '../stock-in/stock-in.component';
-import { StockTransferComponent } from '../stock-transfer/stock-transfer.component';
 
 @Component({
   selector: 'app-inventory-list',
@@ -23,14 +13,7 @@ import { StockTransferComponent } from '../stock-transfer/stock-transfer.compone
   imports: [
     CommonModule,
     FormsModule,
-    MatTabsModule,
-    MatTableModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatButtonModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
   ],
   templateUrl: './inventory-list.component.html',
   styleUrl: './inventory-list.component.css',
@@ -49,13 +32,10 @@ export class InventoryListComponent implements OnInit {
   loadingTransactions = false;
   activeTab = 0;
 
-  balanceColumns = ['productName', 'productSku', 'warehouseName', 'locationName', 'quantityOnHand', 'quantityReserved', 'quantityAvailable', 'unitCost'];
-  txColumns = ['transactionNumber', 'transactionType', 'productName', 'warehouseName', 'quantity', 'transactionDate'];
-
   constructor(
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
-    private dialog: MatDialog
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -107,29 +87,21 @@ export class InventoryListComponent implements OnInit {
     this.loadData();
   }
 
-  onBalancePage(event: PageEvent): void {
-    this.balancePage = event.pageIndex + 1;
-    this.pageSize = event.pageSize;
+  goBalancePage(page: number): void {
+    this.balancePage = page;
     this.loadBalances();
   }
 
-  onTxPage(event: PageEvent): void {
-    this.txPage = event.pageIndex + 1;
-    this.pageSize = event.pageSize;
+  goTxPage(page: number): void {
+    this.txPage = page;
     this.loadTransactions();
   }
 
   openStockIn(): void {
-    const dialogRef = this.dialog.open(StockInComponent, { width: '600px' });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.loadData();
-    });
+    this.router.navigate(['/inventory/stock-in']);
   }
 
   openTransfer(): void {
-    const dialogRef = this.dialog.open(StockTransferComponent, { width: '600px' });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.loadData();
-    });
+    this.router.navigate(['/inventory/transfer']);
   }
 }

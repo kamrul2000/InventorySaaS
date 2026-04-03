@@ -1,13 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { Router, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { ProductService } from '../../../core/services/product.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
@@ -20,13 +15,8 @@ import { ProductDto, WarehouseDto, WarehouseLocationDto } from '../../../core/mo
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
+    RouterModule,
+    MatIconModule,
   ],
   templateUrl: './stock-in.component.html',
   styleUrl: './stock-in.component.css',
@@ -40,7 +30,7 @@ export class StockInComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    public dialogRef: MatDialogRef<StockInComponent>,
+    private router: Router,
     private inventoryService: InventoryService,
     private productService: ProductService,
     private warehouseService: WarehouseService,
@@ -90,7 +80,7 @@ export class StockInComponent implements OnInit {
     this.inventoryService.stockIn(data).subscribe({
       next: () => {
         this.notification.success('Stock in recorded successfully');
-        this.dialogRef.close(true);
+        this.router.navigate(['/inventory']);
       },
       error: () => { this.saving = false; },
     });

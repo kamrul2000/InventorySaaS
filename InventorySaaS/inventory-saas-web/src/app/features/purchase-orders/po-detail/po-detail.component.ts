@@ -1,11 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PurchaseOrderService } from '../../../core/services/purchase-order.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -15,8 +11,7 @@ import { PurchaseOrderDto } from '../../../core/models/domain.models';
   selector: 'app-po-detail',
   standalone: true,
   imports: [
-    CommonModule, MatCardModule, MatTableModule, MatButtonModule,
-    MatIconModule, MatChipsModule, MatProgressSpinnerModule,
+    CommonModule, MatIconModule, MatProgressSpinnerModule,
   ],
   templateUrl: './po-detail.component.html',
   styleUrl: './po-detail.component.css',

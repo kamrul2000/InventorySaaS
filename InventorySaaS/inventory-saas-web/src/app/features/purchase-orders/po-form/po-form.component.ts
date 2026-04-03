@@ -2,15 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PurchaseOrderService } from '../../../core/services/purchase-order.service';
 import { SupplierService } from '../../../core/services/supplier.service';
@@ -23,9 +15,7 @@ import { SupplierDto, WarehouseDto, ProductDto } from '../../../core/models/doma
   selector: 'app-po-form',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule,
-    MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
-    MatDatepickerModule, MatNativeDateModule, MatTableModule, MatProgressSpinnerModule,
+    CommonModule, ReactiveFormsModule, MatIconModule, MatProgressSpinnerModule,
   ],
   templateUrl: './po-form.component.html',
   styleUrl: './po-form.component.css',

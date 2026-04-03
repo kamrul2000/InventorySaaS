@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
@@ -15,7 +14,7 @@ import { CustomerDto } from '../../../core/models/domain.models';
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
+  imports: [CommonModule, MatIconModule, DataTableComponent],
   templateUrl: './customer-list.component.html',
   styleUrl: './customer-list.component.css',
 })

@@ -133,6 +133,15 @@
   background-position: right 14px center;
   padding-right: 36px;
 }
+.form-select option:checked,
+.form-select option:hover {
+  background: #fef6f2;
+  color: #e8602c;
+}
+.form-select:focus option:checked {
+  background: #e8602c linear-gradient(0deg, #e8602c 0%, #e8602c 100%);
+  color: #fff;
+}
 
 .form-error {
   font-size: 12px;
@@ -156,7 +165,7 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #4a5568;
+  color: #68554a;
   cursor: pointer;
 }
 .checkbox-label input[type="checkbox"] {

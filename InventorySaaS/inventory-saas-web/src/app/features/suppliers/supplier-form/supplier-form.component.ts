@@ -1,13 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { SupplierService } from '../../../core/services/supplier.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
@@ -15,8 +10,7 @@ import { NotificationService } from '../../../core/services/notification.service
   selector: 'app-supplier-form',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule,
-    MatInputModule, MatCheckboxModule, MatButtonModule, MatProgressSpinnerModule,
+    CommonModule, ReactiveFormsModule, RouterModule, MatIconModule,
   ],
   templateUrl: './supplier-form.component.html',
   styleUrl: './supplier-form.component.css',

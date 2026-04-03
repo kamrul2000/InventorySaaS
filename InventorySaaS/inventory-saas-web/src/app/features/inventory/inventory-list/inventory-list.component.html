@@ -1,111 +1,134 @@
-<div class="page-header">
-  <h1>Inventory</h1>
-  <div class="actions">
-    <button mat-flat-button color="primary" (click)="openStockIn()">
-      <mat-icon>add_circle</mat-icon> Stock In
-    </button>
-    <button mat-stroked-button color="primary" (click)="openTransfer()">
-      <mat-icon>swap_horiz</mat-icon> Transfer
-    </button>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Inventory</h1>
+      <p class="page-subtitle">Manage stock balances and transactions</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openStockIn()">
+        <mat-icon>add_circle</mat-icon> Stock In
+      </button>
+      <button class="btn-secondary" (click)="openTransfer()">
+        <mat-icon>swap_horiz</mat-icon> Transfer
+      </button>
+    </div>
   </div>
-</div>
 
-<div class="filters">
-  <mat-form-field appearance="outline">
-    <mat-label>Warehouse</mat-label>
-    <mat-select [(ngModel)]="warehouseFilter" (selectionChange)="loadData()">
-      <mat-option value="">All Warehouses</mat-option>
-      @for (wh of warehouses; track wh.id) {
-        <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-</div>
+  <!-- Filter + Tabs -->
+  <div class="controls-row">
+    <div class="tab-row">
+      <button class="tab-btn" [class.active]="activeTab === 0" (click)="onTabChange(0)">Balances</button>
+      <button class="tab-btn" [class.active]="activeTab === 1" (click)="onTabChange(1)">Transactions</button>
+    </div>
+    <div class="filter-group">
+      <select class="form-select" [(ngModel)]="warehouseFilter" (ngModelChange)="loadData()">
+        <option value="">All Warehouses</option>
+        @for (wh of warehouses; track wh.id) {
+          <option [value]="wh.id">{{ wh.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
 
-<mat-tab-group (selectedTabChange)="onTabChange($event.index)">
-  <mat-tab label="Balances">
+  <!-- Balances Tab -->
+  @if (activeTab === 0) {
     @if (loadingBalances) {
-      <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+      <div class="loading-center"><div class="spinner"></div></div>
     } @else {
-      <table mat-table [dataSource]="balances" class="full-width">
-        <ng-container matColumnDef="productName">
-          <th mat-header-cell *matHeaderCellDef>Product</th>
-          <td mat-cell *matCellDef="let row">{{ row.productName }}</td>
-        </ng-container>
-        <ng-container matColumnDef="productSku">
-          <th mat-header-cell *matHeaderCellDef>SKU</th>
-          <td mat-cell *matCellDef="let row">{{ row.productSku }}</td>
-        </ng-container>
-        <ng-container matColumnDef="warehouseName">
-          <th mat-header-cell *matHeaderCellDef>Warehouse</th>
-          <td mat-cell *matCellDef="let row">{{ row.warehouseName }}</td>
-        </ng-container>
-        <ng-container matColumnDef="locationName">
-          <th mat-header-cell *matHeaderCellDef>Location</th>
-          <td mat-cell *matCellDef="let row">{{ row.locationName || '-' }}</td>
-        </ng-container>
-        <ng-container matColumnDef="quantityOnHand">
-          <th mat-header-cell *matHeaderCellDef>On Hand</th>
-          <td mat-cell *matCellDef="let row">{{ row.quantityOnHand }}</td>
-        </ng-container>
-        <ng-container matColumnDef="quantityReserved">
-          <th mat-header-cell *matHeaderCellDef>Reserved</th>
-          <td mat-cell *matCellDef="let row">{{ row.quantityReserved }}</td>
-        </ng-container>
-        <ng-container matColumnDef="quantityAvailable">
-          <th mat-header-cell *matHeaderCellDef>Available</th>
-          <td mat-cell *matCellDef="let row">{{ row.quantityAvailable }}</td>
-        </ng-container>
-        <ng-container matColumnDef="unitCost">
-          <th mat-header-cell *matHeaderCellDef>Unit Cost</th>
-          <td mat-cell *matCellDef="let row">{{ row.unitCost | currency }}</td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="balanceColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: balanceColumns;"></tr>
-      </table>
-      <mat-paginator [length]="balanceTotalCount" [pageSize]="pageSize"
-                     (page)="onBalancePage($event)" showFirstLastButtons></mat-paginator>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Warehouse</th>
+                <th>Location</th>
+                <th>On Hand</th>
+                <th>Reserved</th>
+                <th>Available</th>
+                <th>Unit Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of balances; track row) {
+                <tr>
+                  <td>{{ row.productName }}</td>
+                  <td>{{ row.productSku }}</td>
+                  <td>{{ row.warehouseName }}</td>
+                  <td>{{ row.locationName || '-' }}</td>
+                  <td>{{ row.quantityOnHand }}</td>
+                  <td>{{ row.quantityReserved }}</td>
+                  <td><strong>{{ row.quantityAvailable }}</strong></td>
+                  <td>{{ row.unitCost | currency }}</td>
+                </tr>
+              }
+              @if (balances.length === 0) {
+                <tr><td colspan="8" class="empty-cell">No inventory balances found</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="page-info">Showing {{ balances.length }} of {{ balanceTotalCount }}</span>
+          <div class="page-buttons">
+            <button class="page-btn" [disabled]="balancePage <= 1" (click)="goBalancePage(balancePage - 1)">Previous</button>
+            <span class="page-num">Page {{ balancePage }}</span>
+            <button class="page-btn" [disabled]="balancePage * pageSize >= balanceTotalCount" (click)="goBalancePage(balancePage + 1)">Next</button>
+          </div>
+        </div>
+      </div>
     }
-  </mat-tab>
+  }
 
-  <mat-tab label="Transactions">
+  <!-- Transactions Tab -->
+  @if (activeTab === 1) {
     @if (loadingTransactions) {
-      <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+      <div class="loading-center"><div class="spinner"></div></div>
     } @else {
-      <table mat-table [dataSource]="transactions" class="full-width">
-        <ng-container matColumnDef="transactionNumber">
-          <th mat-header-cell *matHeaderCellDef>Number</th>
-          <td mat-cell *matCellDef="let row">{{ row.transactionNumber }}</td>
-        </ng-container>
-        <ng-container matColumnDef="transactionType">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
-          <td mat-cell *matCellDef="let row">
-            <span class="status-badge" [class]="'status-' + row.transactionType.toLowerCase()">
-              {{ row.transactionType }}
-            </span>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="productName">
-          <th mat-header-cell *matHeaderCellDef>Product</th>
-          <td mat-cell *matCellDef="let row">{{ row.productName }}</td>
-        </ng-container>
-        <ng-container matColumnDef="warehouseName">
-          <th mat-header-cell *matHeaderCellDef>Warehouse</th>
-          <td mat-cell *matCellDef="let row">{{ row.warehouseName }}</td>
-        </ng-container>
-        <ng-container matColumnDef="quantity">
-          <th mat-header-cell *matHeaderCellDef>Qty</th>
-          <td mat-cell *matCellDef="let row">{{ row.quantity }}</td>
-        </ng-container>
-        <ng-container matColumnDef="transactionDate">
-          <th mat-header-cell *matHeaderCellDef>Date</th>
-          <td mat-cell *matCellDef="let row">{{ row.transactionDate | date:'medium' }}</td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="txColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: txColumns;"></tr>
-      </table>
-      <mat-paginator [length]="txTotalCount" [pageSize]="pageSize"
-                     (page)="onTxPage($event)" showFirstLastButtons></mat-paginator>
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Number</th>
+                <th>Type</th>
+                <th>Product</th>
+                <th>Warehouse</th>
+                <th>Qty</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of transactions; track row) {
+                <tr>
+                  <td>{{ row.transactionNumber }}</td>
+                  <td>
+                    <span class="status-badge" [class]="'status-' + row.transactionType.toLowerCase()">
+                      {{ row.transactionType }}
+                    </span>
+                  </td>
+                  <td>{{ row.productName }}</td>
+                  <td>{{ row.warehouseName }}</td>
+                  <td>{{ row.quantity }}</td>
+                  <td>{{ row.transactionDate | date:'medium' }}</td>
+                </tr>
+              }
+              @if (transactions.length === 0) {
+                <tr><td colspan="6" class="empty-cell">No transactions found</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="page-info">Showing {{ transactions.length }} of {{ txTotalCount }}</span>
+          <div class="page-buttons">
+            <button class="page-btn" [disabled]="txPage <= 1" (click)="goTxPage(txPage - 1)">Previous</button>
+            <span class="page-num">Page {{ txPage }}</span>
+            <button class="page-btn" [disabled]="txPage * pageSize >= txTotalCount" (click)="goTxPage(txPage + 1)">Next</button>
+          </div>
+        </div>
+      </div>
     }
-  </mat-tab>
-</mat-tab-group>
+  }
+</div>

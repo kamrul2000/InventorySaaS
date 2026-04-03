@@ -1,2 +1,169 @@
-.full-width { width: 100%; }
-mat-dialog-content { min-width: 400px; }
+.dialog-container {
+  font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+  min-width: 440px;
+}
+
+/* ─── Dialog Header ─── */
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+.dialog-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #a0aec0;
+  transition: all 0.15s;
+}
+.dialog-close:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+/* ─── Dialog Body ─── */
+.dialog-body {
+  padding: 20px 24px;
+}
+
+/* ─── Form ─── */
+.form-group {
+  margin-bottom: 18px;
+}
+.form-label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 6px;
+}
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #2d3748;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+  outline: none;
+}
+.form-input:focus,
+.form-select:focus {
+  border-color: #e8602c;
+  box-shadow: 0 0 0 3px rgba(232, 96, 44, 0.1);
+}
+.form-input::placeholder {
+  color: #a0aec0;
+}
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23718096' d='M1.4 0L6 4.6 10.6 0 12 1.4 6 7.4 0 1.4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+.form-select option:checked,
+.form-select option:hover {
+  background: #fef6f2;
+  color: #e8602c;
+}
+.form-select:focus option:checked {
+  background: #e8602c linear-gradient(0deg, #e8602c 0%, #e8602c 100%);
+  color: #fff;
+}
+.form-error {
+  font-size: 12px;
+  color: #e53e3e;
+  margin-top: 4px;
+}
+
+/* ─── Checkbox ─── */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #2d3748;
+  cursor: pointer;
+}
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #e8602c;
+  cursor: pointer;
+}
+
+/* ─── Dialog Actions ─── */
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #e8602c;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.btn-primary:hover {
+  background: #d4541e;
+  box-shadow: 0 4px 12px rgba(232, 96, 44, 0.25);
+}
+.btn-primary:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #f7fafc;
+  color: #4a5568;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-secondary:hover {
+  background: #edf2f7;
+}

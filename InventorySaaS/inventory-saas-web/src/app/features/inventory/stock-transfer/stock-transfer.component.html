@@ -1,73 +1,91 @@
-<h2 mat-dialog-title>Stock Transfer</h2>
-<mat-dialog-content>
-  <form [formGroup]="form">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Product</mat-label>
-      <mat-select formControlName="productId">
-        @for (p of products; track p.id) {
-          <mat-option [value]="p.id">{{ p.name }} ({{ p.sku }})</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Stock Transfer</h1>
+      <p class="page-subtitle">Transfer stock between warehouses</p>
+    </div>
+    <button class="btn-primary" routerLink="/inventory">
+      <mat-icon>list</mat-icon> Go to Inventory
+    </button>
+  </div>
 
-    <h3>Source</h3>
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Source Warehouse</mat-label>
-      <mat-select formControlName="sourceWarehouseId" (selectionChange)="onSourceWarehouseChange($event.value)">
-        @for (wh of warehouses; track wh.id) {
-          <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Product</label>
+          <select class="form-select" formControlName="productId">
+            <option value="" disabled>Select a product</option>
+            @for (p of products; track p.id) {
+              <option [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input class="form-input" formControlName="quantity" type="number" placeholder="Enter quantity">
+        </div>
+      </div>
 
-    @if (sourceLocations.length > 0) {
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Source Location</mat-label>
-        <mat-select formControlName="sourceLocationId">
-          <mat-option value="">-- None --</mat-option>
-          @for (loc of sourceLocations; track loc.id) {
-            <mat-option [value]="loc.id">{{ loc.name }}</mat-option>
+      <h3 class="section-title">Source</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Source Warehouse</label>
+          <select class="form-select" formControlName="sourceWarehouseId" (change)="onSourceWarehouseChange(form.value.sourceWarehouseId)">
+            <option value="" disabled>Select source warehouse</option>
+            @for (wh of warehouses; track wh.id) {
+              <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          @if (sourceLocations.length > 0) {
+            <label class="form-label">Source Location</label>
+            <select class="form-select" formControlName="sourceLocationId">
+              <option value="">-- None --</option>
+              @for (loc of sourceLocations; track loc.id) {
+                <option [value]="loc.id">{{ loc.name }}</option>
+              }
+            </select>
           }
-        </mat-select>
-      </mat-form-field>
-    }
+        </div>
+      </div>
 
-    <h3>Destination</h3>
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Destination Warehouse</mat-label>
-      <mat-select formControlName="destinationWarehouseId" (selectionChange)="onDestWarehouseChange($event.value)">
-        @for (wh of warehouses; track wh.id) {
-          <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    @if (destLocations.length > 0) {
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Destination Location</mat-label>
-        <mat-select formControlName="destinationLocationId">
-          <mat-option value="">-- None --</mat-option>
-          @for (loc of destLocations; track loc.id) {
-            <mat-option [value]="loc.id">{{ loc.name }}</mat-option>
+      <h3 class="section-title">Destination</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Destination Warehouse</label>
+          <select class="form-select" formControlName="destinationWarehouseId" (change)="onDestWarehouseChange(form.value.destinationWarehouseId)">
+            <option value="" disabled>Select destination warehouse</option>
+            @for (wh of warehouses; track wh.id) {
+              <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          @if (destLocations.length > 0) {
+            <label class="form-label">Destination Location</label>
+            <select class="form-select" formControlName="destinationLocationId">
+              <option value="">-- None --</option>
+              @for (loc of destLocations; track loc.id) {
+                <option [value]="loc.id">{{ loc.name }}</option>
+              }
+            </select>
           }
-        </mat-select>
-      </mat-form-field>
-    }
+        </div>
+      </div>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Quantity</mat-label>
-      <input matInput formControlName="quantity" type="number">
-    </mat-form-field>
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input form-textarea" formControlName="notes" rows="2" placeholder="Optional notes"></textarea>
+      </div>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Notes</mat-label>
-      <textarea matInput formControlName="notes" rows="2"></textarea>
-    </mat-form-field>
-  </form>
-</mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button mat-button (click)="dialogRef.close()">Cancel</button>
-  <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || saving">
-    Transfer
-  </button>
-</mat-dialog-actions>
+      <div class="form-actions">
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+          Transfer
+        </button>
+        <button class="btn-secondary" type="button" routerLink="/inventory">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

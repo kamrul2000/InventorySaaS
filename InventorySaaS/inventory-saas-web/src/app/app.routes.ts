@@ -13,6 +13,8 @@ import { CategoryListComponent } from './features/categories/category-list/categ
 import { WarehouseListComponent } from './features/warehouses/warehouse-list/warehouse-list.component';
 import { WarehouseFormComponent } from './features/warehouses/warehouse-form/warehouse-form.component';
 import { InventoryListComponent } from './features/inventory/inventory-list/inventory-list.component';
+import { StockInComponent } from './features/inventory/stock-in/stock-in.component';
+import { StockTransferComponent } from './features/inventory/stock-transfer/stock-transfer.component';
 import { SupplierListComponent } from './features/suppliers/supplier-list/supplier-list.component';
 import { SupplierFormComponent } from './features/suppliers/supplier-form/supplier-form.component';
 import { CustomerListComponent } from './features/customers/customer-list/customer-list.component';
@@ -49,6 +51,8 @@ export const routes: Routes = [
       { path: 'warehouses/new', component: WarehouseFormComponent },
       { path: 'warehouses/:id/edit', component: WarehouseFormComponent },
       { path: 'inventory', component: InventoryListComponent },
+      { path: 'inventory/stock-in', component: StockInComponent },
+      { path: 'inventory/transfer', component: StockTransferComponent },
       { path: 'suppliers', component: SupplierListComponent },
       { path: 'suppliers/new', component: SupplierFormComponent },
       { path: 'suppliers/:id/edit', component: SupplierFormComponent },

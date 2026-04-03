@@ -1,22 +1,28 @@
-<div class="page-header">
-  <h1>User Management</h1>
-  <div class="actions">
-    <button mat-flat-button color="primary" (click)="addUser()">
-      <mat-icon>add</mat-icon> Add User
-    </button>
-    <button mat-stroked-button color="primary" (click)="inviteUser()">
-      <mat-icon>mail</mat-icon> Invite User
-    </button>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">User Management</h1>
+      <p class="page-subtitle">Manage user accounts, roles and permissions</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" (click)="inviteUser()">
+        <mat-icon>mail</mat-icon> Invite User
+      </button>
+      <button class="btn-primary" (click)="addUser()">
+        <mat-icon>add</mat-icon> Add User
+      </button>
+    </div>
   </div>
+
+  <app-data-table
+    [columns]="columns"
+    [data]="users"
+    [totalCount]="totalCount"
+    [pageSize]="pageSize"
+    [loading]="loading"
+    (pageChange)="onPageChange($event)"
+    (sortChange)="onSortChange($event)"
+    (searchChange)="onSearch($event)"
+    (rowAction)="onRowAction($event)">
+  </app-data-table>
 </div>
-<app-data-table
-  [columns]="columns"
-  [data]="users"
-  [totalCount]="totalCount"
-  [pageSize]="pageSize"
-  [loading]="loading"
-  (pageChange)="onPageChange($event)"
-  (sortChange)="onSortChange($event)"
-  (searchChange)="onSearch($event)"
-  (rowAction)="onRowAction($event)">
-</app-data-table>

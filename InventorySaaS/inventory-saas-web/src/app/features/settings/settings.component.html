@@ -1,69 +1,102 @@
-<div class="form-container">
-  <h1>Settings</h1>
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Company Settings</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      @if (loading) {
-        <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
-      } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <div class="form-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Company Name</mat-label>
-              <input matInput formControlName="name">
-              @if (form.get('name')?.hasError('required') && form.get('name')?.touched) { <mat-error>Required</mat-error> }
-            </mat-form-field>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Settings</h1>
+      <p class="page-subtitle">Configure your company profile and preferences</p>
+    </div>
+  </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Contact Email</mat-label>
-              <input matInput formControlName="contactEmail" type="email">
-            </mat-form-field>
+  @if (loading) {
+    <div class="loading-center"><div class="spinner"></div></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Company Information -->
+      <div class="section-card">
+        <h2 class="section-title">Company Information</h2>
+        <p class="section-desc">Basic details about your organization</p>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Phone</mat-label>
-              <input matInput formControlName="phone">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Address</mat-label>
-              <input matInput formControlName="address">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>City</mat-label>
-              <input matInput formControlName="city">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Country</mat-label>
-              <input matInput formControlName="country">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Currency</mat-label>
-              <input matInput formControlName="currency" placeholder="USD">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Timezone</mat-label>
-              <input matInput formControlName="timezone" placeholder="UTC">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Logo URL</mat-label>
-              <input matInput formControlName="logoUrl">
-            </mat-form-field>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Company Name</label>
+            <input class="form-input" formControlName="name" placeholder="Your company name">
+            @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+              <span class="form-error">Company name is required</span>
+            }
           </div>
 
-          <div class="form-actions">
-            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
-              @if (saving) { <mat-spinner diameter="20"></mat-spinner> } @else { Save Settings }
-            </button>
+          <div class="form-group">
+            <label class="form-label">Contact Email</label>
+            <input class="form-input" formControlName="contactEmail" type="email" placeholder="contact@company.com">
           </div>
-        </form>
-      }
-    </mat-card-content>
-  </mat-card>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input class="form-input" formControlName="phone" placeholder="Phone number">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Logo URL</label>
+            <input class="form-input" formControlName="logoUrl" placeholder="https://example.com/logo.png">
+          </div>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="section-card">
+        <h2 class="section-title">Address</h2>
+        <p class="section-desc">Company location details</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Address</label>
+            <input class="form-input" formControlName="address" placeholder="Street address">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input class="form-input" formControlName="city" placeholder="City">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Country</label>
+            <input class="form-input" formControlName="country" placeholder="Country">
+          </div>
+
+          <div class="form-group"></div>
+        </div>
+      </div>
+
+      <!-- Regional Settings -->
+      <div class="section-card">
+        <h2 class="section-title">Regional Settings</h2>
+        <p class="section-desc">Currency and timezone preferences</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Currency</label>
+            <input class="form-input" formControlName="currency" placeholder="USD">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Timezone</label>
+            <input class="form-input" formControlName="timezone" placeholder="UTC">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+          @if (saving) {
+            <span class="btn-spinner"></span> Saving...
+          } @else {
+            Save Settings
+          }
+        </button>
+      </div>
+    </form>
+  }
 </div>

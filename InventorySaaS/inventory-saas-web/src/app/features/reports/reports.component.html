@@ -1,105 +1,193 @@
-<div class="page-header">
-  <h1>Reports</h1>
-  <button mat-flat-button color="primary" (click)="exportPdf()" [disabled]="exporting">
-    <mat-icon>picture_as_pdf</mat-icon>
-    {{ exporting ? 'Generating...' : 'Export PDF' }}
-  </button>
-</div>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reports</h1>
+      <p class="page-subtitle">View stock summaries, low stock alerts, expiry tracking and inventory valuation</p>
+    </div>
+    <button class="btn-primary" (click)="exportPdf()" [disabled]="exporting">
+      <mat-icon>picture_as_pdf</mat-icon>
+      {{ exporting ? 'Generating...' : 'Export PDF' }}
+    </button>
+  </div>
 
-<div class="filters">
-  <mat-form-field appearance="outline">
-    <mat-label>Warehouse</mat-label>
-    <mat-select [(ngModel)]="warehouseFilter" (selectionChange)="loadCurrentTab()">
-      <mat-option value="">All Warehouses</mat-option>
-      @for (wh of warehouses; track wh.id) {
-        <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-
-  @if (activeTab === 0) {
-    <mat-form-field appearance="outline">
-      <mat-label>Category</mat-label>
-      <mat-select [(ngModel)]="categoryFilter" (selectionChange)="loadCurrentTab()">
-        <mat-option value="">All Categories</mat-option>
-        @for (cat of categories; track cat.id) {
-          <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+  <!-- Filters -->
+  <div class="filter-row">
+    <div class="filter-group">
+      <label class="filter-label">Warehouse</label>
+      <select class="form-select" [(ngModel)]="warehouseFilter" (ngModelChange)="loadCurrentTab()">
+        <option value="">All Warehouses</option>
+        @for (wh of warehouses; track wh.id) {
+          <option [value]="wh.id">{{ wh.name }}</option>
         }
-      </mat-select>
-    </mat-form-field>
+      </select>
+    </div>
+
+    @if (activeTab === 0) {
+      <div class="filter-group">
+        <label class="filter-label">Category</label>
+        <select class="form-select" [(ngModel)]="categoryFilter" (ngModelChange)="loadCurrentTab()">
+          <option value="">All Categories</option>
+          @for (cat of categories; track cat.id) {
+            <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-row">
+    <button class="tab-btn" [class.active]="activeTab === 0" (click)="onTabChange(0)">Stock Summary</button>
+    <button class="tab-btn" [class.active]="activeTab === 1" (click)="onTabChange(1)">Low Stock</button>
+    <button class="tab-btn" [class.active]="activeTab === 2" (click)="onTabChange(2)">Expiry</button>
+    <button class="tab-btn" [class.active]="activeTab === 3" (click)="onTabChange(3)">Inventory Valuation</button>
+  </div>
+
+  <!-- Stock Summary Tab -->
+  @if (activeTab === 0) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Category</th>
+              <th>Warehouse</th>
+              <th>Qty</th>
+              <th>Unit Cost</th>
+              <th>Total Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of stockSummary; track r.sku) {
+              <tr>
+                <td>{{ r.productName }}</td>
+                <td>{{ r.sku }}</td>
+                <td>{{ r.categoryName }}</td>
+                <td>{{ r.warehouseName }}</td>
+                <td>{{ r.quantityOnHand }}</td>
+                <td>{{ r.unitCost | currency }}</td>
+                <td>{{ r.totalValue | currency }}</td>
+              </tr>
+            }
+            @if (stockSummary.length === 0) {
+              <tr><td colspan="7" class="empty-row">No stock summary data available</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Low Stock Tab -->
+  @if (activeTab === 1) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Warehouse</th>
+              <th>Current</th>
+              <th>Reorder Level</th>
+              <th>Deficit</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of lowStock; track r.sku) {
+              <tr>
+                <td>{{ r.productName }}</td>
+                <td>{{ r.sku }}</td>
+                <td>{{ r.warehouseName }}</td>
+                <td class="text-warn">{{ r.currentStock }}</td>
+                <td>{{ r.reorderLevel }}</td>
+                <td class="text-danger">{{ r.deficit }}</td>
+              </tr>
+            }
+            @if (lowStock.length === 0) {
+              <tr><td colspan="6" class="empty-row">No low stock items found</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Expiry Tab -->
+  @if (activeTab === 2) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Warehouse</th>
+              <th>Batch</th>
+              <th>Expiry Date</th>
+              <th>Qty</th>
+              <th>Days Left</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of expiry; track r.sku) {
+              <tr>
+                <td>{{ r.productName }}</td>
+                <td>{{ r.sku }}</td>
+                <td>{{ r.warehouseName }}</td>
+                <td>{{ r.batchNumber || '-' }}</td>
+                <td>{{ r.expiryDate | date:'mediumDate' }}</td>
+                <td>{{ r.quantity }}</td>
+                <td [class.text-danger]="r.daysUntilExpiry <= 7" [class.text-warn]="r.daysUntilExpiry > 7 && r.daysUntilExpiry <= 30">{{ r.daysUntilExpiry }}</td>
+              </tr>
+            }
+            @if (expiry.length === 0) {
+              <tr><td colspan="7" class="empty-row">No expiry data available</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Inventory Valuation Tab -->
+  @if (activeTab === 3) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Products</th>
+              <th>Cost Value</th>
+              <th>Selling Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of valuation; track r.categoryName) {
+              <tr>
+                <td>{{ r.categoryName }}</td>
+                <td>{{ r.productCount }}</td>
+                <td>{{ r.totalCostValue | currency }}</td>
+                <td>{{ r.totalSellingValue | currency }}</td>
+              </tr>
+            }
+            @if (valuation.length === 0) {
+              <tr><td colspan="4" class="empty-row">No valuation data available</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   }
 </div>
-
-<mat-tab-group (selectedTabChange)="onTabChange($event.index)">
-  <mat-tab label="Stock Summary">
-    @if (loading) {
-      <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
-    } @else {
-      <table mat-table [dataSource]="stockSummary" class="full-width">
-        <ng-container matColumnDef="productName"><th mat-header-cell *matHeaderCellDef>Product</th><td mat-cell *matCellDef="let r">{{ r.productName }}</td></ng-container>
-        <ng-container matColumnDef="sku"><th mat-header-cell *matHeaderCellDef>SKU</th><td mat-cell *matCellDef="let r">{{ r.sku }}</td></ng-container>
-        <ng-container matColumnDef="categoryName"><th mat-header-cell *matHeaderCellDef>Category</th><td mat-cell *matCellDef="let r">{{ r.categoryName }}</td></ng-container>
-        <ng-container matColumnDef="warehouseName"><th mat-header-cell *matHeaderCellDef>Warehouse</th><td mat-cell *matCellDef="let r">{{ r.warehouseName }}</td></ng-container>
-        <ng-container matColumnDef="quantityOnHand"><th mat-header-cell *matHeaderCellDef>Qty</th><td mat-cell *matCellDef="let r">{{ r.quantityOnHand }}</td></ng-container>
-        <ng-container matColumnDef="unitCost"><th mat-header-cell *matHeaderCellDef>Unit Cost</th><td mat-cell *matCellDef="let r">{{ r.unitCost | currency }}</td></ng-container>
-        <ng-container matColumnDef="totalValue"><th mat-header-cell *matHeaderCellDef>Total Value</th><td mat-cell *matCellDef="let r">{{ r.totalValue | currency }}</td></ng-container>
-        <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: stockColumns;"></tr>
-      </table>
-    }
-  </mat-tab>
-
-  <mat-tab label="Low Stock">
-    @if (loading) {
-      <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
-    } @else {
-      <table mat-table [dataSource]="lowStock" class="full-width">
-        <ng-container matColumnDef="productName"><th mat-header-cell *matHeaderCellDef>Product</th><td mat-cell *matCellDef="let r">{{ r.productName }}</td></ng-container>
-        <ng-container matColumnDef="sku"><th mat-header-cell *matHeaderCellDef>SKU</th><td mat-cell *matCellDef="let r">{{ r.sku }}</td></ng-container>
-        <ng-container matColumnDef="warehouseName"><th mat-header-cell *matHeaderCellDef>Warehouse</th><td mat-cell *matCellDef="let r">{{ r.warehouseName }}</td></ng-container>
-        <ng-container matColumnDef="currentStock"><th mat-header-cell *matHeaderCellDef>Current</th><td mat-cell *matCellDef="let r" class="text-warn">{{ r.currentStock }}</td></ng-container>
-        <ng-container matColumnDef="reorderLevel"><th mat-header-cell *matHeaderCellDef>Reorder Level</th><td mat-cell *matCellDef="let r">{{ r.reorderLevel }}</td></ng-container>
-        <ng-container matColumnDef="deficit"><th mat-header-cell *matHeaderCellDef>Deficit</th><td mat-cell *matCellDef="let r" class="text-danger">{{ r.deficit }}</td></ng-container>
-        <tr mat-header-row *matHeaderRowDef="lowStockColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: lowStockColumns;"></tr>
-      </table>
-    }
-  </mat-tab>
-
-  <mat-tab label="Expiry">
-    @if (loading) {
-      <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
-    } @else {
-      <table mat-table [dataSource]="expiry" class="full-width">
-        <ng-container matColumnDef="productName"><th mat-header-cell *matHeaderCellDef>Product</th><td mat-cell *matCellDef="let r">{{ r.productName }}</td></ng-container>
-        <ng-container matColumnDef="sku"><th mat-header-cell *matHeaderCellDef>SKU</th><td mat-cell *matCellDef="let r">{{ r.sku }}</td></ng-container>
-        <ng-container matColumnDef="warehouseName"><th mat-header-cell *matHeaderCellDef>Warehouse</th><td mat-cell *matCellDef="let r">{{ r.warehouseName }}</td></ng-container>
-        <ng-container matColumnDef="batchNumber"><th mat-header-cell *matHeaderCellDef>Batch</th><td mat-cell *matCellDef="let r">{{ r.batchNumber || '-' }}</td></ng-container>
-        <ng-container matColumnDef="expiryDate"><th mat-header-cell *matHeaderCellDef>Expiry Date</th><td mat-cell *matCellDef="let r">{{ r.expiryDate | date:'mediumDate' }}</td></ng-container>
-        <ng-container matColumnDef="quantity"><th mat-header-cell *matHeaderCellDef>Qty</th><td mat-cell *matCellDef="let r">{{ r.quantity }}</td></ng-container>
-        <ng-container matColumnDef="daysUntilExpiry"><th mat-header-cell *matHeaderCellDef>Days Left</th>
-          <td mat-cell *matCellDef="let r" [class.text-danger]="r.daysUntilExpiry <= 7" [class.text-warn]="r.daysUntilExpiry > 7 && r.daysUntilExpiry <= 30">
-            {{ r.daysUntilExpiry }}
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="expiryColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: expiryColumns;"></tr>
-      </table>
-    }
-  </mat-tab>
-
-  <mat-tab label="Inventory Valuation">
-    @if (loading) {
-      <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
-    } @else {
-      <table mat-table [dataSource]="valuation" class="full-width">
-        <ng-container matColumnDef="categoryName"><th mat-header-cell *matHeaderCellDef>Category</th><td mat-cell *matCellDef="let r">{{ r.categoryName }}</td></ng-container>
-        <ng-container matColumnDef="productCount"><th mat-header-cell *matHeaderCellDef>Products</th><td mat-cell *matCellDef="let r">{{ r.productCount }}</td></ng-container>
-        <ng-container matColumnDef="totalCostValue"><th mat-header-cell *matHeaderCellDef>Cost Value</th><td mat-cell *matCellDef="let r">{{ r.totalCostValue | currency }}</td></ng-container>
-        <ng-container matColumnDef="totalSellingValue"><th mat-header-cell *matHeaderCellDef>Selling Value</th><td mat-cell *matCellDef="let r">{{ r.totalSellingValue | currency }}</td></ng-container>
-        <tr mat-header-row *matHeaderRowDef="valuationColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: valuationColumns;"></tr>
-      </table>
-    }
-  </mat-tab>
-</mat-tab-group>

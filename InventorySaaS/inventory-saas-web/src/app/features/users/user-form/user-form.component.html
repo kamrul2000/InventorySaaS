@@ -1,67 +1,103 @@
-<div class="form-container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ isEditMode ? 'Edit User' : 'New User' }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" type="email">
-            @if (form.get('email')?.hasError('required') && form.get('email')?.touched) { <mat-error>Required</mat-error> }
-            @if (form.get('email')?.hasError('email') && form.get('email')?.touched) { <mat-error>Invalid email</mat-error> }
-          </mat-form-field>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ isEditMode ? 'Edit User' : 'New User' }}</h1>
+      <p class="page-subtitle">{{ isEditMode ? 'Update user account details and roles' : 'Create a new user account' }}</p>
+    </div>
+    <button class="btn-secondary" type="button" (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon> Back to Users
+    </button>
+  </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>First Name</mat-label>
-            <input matInput formControlName="firstName">
-            @if (form.get('firstName')?.hasError('required') && form.get('firstName')?.touched) { <mat-error>Required</mat-error> }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Last Name</mat-label>
-            <input matInput formControlName="lastName">
-            @if (form.get('lastName')?.hasError('required') && form.get('lastName')?.touched) { <mat-error>Required</mat-error> }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Phone</mat-label>
-            <input matInput formControlName="phone">
-          </mat-form-field>
-
-          @if (!isEditMode) {
-            <mat-form-field appearance="outline">
-              <mat-label>Password</mat-label>
-              <input matInput formControlName="password" type="password">
-              @if (form.get('password')?.hasError('required') && form.get('password')?.touched) { <mat-error>Required</mat-error> }
-              @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) { <mat-error>Min 8 characters</mat-error> }
-            </mat-form-field>
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" formControlName="email" type="email" placeholder="user@example.com">
+          @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+            <span class="form-error">Email is required</span>
           }
+          @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+            <span class="form-error">Invalid email address</span>
+          }
+        </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Roles</mat-label>
-            <mat-select formControlName="roles" multiple>
-              <mat-option value="TenantAdmin">Tenant Admin</mat-option>
-              <mat-option value="WarehouseManager">Warehouse Manager</mat-option>
-              <mat-option value="InventoryStaff">Inventory Staff</mat-option>
-              <mat-option value="Viewer">Viewer</mat-option>
-            </mat-select>
-            @if (form.get('roles')?.hasError('required') && form.get('roles')?.touched) { <mat-error>Select at least one role</mat-error> }
-          </mat-form-field>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" formControlName="phone" placeholder="Phone number">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-input" formControlName="firstName" placeholder="First name">
+          @if (form.get('firstName')?.hasError('required') && form.get('firstName')?.touched) {
+            <span class="form-error">First name is required</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" formControlName="lastName" placeholder="Last name">
+          @if (form.get('lastName')?.hasError('required') && form.get('lastName')?.touched) {
+            <span class="form-error">Last name is required</span>
+          }
+        </div>
+      </div>
+
+      @if (!isEditMode) {
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-input" formControlName="password" type="password" placeholder="Minimum 8 characters">
+            @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+              <span class="form-error">Password is required</span>
+            }
+            @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
+              <span class="form-error">Minimum 8 characters required</span>
+            }
+          </div>
+          <div class="form-group"></div>
+        </div>
+      }
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Roles</label>
+          <select class="form-select" formControlName="roles" multiple>
+            <option value="TenantAdmin">Tenant Admin</option>
+            <option value="WarehouseManager">Warehouse Manager</option>
+            <option value="InventoryStaff">Inventory Staff</option>
+            <option value="Viewer">Viewer</option>
+          </select>
+          @if (form.get('roles')?.hasError('required') && form.get('roles')?.touched) {
+            <span class="form-error">Select at least one role</span>
+          }
         </div>
 
         @if (isEditMode) {
-          <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+          <div class="form-group">
+            <label class="form-label">&nbsp;</label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isActive">
+              Active
+            </label>
+          </div>
         }
+      </div>
 
-        <div class="form-actions">
-          <button mat-button type="button" (click)="cancel()">Cancel</button>
-          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving">
-            @if (saving) { <mat-spinner diameter="20"></mat-spinner> } @else { {{ isEditMode ? 'Update' : 'Create' }} }
-          </button>
-        </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+      <div class="form-actions">
+        <button class="btn-secondary" type="button" (click)="cancel()">Cancel</button>
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+          @if (saving) {
+            <span class="btn-spinner"></span> Saving...
+          } @else {
+            {{ isEditMode ? 'Update User' : 'Create User' }}
+          }
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
