@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -37,7 +38,8 @@ export class CategoryListComponent implements OnInit {
   constructor(
     private categoryService: CategoryService,
     private dialog: MatDialog,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -88,10 +90,18 @@ export class CategoryListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const category = event.row as CategoryDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/categories', category.id]);
+    } else if (event.action === 'edit') {
       this.openForm(category);
+    } else if (event.action === 'toggle:isActive') {
+      this.categoryService.update(category.id, { isActive: !category.isActive }).subscribe({
+        next: () => this.loadCategories(),
+      });
     } else if (event.action === 'delete') {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '420px',
+        panelClass: 'confirm-dialog-panel',
         data: { title: 'Delete Category', message: `Are you sure you want to delete "${category.name}"?` },
       });
       dialogRef.afterClosed().subscribe((confirmed) => {

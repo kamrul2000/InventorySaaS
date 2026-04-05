@@ -1,0 +1,40 @@
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else if (category) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">{{ category.name }}</h1>
+          <span class="status-badge" [class]="category.isActive ? 'status-active' : 'status-inactive'">
+            {{ category.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="page-subtitle">Category details</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Category Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Name</span>
+          <span class="detail-value">{{ category.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Description</span>
+          <span class="detail-value">{{ category.description || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Products</span>
+          <span class="detail-value">{{ category.productCount }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

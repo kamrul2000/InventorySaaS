@@ -30,6 +30,12 @@ import { NotificationsComponent } from './features/notifications/notifications.c
 import { UserListComponent } from './features/users/user-list/user-list.component';
 import { UserFormComponent } from './features/users/user-form/user-form.component';
 import { SettingsComponent } from './features/settings/settings.component';
+import { ProductDetailComponent } from './features/products/product-detail/product-detail.component';
+import { CategoryDetailComponent } from './features/categories/category-detail/category-detail.component';
+import { WarehouseDetailComponent } from './features/warehouses/warehouse-detail/warehouse-detail.component';
+import { SupplierDetailComponent } from './features/suppliers/supplier-detail/supplier-detail.component';
+import { CustomerDetailComponent } from './features/customers/customer-detail/customer-detail.component';
+import { UserDetailComponent } from './features/users/user-detail/user-detail.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -46,19 +52,24 @@ export const routes: Routes = [
       { path: 'products', component: ProductListComponent },
       { path: 'products/new', component: ProductFormComponent },
       { path: 'products/:id/edit', component: ProductFormComponent },
+      { path: 'products/:id', component: ProductDetailComponent },
       { path: 'categories', component: CategoryListComponent },
+      { path: 'categories/:id', component: CategoryDetailComponent },
       { path: 'warehouses', component: WarehouseListComponent },
       { path: 'warehouses/new', component: WarehouseFormComponent },
       { path: 'warehouses/:id/edit', component: WarehouseFormComponent },
+      { path: 'warehouses/:id', component: WarehouseDetailComponent },
       { path: 'inventory', component: InventoryListComponent },
       { path: 'inventory/stock-in', component: StockInComponent },
       { path: 'inventory/transfer', component: StockTransferComponent },
       { path: 'suppliers', component: SupplierListComponent },
       { path: 'suppliers/new', component: SupplierFormComponent },
       { path: 'suppliers/:id/edit', component: SupplierFormComponent },
+      { path: 'suppliers/:id', component: SupplierDetailComponent },
       { path: 'customers', component: CustomerListComponent },
       { path: 'customers/new', component: CustomerFormComponent },
       { path: 'customers/:id/edit', component: CustomerFormComponent },
+      { path: 'customers/:id', component: CustomerDetailComponent },
       { path: 'purchase-orders', component: PoListComponent },
       { path: 'purchase-orders/new', component: PoFormComponent },
       { path: 'purchase-orders/:id', component: PoDetailComponent },
@@ -75,6 +86,7 @@ export const routes: Routes = [
       },
       { path: 'users/new', component: UserFormComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
       { path: 'users/:id/edit', component: UserFormComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
+      { path: 'users/:id', component: UserDetailComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
       { path: 'settings', component: SettingsComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
     ],
   },

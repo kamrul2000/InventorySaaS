@@ -30,11 +30,11 @@
                 {{ row[col.key] | currency }}
               }
               @case ('boolean') {
-                @if (row[col.key]) {
-                  <span class="bool-badge bool-yes">Active</span>
-                } @else {
-                  <span class="bool-badge bool-no">Inactive</span>
-                }
+                <mat-slide-toggle
+                  [checked]="row[col.key]"
+                  (change)="onAction('toggle:' + col.key, row)"
+                  color="primary">
+                </mat-slide-toggle>
               }
               @default {
                 {{ row[col.key] }}
@@ -48,6 +48,9 @@
         <th mat-header-cell *matHeaderCellDef>Action</th>
         <td mat-cell *matCellDef="let row">
           <div class="action-btns">
+            <button class="action-btn view-btn" (click)="onAction('view', row)" title="View">
+              <mat-icon>visibility</mat-icon>
+            </button>
             <button class="action-btn edit-btn" (click)="onAction('edit', row)" title="Edit">
               <mat-icon>edit_note</mat-icon>
             </button>

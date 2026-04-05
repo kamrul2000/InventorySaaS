@@ -1,0 +1,59 @@
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else if (user) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">{{ user.firstName }} {{ user.lastName }}</h1>
+          <span class="status-badge" [class]="user.isActive ? 'status-active' : 'status-inactive'">
+            {{ user.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="page-subtitle">User account details</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" (click)="edit()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Account Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Email</span>
+          <span class="detail-value">{{ user.email }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">First Name</span>
+          <span class="detail-value">{{ user.firstName || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Last Name</span>
+          <span class="detail-value">{{ user.lastName || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Phone</span>
+          <span class="detail-value">{{ user.phone || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Roles</span>
+          <span class="detail-value">
+            @for (role of user.roles; track role) {
+              <span class="role-badge">{{ role }}</span>
+            }
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Created</span>
+          <span class="detail-value">{{ user.createdAt | date:'mediumDate' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

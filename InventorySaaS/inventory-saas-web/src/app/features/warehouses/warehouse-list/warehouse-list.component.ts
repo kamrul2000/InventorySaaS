@@ -85,10 +85,22 @@ export class WarehouseListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const warehouse = event.row as WarehouseDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/warehouses', warehouse.id]);
+    } else if (event.action === 'edit') {
       this.router.navigate(['/warehouses', warehouse.id, 'edit']);
+    } else if (event.action === 'toggle:isActive') {
+      this.warehouseService.update(warehouse.id, { isActive: !warehouse.isActive }).subscribe({
+        next: () => this.loadWarehouses(),
+      });
+    } else if (event.action === 'toggle:isDefault') {
+      this.warehouseService.update(warehouse.id, { isDefault: !warehouse.isDefault }).subscribe({
+        next: () => this.loadWarehouses(),
+      });
     } else if (event.action === 'delete') {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '420px',
+        panelClass: 'confirm-dialog-panel',
         data: { title: 'Delete Warehouse', message: `Are you sure you want to delete "${warehouse.name}"?` },
       });
       dialogRef.afterClosed().subscribe((confirmed) => {

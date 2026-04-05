@@ -94,10 +94,18 @@ export class ProductListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const product = event.row as ProductDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/products', product.id]);
+    } else if (event.action === 'edit') {
       this.router.navigate(['/products', product.id, 'edit']);
+    } else if (event.action === 'toggle:isActive') {
+      this.productService.update(product.id, { isActive: !product.isActive }).subscribe({
+        next: () => this.loadProducts(),
+      });
     } else if (event.action === 'delete') {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '420px',
+        panelClass: 'confirm-dialog-panel',
         data: { title: 'Delete Product', message: `Are you sure you want to delete "${product.name}"?` },
       });
       dialogRef.afterClosed().subscribe((confirmed) => {

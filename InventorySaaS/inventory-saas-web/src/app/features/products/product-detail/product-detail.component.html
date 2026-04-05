@@ -1,0 +1,81 @@
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else if (product) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">{{ product.name }}</h1>
+          <span class="status-badge" [class]="product.isActive ? 'status-active' : 'status-inactive'">
+            {{ product.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="page-subtitle">Product details and pricing information</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" (click)="edit()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">General Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Name</span>
+          <span class="detail-value">{{ product.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">SKU</span>
+          <span class="detail-value">{{ product.sku }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Barcode</span>
+          <span class="detail-value">{{ product.barcode || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Category</span>
+          <span class="detail-value">{{ product.categoryName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Brand</span>
+          <span class="detail-value">{{ product.brandName || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Unit of Measure</span>
+          <span class="detail-value">{{ product.unitName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Pricing & Stock</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Cost Price</span>
+          <span class="detail-value currency-value">{{ product.costPrice | currency }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Selling Price</span>
+          <span class="detail-value currency-value">{{ product.sellingPrice | currency }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Reorder Level</span>
+          <span class="detail-value">{{ product.reorderLevel }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Track Expiry</span>
+          <span class="detail-value">{{ product.trackExpiry ? 'Yes' : 'No' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Created</span>
+          <span class="detail-value">{{ product.createdAt | date:'mediumDate' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -59,10 +59,16 @@ export class CustomerListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const c = event.row as CustomerDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/customers', c.id]);
+    } else if (event.action === 'edit') {
       this.router.navigate(['/customers', c.id, 'edit']);
+    } else if (event.action === 'toggle:isActive') {
+      this.customerService.update(c.id, { isActive: !c.isActive }).subscribe({
+        next: () => this.loadCustomers(),
+      });
     } else if (event.action === 'delete') {
-      this.dialog.open(ConfirmDialogComponent, { data: { title: 'Delete Customer', message: `Delete "${c.name}"?` } })
+      this.dialog.open(ConfirmDialogComponent, { width: '420px', panelClass: 'confirm-dialog-panel', data: { title: 'Delete Customer', message: `Delete "${c.name}"?` } })
         .afterClosed().subscribe((ok) => { if (ok) this.customerService.delete(c.id).subscribe({ next: () => { this.notification.success('Deleted'); this.loadCustomers(); } }); });
     }
   }

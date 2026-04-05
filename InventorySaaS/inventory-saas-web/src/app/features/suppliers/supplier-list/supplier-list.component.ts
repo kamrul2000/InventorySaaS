@@ -62,10 +62,16 @@ export class SupplierListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const s = event.row as SupplierDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/suppliers', s.id]);
+    } else if (event.action === 'edit') {
       this.router.navigate(['/suppliers', s.id, 'edit']);
+    } else if (event.action === 'toggle:isActive') {
+      this.supplierService.update(s.id, { isActive: !s.isActive }).subscribe({
+        next: () => this.loadSuppliers(),
+      });
     } else if (event.action === 'delete') {
-      this.dialog.open(ConfirmDialogComponent, { data: { title: 'Delete Supplier', message: `Delete "${s.name}"?` } })
+      this.dialog.open(ConfirmDialogComponent, { width: '420px', panelClass: 'confirm-dialog-panel', data: { title: 'Delete Supplier', message: `Delete "${s.name}"?` } })
         .afterClosed().subscribe((c) => { if (c) this.supplierService.delete(s.id).subscribe({ next: () => { this.notification.success('Deleted'); this.loadSuppliers(); } }); });
     }
   }

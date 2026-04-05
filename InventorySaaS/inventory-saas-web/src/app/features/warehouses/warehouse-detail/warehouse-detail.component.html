@@ -1,0 +1,55 @@
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else if (warehouse) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">{{ warehouse.name }}</h1>
+          <span class="status-badge" [class]="warehouse.isActive ? 'status-active' : 'status-inactive'">
+            {{ warehouse.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="page-subtitle">Warehouse details and location info</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" (click)="edit()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Warehouse Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Name</span>
+          <span class="detail-value">{{ warehouse.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Code</span>
+          <span class="detail-value">{{ warehouse.code }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Address</span>
+          <span class="detail-value">{{ warehouse.address || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">City</span>
+          <span class="detail-value">{{ warehouse.city || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Default Warehouse</span>
+          <span class="detail-value">{{ warehouse.isDefault ? 'Yes' : 'No' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Locations</span>
+          <span class="detail-value">{{ warehouse.locationCount }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

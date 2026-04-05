@@ -60,8 +60,14 @@ export class UserListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const user = event.row as User;
-    if (event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/users', user.id]);
+    } else if (event.action === 'edit') {
       this.router.navigate(['/users', user.id, 'edit']);
+    } else if (event.action === 'toggle:isActive') {
+      this.userService.update(user.id, { isActive: !user.isActive }).subscribe({
+        next: () => this.loadUsers(),
+      });
     }
   }
 }

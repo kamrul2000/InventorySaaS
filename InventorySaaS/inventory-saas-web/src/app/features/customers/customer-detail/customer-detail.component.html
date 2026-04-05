@@ -1,0 +1,63 @@
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else if (customer) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">{{ customer.name }}</h1>
+          <span class="status-badge" [class]="customer.isActive ? 'status-active' : 'status-inactive'">
+            {{ customer.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="page-subtitle">Customer details and contact information</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" (click)="edit()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Customer Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Name</span>
+          <span class="detail-value">{{ customer.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Code</span>
+          <span class="detail-value">{{ customer.code || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Type</span>
+          <span class="detail-value">{{ customer.customerType || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Contact Person</span>
+          <span class="detail-value">{{ customer.contactPerson || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Email</span>
+          <span class="detail-value">{{ customer.email || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Phone</span>
+          <span class="detail-value">{{ customer.phone || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">City</span>
+          <span class="detail-value">{{ customer.city || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Country</span>
+          <span class="detail-value">{{ customer.country || 'N/A' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}
