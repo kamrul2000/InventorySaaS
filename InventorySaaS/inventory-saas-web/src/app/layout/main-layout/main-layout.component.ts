@@ -5,6 +5,7 @@ import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 
 @Component({
   selector: 'app-main-layout',
@@ -15,12 +16,14 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     MatSidenavModule,
     HeaderComponent,
     SidebarComponent,
+    ChatPanelComponent,
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css',
 })
 export class MainLayoutComponent {
   @ViewChild('sidenav') sidenav!: MatSidenav;
+  @ViewChild('chatSidenav') chatSidenav!: MatSidenav;
   isMobile = false;
 
   constructor(private breakpointObserver: BreakpointObserver) {

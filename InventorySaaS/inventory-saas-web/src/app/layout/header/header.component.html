@@ -41,6 +41,11 @@
       }
     </mat-menu>
 
+    <!-- AI Chat Toggle -->
+    <button class="icon-btn" (click)="toggleChat.emit()" title="Inventory Copilot">
+      <mat-icon>smart_toy</mat-icon>
+    </button>
+
     <!-- User Avatar Trigger -->
     <button class="avatar-trigger" [matMenuTriggerFor]="userMenu">
       <div class="header-avatar">

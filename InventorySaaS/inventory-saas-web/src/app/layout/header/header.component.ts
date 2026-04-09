@@ -24,6 +24,7 @@ import { NotificationDto } from '../../core/models/domain.models';
 })
 export class HeaderComponent implements OnInit {
   @Output() toggleSidenav = new EventEmitter<void>();
+  @Output() toggleChat = new EventEmitter<void>();
 
   currentUser: User | null = null;
   unreadCount = 0;

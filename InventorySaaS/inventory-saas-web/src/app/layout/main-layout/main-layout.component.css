@@ -23,3 +23,13 @@
   flex: 1;
   overflow-y: auto;
 }
+.chat-sidenav {
+  width: 380px;
+  border-left: 1px solid #f0f0f0;
+  box-shadow: none;
+}
+@media (max-width: 599px) {
+  .chat-sidenav {
+    width: 100vw;
+  }
+}

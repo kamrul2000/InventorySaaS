@@ -1,0 +1,74 @@
+<div class="chat-panel">
+  <div class="chat-header">
+    <div class="chat-title">
+      <mat-icon>smart_toy</mat-icon>
+      <span>Inventory Copilot</span>
+    </div>
+    <button class="chat-clear-btn" (click)="clearChat()" title="Clear chat">
+      <mat-icon>delete_outline</mat-icon>
+    </button>
+  </div>
+
+  <div class="chat-messages" #messagesContainer>
+    @if (messages.length === 0) {
+      <div class="chat-empty">
+        <mat-icon class="chat-empty-icon">psychology</mat-icon>
+        <p class="chat-empty-title">Ask me anything about your inventory</p>
+        <p class="chat-empty-sub">I have access to your real-time inventory data</p>
+        <div class="chat-suggestions">
+          <button class="suggestion-chip" (click)="sendSuggestion('What items are low on stock?')">
+            What items are low on stock?
+          </button>
+          <button class="suggestion-chip" (click)="sendSuggestion('Show me recent transactions')">
+            Show me recent transactions
+          </button>
+          <button class="suggestion-chip" (click)="sendSuggestion('What is my total inventory value?')">
+            What is my total inventory value?
+          </button>
+          <button class="suggestion-chip" (click)="sendSuggestion('Summarize my recent sales orders')">
+            Summarize my recent sales orders
+          </button>
+        </div>
+      </div>
+    }
+    @for (msg of messages; track $index) {
+      <div class="chat-bubble" [class.user-bubble]="msg.role === 'user'" [class.assistant-bubble]="msg.role === 'assistant'">
+        @if (msg.role === 'assistant') {
+          <div class="bubble-avatar">
+            <mat-icon>smart_toy</mat-icon>
+          </div>
+        }
+        <div class="bubble-content" [class.empty-content]="msg.content === '' && isLoading">
+          @if (msg.content === '' && isLoading && $index === messages.length - 1) {
+            <div class="typing-indicator">
+              <span></span><span></span><span></span>
+            </div>
+          } @else {
+            <span style="white-space: pre-wrap;">{{ msg.content }}</span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="chat-input-area">
+    @if (isLoading) {
+      <button class="stop-btn" (click)="cancelStream()">
+        <mat-icon>stop</mat-icon> Stop generating
+      </button>
+    }
+    <div class="chat-input-row">
+      <textarea
+        class="chat-input"
+        [(ngModel)]="inputText"
+        (keydown)="onKeyDown($event)"
+        placeholder="Ask about your inventory..."
+        rows="1"
+        [disabled]="isLoading"
+      ></textarea>
+      <button class="send-btn" (click)="sendMessage()" [disabled]="!inputText.trim() || isLoading">
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>

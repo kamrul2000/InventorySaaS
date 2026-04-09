@@ -9,6 +9,7 @@ using InventorySaaS.Infrastructure.Services.BackgroundJobs;
 using InventorySaaS.Infrastructure.Services.Email;
 using InventorySaaS.Infrastructure.Services.Storage;
 using InventorySaaS.Infrastructure.Services.Reports;
+using InventorySaaS.Infrastructure.Services.AI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,6 +43,9 @@ public static class DependencyInjection
 
         // PDF Reports
         services.AddScoped<IPdfReportService, PdfReportService>();
+
+        // AI Chat
+        services.AddScoped<IAiChatService, AiChatService>();
 
         // Background jobs
         services.AddScoped<InventoryAlertJob>();

@@ -6,8 +6,11 @@
                  class="sidenav">
       <app-sidebar></app-sidebar>
     </mat-sidenav>
+    <mat-sidenav #chatSidenav position="end" mode="over" class="chat-sidenav">
+      <app-chat-panel></app-chat-panel>
+    </mat-sidenav>
     <mat-sidenav-content class="content">
-      <app-header (toggleSidenav)="sidenav.toggle()"></app-header>
+      <app-header (toggleSidenav)="sidenav.toggle()" (toggleChat)="chatSidenav.toggle()"></app-header>
       <div class="page-container">
         <router-outlet></router-outlet>
       </div>
