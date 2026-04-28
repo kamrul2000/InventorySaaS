@@ -42,14 +42,13 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 
 ### Dashboard — KPIs at a glance
 
-![Dashboard](docs/screenshots/dashboard.png)
 <img width="1360" height="644" alt="image" src="https://github.com/user-attachments/assets/ed41a5e6-2762-4fb5-9d4f-de43bfce97bb" />
 
 <!-- Until the screenshot exists, GitHub will show a broken image. Replace with: ![Dashboard](docs/screenshots/dashboard.png) -->
 
 ### AI Product Scan — photo to draft product in one click
 
-![Product Scan](docs/screenshots/ai-product-scan.png)
+<img width="1354" height="614" alt="image" src="https://github.com/user-attachments/assets/1323afee-72f0-468a-aae6-012798fc611a" />
 
 ### AI Inventory Copilot — chat grounded in live tenant data
 
