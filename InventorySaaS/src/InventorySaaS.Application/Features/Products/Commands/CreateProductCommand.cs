@@ -77,16 +77,28 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
         if (unitId is null)
             return Result<ProductDto>.Failure("Unit of Measure is required. Provide UnitOfMeasureId or UnitName.");
 
-        // Auto-generate SKU: {CategoryCode}-{sequential number}
+        // Auto-generate SKU: {CategoryCode}-{sequential number}.
+        // Resolve the next number from existing SKUs that share the prefix (across categories,
+        // since the unique index is on (TenantId, Sku)) — using count+1 collides when products
+        // are deleted or when manually-assigned SKUs happen to match the auto-generated pattern.
         var categoryCode = category.Name.Length >= 3
             ? category.Name[..3].ToUpperInvariant()
             : category.Name.ToUpperInvariant().PadRight(3, 'X');
 
-        var existingCount = await _context.Products
-            .Where(p => p.CategoryId == request.CategoryId)
-            .CountAsync(cancellationToken);
+        var prefix = $"{categoryCode}-";
+        var existingSkus = await _context.Products
+            .Where(p => p.Sku.StartsWith(prefix))
+            .Select(p => p.Sku)
+            .ToListAsync(cancellationToken);
 
-        var sku = $"{categoryCode}-{(existingCount + 1):D5}";
+        var nextNumber = 1;
+        foreach (var existing in existingSkus)
+        {
+            if (int.TryParse(existing[prefix.Length..], out var n) && n >= nextNumber)
+                nextNumber = n + 1;
+        }
+
+        var sku = $"{prefix}{nextNumber:D5}";
 
         var product = new ProductInfo
         {
