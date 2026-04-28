@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { PaginatedList } from '../models/api.models';
-import { ProductDto } from '../models/domain.models';
+import { ProductDto, ProductExtractionResult } from '../models/domain.models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly endpoint = '/api/v1/products';
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private http: HttpClient) {}
 
   getAll(params?: {
     pageNumber?: number;
@@ -37,5 +39,14 @@ export class ProductService {
 
   delete(id: string): Observable<void> {
     return this.api.delete(`${this.endpoint}/${id}`);
+  }
+
+  extractFromImage(file: File): Observable<ProductExtractionResult> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<ProductExtractionResult>(
+      `${environment.apiUrl}${this.endpoint}/extract-from-image`,
+      formData
+    );
   }
 }

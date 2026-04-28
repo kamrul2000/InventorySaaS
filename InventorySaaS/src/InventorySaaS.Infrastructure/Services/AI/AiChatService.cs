@@ -84,7 +84,7 @@ public class AiChatService : IAiChatService
             generationConfig = new { maxOutputTokens = 1024 }
         };
 
-        var geminiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:streamGenerateContent?alt=sse&key={apiKey}";
+        var geminiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent?alt=sse&key={apiKey}";
         var json = JsonSerializer.Serialize(requestBody);
 
         HttpResponseMessage? response = null;

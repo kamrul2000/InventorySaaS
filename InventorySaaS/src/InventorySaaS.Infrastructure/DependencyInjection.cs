@@ -47,6 +47,9 @@ public static class DependencyInjection
         // AI Chat
         services.AddScoped<IAiChatService, AiChatService>();
 
+        // AI Product extraction (Gemini vision) — typed HttpClient
+        services.AddHttpClient<IProductExtractionService, GeminiProductExtractionService>();
+
         // Background jobs
         services.AddScoped<InventoryAlertJob>();
 

@@ -5,10 +5,28 @@
       <h1 class="page-title">{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h1>
       <p class="page-subtitle">{{ isEditMode ? 'Update product details' : 'Add a new product to your inventory' }}</p>
     </div>
-    <button class="btn-primary" (click)="cancel()">
-      <mat-icon>list</mat-icon>
-      Go to Product List
-    </button>
+    <div class="header-actions">
+      <button class="btn-scan" type="button" (click)="openImagePicker()" [disabled]="scanning">
+        @if (scanning) {
+          <mat-spinner diameter="18"></mat-spinner>
+          <span>Scanning…</span>
+        } @else {
+          <mat-icon>photo_camera</mat-icon>
+          <span>Scan from Photo</span>
+        }
+      </button>
+      <button class="btn-primary" (click)="cancel()">
+        <mat-icon>list</mat-icon>
+        Go to Product List
+      </button>
+    </div>
+    <input
+      #fileInput
+      type="file"
+      accept="image/jpeg,image/png"
+      hidden
+      (change)="onFileSelected($event)"
+    />
   </div>
 
   <!-- Form Card -->

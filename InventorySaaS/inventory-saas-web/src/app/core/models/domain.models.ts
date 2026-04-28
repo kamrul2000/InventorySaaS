@@ -48,6 +48,19 @@ export interface ProductDto {
   createdAt: string;
 }
 
+export interface ProductExtractionResult {
+  name: string | null;
+  description: string | null;
+  brandName: string | null;
+  unitName: string | null;
+  barcode: string | null;
+  suggestedCategory: string | null;
+  suggestedSellingPrice: number | null;
+  suggestedCostPrice: number | null;
+  trackExpiry: boolean;
+  notes: string | null;
+}
+
 export interface WarehouseDto {
   id: string;
   name: string;
