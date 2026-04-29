@@ -313,8 +313,6 @@ Concurrent edits on the same record are caught via EF Core `RowVersion` columns 
 - .NET 10 SDK
 - Node.js 20+ and npm
 - SQL Server (LocalDB, Express, full, or via Docker)
-- Optional: Redis 7
-- Optional: a Google AI Studio API key for the AI features (https://aistudio.google.com/apikey)
 
 ### 1. Clone
 
@@ -572,22 +570,6 @@ The Hangfire database is created on the same SQL Server instance under a separat
 
 ---
 
-## Roadmap
-
-- Stripe / Paddle billing integration on the existing `SubscriptionPlan` model
-- Stock-out and adjustment UIs (currently API-only)
-- Per-permission UI gating (currently role-based gating only)
-- Cloud file storage adapter (S3 / Azure Blob) — interface is already in place
-- Webhook outbox for order events
-- Localisation (EN today)
-
----
-
-## Contributing
-
-PRs welcome. Please run both test projects and `dotnet format` before opening one. For new features, add a MediatR handler with FluentValidation and a controller action; the existing modules are good templates.
-
----
 
 ## License
 
