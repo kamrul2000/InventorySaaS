@@ -14,7 +14,7 @@ public class TenantInfo : BaseEntity
     public string? Address { get; set; }
     public string? City { get; set; }
     public string? Country { get; set; }
-    public string? Currency { get; set; } = "USD";
+    public string? Currency { get; set; } = "BDT";
     public string? Timezone { get; set; } = "UTC";
     public TenantStatus Status { get; set; } = TenantStatus.Active;
     public Guid SubscriptionPlanId { get; set; }

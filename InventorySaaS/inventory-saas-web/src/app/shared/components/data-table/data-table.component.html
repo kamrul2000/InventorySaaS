@@ -27,7 +27,7 @@
                 {{ row[col.key] | date:'mediumDate' }}
               }
               @case ('currency') {
-                {{ row[col.key] | currency }}
+                {{ row[col.key] | currency:'BDT':'৳':'1.2-2' }}
               }
               @case ('boolean') {
                 <mat-slide-toggle

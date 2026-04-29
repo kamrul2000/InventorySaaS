@@ -72,7 +72,7 @@
                 <td>
                   <input type="number" class="form-input table-input" formControlName="unitPrice" step="0.01" (input)="calculateLineTotal($index)">
                 </td>
-                <td class="line-total">{{ items.at($index).get('lineTotal')?.value | currency }}</td>
+                <td class="line-total">{{ items.at($index).get('lineTotal')?.value | currency:'BDT':'৳':'1.2-2' }}</td>
                 <td>
                   <button type="button" class="btn-remove" (click)="removeItem($index)">
                     <mat-icon>delete</mat-icon>
@@ -85,7 +85,7 @@
       </div>
 
       <div class="total-row">
-        <strong>Grand Total: {{ grandTotal | currency }}</strong>
+        <strong>Grand Total: {{ grandTotal | currency:'BDT':'৳':'1.2-2' }}</strong>
       </div>
 
       <div class="form-actions">

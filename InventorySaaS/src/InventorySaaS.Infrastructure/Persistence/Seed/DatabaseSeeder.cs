@@ -250,7 +250,7 @@ public class DatabaseSeeder
             Slug = "demo-company",
             Subdomain = "demo",
             ContactEmail = "admin@demo-company.com",
-            Currency = "USD",
+            Currency = "BDT",
             Timezone = "UTC",
             Status = TenantStatus.Active,
             SubscriptionPlanId = freePlan.Id,

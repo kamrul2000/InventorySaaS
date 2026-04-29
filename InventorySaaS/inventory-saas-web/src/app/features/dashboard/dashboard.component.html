@@ -12,7 +12,7 @@
         </div>
         <div class="kpi-text">
           <span class="kpi-label">Total Sales</span>
-          <span class="kpi-value">{{ data.totalSales | currency:'USD':'symbol':'1.0-0' }}</span>
+          <span class="kpi-value">{{ data.totalSales | currency:'BDT':'৳':'1.0-0' }}</span>
         </div>
       </div>
 
@@ -22,7 +22,7 @@
         </div>
         <div class="kpi-text">
           <span class="kpi-label">Total Purchase</span>
-          <span class="kpi-value">{{ data.totalPurchases | currency:'USD':'symbol':'1.0-0' }}</span>
+          <span class="kpi-value">{{ data.totalPurchases | currency:'BDT':'৳':'1.0-0' }}</span>
         </div>
       </div>
 
@@ -32,7 +32,7 @@
         </div>
         <div class="kpi-text">
           <span class="kpi-label">Inventory Value</span>
-          <span class="kpi-value">{{ data.totalInventoryValue | currency:'USD':'symbol':'1.0-0' }}</span>
+          <span class="kpi-value">{{ data.totalInventoryValue | currency:'BDT':'৳':'1.0-0' }}</span>
         </div>
       </div>
 
@@ -180,7 +180,7 @@
               </div>
               <div class="product-info">
                 <span class="product-name">{{ p.productName }}</span>
-                <span class="product-detail">{{ p.sellingPrice | currency:'USD':'symbol':'1.0-0' }} &middot; {{ p.totalQuantity | number }} Units</span>
+                <span class="product-detail">{{ p.sellingPrice | currency:'BDT':'৳':'1.0-0' }} &middot; {{ p.totalQuantity | number }} Units</span>
               </div>
               <div class="product-badge">
                 {{ getStockPercent(p) }}%
@@ -235,7 +235,7 @@
               </div>
               <div class="product-info">
                 <span class="product-name">{{ s.customerName }}</span>
-                <span class="product-detail">{{ s.orderNumber }} &middot; {{ s.totalAmount | currency:'USD':'symbol':'1.0-0' }}</span>
+                <span class="product-detail">{{ s.orderNumber }} &middot; {{ s.totalAmount | currency:'BDT':'৳':'1.0-0' }}</span>
               </div>
               <div class="sales-status" [class]="'status-' + s.status.toLowerCase()">
                 {{ s.status }}

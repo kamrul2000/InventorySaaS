@@ -207,17 +207,17 @@ public class AiChatService : IAiChatService
             .Select(ib => new { ib.QuantityOnHand, ib.UnitCost })
             .ToListAsync(ct);
         var totalValue = balances.Sum(b => (decimal)b.QuantityOnHand * b.UnitCost);
-        sb.AppendLine($"- Total Inventory Value: ${totalValue:N2}");
+        sb.AppendLine($"- Total Inventory Value: ৳{totalValue:N2}");
 
         var totalSales = await _context.SalesOrders
             .Where(so => so.Status != SalesOrderStatus.Draft && so.Status != SalesOrderStatus.Cancelled)
             .SumAsync(so => so.TotalAmount, ct);
-        sb.AppendLine($"- Total Sales Revenue: ${totalSales:N2}");
+        sb.AppendLine($"- Total Sales Revenue: ৳{totalSales:N2}");
 
         var totalPurchases = await _context.PurchaseOrders
             .Where(po => po.Status != PurchaseOrderStatus.Draft && po.Status != PurchaseOrderStatus.Cancelled)
             .SumAsync(po => po.TotalAmount, ct);
-        sb.AppendLine($"- Total Purchase Spend: ${totalPurchases:N2}");
+        sb.AppendLine($"- Total Purchase Spend: ৳{totalPurchases:N2}");
 
         var lowStock = await _context.InventoryBalances
             .Where(ib => ib.QuantityOnHand > 0 && ib.QuantityOnHand <= ib.Product.ReorderLevel)
@@ -247,7 +247,7 @@ public class AiChatService : IAiChatService
             sb.AppendLine();
             sb.AppendLine("## Top Products by Stock");
             foreach (var p in topProducts)
-                sb.AppendLine($"- {p.Name} (SKU: {p.Sku}) — {p.TotalQty} units, selling at ${p.SellingPrice:N2}");
+                sb.AppendLine($"- {p.Name} (SKU: {p.Sku}) — {p.TotalQty} units, selling at ৳{p.SellingPrice:N2}");
         }
 
         var recentTx = await _context.InventoryTransactions
@@ -275,7 +275,7 @@ public class AiChatService : IAiChatService
             sb.AppendLine();
             sb.AppendLine("## Recent Sales Orders");
             foreach (var so in recentSO)
-                sb.AppendLine($"- {so.OrderNumber}: {so.Customer} — ${so.TotalAmount:N2} ({so.Status}) on {so.OrderDate:yyyy-MM-dd}");
+                sb.AppendLine($"- {so.OrderNumber}: {so.Customer} — ৳{so.TotalAmount:N2} ({so.Status}) on {so.OrderDate:yyyy-MM-dd}");
         }
 
         var recentPO = await _context.PurchaseOrders
@@ -289,7 +289,7 @@ public class AiChatService : IAiChatService
             sb.AppendLine();
             sb.AppendLine("## Recent Purchase Orders");
             foreach (var po in recentPO)
-                sb.AppendLine($"- {po.OrderNumber}: {po.Supplier} — ${po.TotalAmount:N2} ({po.Status}) on {po.OrderDate:yyyy-MM-dd}");
+                sb.AppendLine($"- {po.OrderNumber}: {po.Supplier} — ৳{po.TotalAmount:N2} ({po.Status}) on {po.OrderDate:yyyy-MM-dd}");
         }
 
         return sb.ToString();

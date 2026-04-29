@@ -46,7 +46,7 @@
         </div>
         <div class="detail-item">
           <span class="detail-label">Total Amount</span>
-          <span class="detail-value">{{ order.totalAmount | currency }}</span>
+          <span class="detail-value">{{ order.totalAmount | currency:'BDT':'৳':'1.2-2' }}</span>
         </div>
       </div>
     </div>
@@ -71,8 +71,8 @@
               <td>{{ item.productSku }}</td>
               <td>{{ item.quantity }}</td>
               <td>{{ item.deliveredQuantity }}</td>
-              <td>{{ item.unitPrice | currency }}</td>
-              <td>{{ item.lineTotal | currency }}</td>
+              <td>{{ item.unitPrice | currency:'BDT':'৳':'1.2-2' }}</td>
+              <td>{{ item.lineTotal | currency:'BDT':'৳':'1.2-2' }}</td>
             </tr>
           }
         </tbody>

@@ -875,10 +875,10 @@ export const environment = {
 
 | Plan | Monthly | Annual | Max Users | Max Warehouses | Max Products | Advanced Reports | API Access |
 |---|---|---|---|---|---|---|---|
-| Free | $0 | $0 | 3 | 1 | 100 | No | No |
-| Basic | $29.99 | $299.99 | 10 | 3 | 1,000 | No | No |
-| Professional | $79.99 | $799.99 | 50 | 10 | 10,000 | Yes | Yes |
-| Enterprise | $199.99 | $1,999.99 | Unlimited | Unlimited | Unlimited | Yes | Yes |
+| Free | ৳0 | ৳0 | 3 | 1 | 100 | No | No |
+| Basic | ৳29.99 | ৳299.99 | 10 | 3 | 1,000 | No | No |
+| Professional | ৳79.99 | ৳799.99 | 50 | 10 | 10,000 | Yes | Yes |
+| Enterprise | ৳199.99 | ৳1,999.99 | Unlimited | Unlimited | Unlimited | Yes | Yes |
 
 ---
 

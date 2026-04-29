@@ -69,8 +69,8 @@
                 <td>{{ r.categoryName }}</td>
                 <td>{{ r.warehouseName }}</td>
                 <td>{{ r.quantityOnHand }}</td>
-                <td>{{ r.unitCost | currency }}</td>
-                <td>{{ r.totalValue | currency }}</td>
+                <td>{{ r.unitCost | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ r.totalValue | currency:'BDT':'৳':'1.2-2' }}</td>
               </tr>
             }
             @if (stockSummary.length === 0) {
@@ -178,8 +178,8 @@
               <tr>
                 <td>{{ r.categoryName }}</td>
                 <td>{{ r.productCount }}</td>
-                <td>{{ r.totalCostValue | currency }}</td>
-                <td>{{ r.totalSellingValue | currency }}</td>
+                <td>{{ r.totalCostValue | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ r.totalSellingValue | currency:'BDT':'৳':'1.2-2' }}</td>
               </tr>
             }
             @if (valuation.length === 0) {

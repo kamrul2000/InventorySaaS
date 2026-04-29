@@ -57,11 +57,11 @@
       <div class="detail-grid">
         <div class="detail-item">
           <span class="detail-label">Cost Price</span>
-          <span class="detail-value currency-value">{{ product.costPrice | currency }}</span>
+          <span class="detail-value currency-value">{{ product.costPrice | currency:'BDT':'৳':'1.2-2' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Selling Price</span>
-          <span class="detail-value currency-value">{{ product.sellingPrice | currency }}</span>
+          <span class="detail-value currency-value">{{ product.sellingPrice | currency:'BDT':'৳':'1.2-2' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Reorder Level</span>
