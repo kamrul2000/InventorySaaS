@@ -1,0 +1,26 @@
+<div class="toast-stack" aria-live="polite" aria-atomic="true">
+  @for (t of toasts(); track t.id) {
+    <div
+      class="toast"
+      [class]="'toast--' + t.variant"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+    >
+      <div class="toast-header">
+        <span class="toast-icon" [class]="'toast-icon--' + t.variant">{{ iconFor(t.variant) }}</span>
+        <strong class="toast-title">{{ t.title }}</strong>
+        <small class="toast-time">{{ timeAgo(t) }}</small>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          (click)="dismiss(t.id)"
+        >
+          ×
+        </button>
+      </div>
+      <div class="toast-body">{{ t.message }}</div>
+    </div>
+  }
+</div>
