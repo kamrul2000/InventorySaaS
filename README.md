@@ -38,7 +38,6 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 
 ## Screenshots
 
-> Drop the actual PNGs into `docs/screenshots/` with the filenames below. GitHub will render them inline. The placeholders use [shields.io](https://shields.io) so the README still looks intentional before the real images land.
 
 ### Dashboard — KPIs at a glance
 
