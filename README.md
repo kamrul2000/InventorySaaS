@@ -52,35 +52,37 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 
 ### AI Inventory Copilot — chat grounded in live tenant data
 
-![Inventory Copilot](docs/screenshots/ai-chat.png)
+<img width="1356" height="644" alt="image" src="https://github.com/user-attachments/assets/3fe4875e-bcf0-4ccb-9a59-d147aefddb3f" />
 
 ### Product Form — manual entry with reorder level and expiry tracking
 
-![Product Form](docs/screenshots/product-form.png)
+<img width="1352" height="633" alt="image" src="https://github.com/user-attachments/assets/a0c9b6ea-273c-41dc-96dd-acdbac8d49ff" />
 
 ### Inventory — balances per warehouse, location, and batch
 
-![Inventory Balances](docs/screenshots/inventory-balances.png)
+<img width="1362" height="633" alt="image" src="https://github.com/user-attachments/assets/dec6d0e1-6729-4c82-9d89-7ab703b36d4d" />
 
 ### Purchase Order Lifecycle — draft → approve → receive
 
-![Purchase Order](docs/screenshots/purchase-order.png)
+<img width="1366" height="623" alt="image" src="https://github.com/user-attachments/assets/a63bb0e8-cb39-4edf-98ba-5cf32fd08dc2" />
 
 ### Sales Order Lifecycle — draft → confirm → deliver
 
-![Sales Order](docs/screenshots/sales-order.png)
+<img width="1366" height="639" alt="image" src="https://github.com/user-attachments/assets/1dc2101e-190e-4b40-9031-49fbed57edb8" />
 
 ### Reports — JSON and PDF exports for stock, low stock, expiry, valuation
 
-![Reports](docs/screenshots/reports.png)
+<img width="1360" height="628" alt="image" src="https://github.com/user-attachments/assets/4acd8058-3f24-42fa-819c-6226189f6778" />
+<img width="1349" height="568" alt="image" src="https://github.com/user-attachments/assets/3f315480-0c4c-4a5b-8b2c-41067cd23b58" />
+
 
 ### Hangfire Dashboard — recurring low-stock and expiry jobs
 
-![Hangfire](docs/screenshots/hangfire.png)
+<img width="1349" height="548" alt="image" src="https://github.com/user-attachments/assets/8567e851-81d5-4238-a3fb-3b2faace681e" />
 
 ### Swagger — full API surface with JWT auth
 
-![Swagger](docs/screenshots/swagger.png)
+<img width="1315" height="639" alt="image" src="https://github.com/user-attachments/assets/a658124f-3c89-4497-9476-f29af7258b24" />
 
 ---
 
