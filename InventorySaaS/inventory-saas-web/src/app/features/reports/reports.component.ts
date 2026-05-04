@@ -83,7 +83,8 @@ export class ReportsComponent implements OnInit {
         });
         break;
       case 3:
-        this.reportService.inventoryValuation({ warehouseId: params.warehouseId } as Record<string, string>).subscribe({
+        // Inventory valuation aggregates across all warehouses; backend ignores warehouse filter here.
+        this.reportService.inventoryValuation().subscribe({
           next: (d) => { this.valuation = d; this.loading = false; },
           error: () => { this.loading = false; },
         });

@@ -56,4 +56,12 @@ public class SuppliersController : ControllerBase
         var result = await _supplierService.UpdateAsync(id, request, cancellationToken);
         return Ok(result);
     }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "ManagerUp")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await _supplierService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
 }

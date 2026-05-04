@@ -77,7 +77,7 @@ export const routes: Routes = [
       { path: 'sales-orders/new', component: SoFormComponent },
       { path: 'sales-orders/:id', component: SoDetailComponent },
       { path: 'reports', component: ReportsComponent },
-      // { path: 'notifications', component: NotificationsComponent },
+      { path: 'notifications', component: NotificationsComponent },
       {
         path: 'users',
         component: UserListComponent,

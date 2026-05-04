@@ -28,8 +28,15 @@ public record CreateCustomerRequest(
 
 public record UpdateCustomerRequest(
     string? Name,
+    string? Code,
+    string? CustomerType,
     string? ContactPerson,
     string? Email,
     string? Phone,
     string? Address,
+    string? City,
+    string? Country,
+    string? TaxId,
+    string? PaymentTerms,
+    decimal? CreditLimit,
     bool? IsActive);

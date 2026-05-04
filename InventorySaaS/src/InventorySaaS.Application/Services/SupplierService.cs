@@ -130,10 +130,15 @@ public class SupplierService : ISupplierService
             throw new NotFoundException(nameof(SupplierInfo), id);
 
         if (request.Name is not null) supplier.Name = request.Name;
+        if (request.Code is not null) supplier.Code = request.Code;
         if (request.ContactPerson is not null) supplier.ContactPerson = request.ContactPerson;
         if (request.Email is not null) supplier.Email = request.Email;
         if (request.Phone is not null) supplier.Phone = request.Phone;
         if (request.Address is not null) supplier.Address = request.Address;
+        if (request.City is not null) supplier.City = request.City;
+        if (request.Country is not null) supplier.Country = request.Country;
+        if (request.TaxId is not null) supplier.TaxId = request.TaxId;
+        if (request.PaymentTerms is not null) supplier.PaymentTerms = request.PaymentTerms;
         if (request.IsActive.HasValue) supplier.IsActive = request.IsActive.Value;
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -148,5 +153,24 @@ public class SupplierService : ISupplierService
             supplier.City,
             supplier.Country,
             supplier.IsActive);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var supplier = await _context.Suppliers
+            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted, cancellationToken)
+            ?? throw new NotFoundException(nameof(SupplierInfo), id);
+
+        var hasOpenOrders = await _context.PurchaseOrders
+            .AnyAsync(po => po.SupplierId == id && !po.IsDeleted, cancellationToken);
+
+        if (hasOpenOrders)
+            throw new ConflictException("Cannot delete a supplier with existing purchase orders.");
+
+        supplier.IsDeleted = true;
+        supplier.DeletedAt = DateTime.UtcNow;
+        supplier.IsActive = false;
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

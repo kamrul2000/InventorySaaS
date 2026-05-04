@@ -6,7 +6,7 @@ import { PurchaseOrderDto } from '../models/domain.models';
 
 @Injectable({ providedIn: 'root' })
 export class PurchaseOrderService {
-  private readonly endpoint = '/api/v1/purchaseorders';
+  private readonly endpoint = '/api/v1/PurchaseOrders';
 
   constructor(private api: ApiService) {}
 

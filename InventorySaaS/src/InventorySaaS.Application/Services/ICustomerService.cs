@@ -21,4 +21,6 @@ public interface ICustomerService
         Guid id,
         UpdateCustomerRequest request,
         CancellationToken cancellationToken);
+
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 }

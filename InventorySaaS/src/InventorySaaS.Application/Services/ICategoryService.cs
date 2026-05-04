@@ -21,4 +21,6 @@ public interface ICategoryService
         Guid id,
         UpdateCategoryRequest request,
         CancellationToken cancellationToken);
+
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 }

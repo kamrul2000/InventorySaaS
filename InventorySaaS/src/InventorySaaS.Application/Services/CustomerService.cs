@@ -135,10 +135,17 @@ public class CustomerService : ICustomerService
             throw new NotFoundException(nameof(CustomerInfo), id);
 
         if (request.Name is not null) customer.Name = request.Name;
+        if (request.Code is not null) customer.Code = request.Code;
+        if (request.CustomerType is not null) customer.CustomerType = request.CustomerType;
         if (request.ContactPerson is not null) customer.ContactPerson = request.ContactPerson;
         if (request.Email is not null) customer.Email = request.Email;
         if (request.Phone is not null) customer.Phone = request.Phone;
         if (request.Address is not null) customer.Address = request.Address;
+        if (request.City is not null) customer.City = request.City;
+        if (request.Country is not null) customer.Country = request.Country;
+        if (request.TaxId is not null) customer.TaxId = request.TaxId;
+        if (request.PaymentTerms is not null) customer.PaymentTerms = request.PaymentTerms;
+        if (request.CreditLimit.HasValue) customer.CreditLimit = request.CreditLimit.Value;
         if (request.IsActive.HasValue) customer.IsActive = request.IsActive.Value;
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -154,5 +161,24 @@ public class CustomerService : ICustomerService
             customer.City,
             customer.Country,
             customer.IsActive);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var customer = await _context.Customers
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken)
+            ?? throw new NotFoundException(nameof(CustomerInfo), id);
+
+        var hasOpenOrders = await _context.SalesOrders
+            .AnyAsync(so => so.CustomerId == id && !so.IsDeleted, cancellationToken);
+
+        if (hasOpenOrders)
+            throw new ConflictException("Cannot delete a customer with existing sales orders.");
+
+        customer.IsDeleted = true;
+        customer.DeletedAt = DateTime.UtcNow;
+        customer.IsActive = false;
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

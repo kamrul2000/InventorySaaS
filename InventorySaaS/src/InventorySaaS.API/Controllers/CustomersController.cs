@@ -56,4 +56,12 @@ public class CustomersController : ControllerBase
         var result = await _customerService.UpdateAsync(id, request, cancellationToken);
         return Ok(result);
     }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "ManagerUp")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await _customerService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
 }

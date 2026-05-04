@@ -57,6 +57,21 @@ public class WarehousesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "ManagerUp")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await _warehouseService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpGet("{warehouseId:guid}/locations")]
+    public async Task<IActionResult> GetLocations(Guid warehouseId, CancellationToken cancellationToken)
+    {
+        var result = await _warehouseService.GetLocationsAsync(warehouseId, cancellationToken);
+        return Ok(result);
+    }
+
     [HttpPost("{warehouseId:guid}/locations")]
     [Authorize(Policy = "ManagerUp")]
     public async Task<IActionResult> CreateLocation(

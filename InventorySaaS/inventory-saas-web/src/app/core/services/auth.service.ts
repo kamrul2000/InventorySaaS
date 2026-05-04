@@ -54,7 +54,7 @@ export class AuthService {
   refreshToken(): Observable<AuthResponse> {
     const refreshToken = localStorage.getItem(this.REFRESH_TOKEN_KEY);
     const request: RefreshTokenRequest = { refreshToken: refreshToken || '' };
-    return this.http.post<AuthResponse>(`${this.baseUrl}/refresh`, request).pipe(
+    return this.http.post<AuthResponse>(`${this.baseUrl}/refresh-token`, request).pipe(
       tap((response) => this.handleAuthResponse(response))
     );
   }
@@ -68,6 +68,14 @@ export class AuthService {
   }
 
   logout(): void {
+    const refreshToken = this.getRefreshToken();
+    if (refreshToken) {
+      // Best-effort: revoke server-side refresh token. Don't block navigation if it fails.
+      this.http.post(`${this.baseUrl}/logout`, { refreshToken }).subscribe({
+        next: () => {},
+        error: () => {},
+      });
+    }
     this.clearStorage();
     this.currentUserSubject.next(null);
     this.router.navigate(['/auth/login']);

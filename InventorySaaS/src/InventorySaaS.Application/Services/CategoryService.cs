@@ -137,4 +137,21 @@ public class CategoryService : ICategoryService
             category.IsActive,
             category.Products.Count);
     }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var category = await _context.Categories
+            .Include(c => c.Products)
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, cancellationToken)
+            ?? throw new NotFoundException(nameof(Category), id);
+
+        if (category.Products.Any(p => !p.IsDeleted))
+            throw new ConflictException("Cannot delete a category that has products. Reassign or delete the products first.");
+
+        category.IsDeleted = true;
+        category.DeletedAt = DateTime.UtcNow;
+        category.IsActive = false;
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

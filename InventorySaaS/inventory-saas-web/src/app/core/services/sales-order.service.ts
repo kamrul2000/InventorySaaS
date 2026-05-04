@@ -6,7 +6,7 @@ import { SalesOrderDto } from '../models/domain.models';
 
 @Injectable({ providedIn: 'root' })
 export class SalesOrderService {
-  private readonly endpoint = '/api/v1/salesorders';
+  private readonly endpoint = '/api/v1/SalesOrders';
 
   constructor(private api: ApiService) {}
 
@@ -36,5 +36,9 @@ export class SalesOrderService {
 
   deliver(id: string, data?: unknown): Observable<void> {
     return this.api.post<void>(`${this.endpoint}/${id}/deliver`, data || {});
+  }
+
+  return(id: string, data: unknown): Observable<void> {
+    return this.api.post<void>(`${this.endpoint}/${id}/return`, data);
   }
 }

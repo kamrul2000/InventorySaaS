@@ -3,14 +3,8 @@ export interface PaginatedList<T> {
   pageNumber: number;
   totalPages: number;
   totalCount: number;
-  hasPrevious: boolean;
-  hasNext: boolean;
-}
-
-export interface ApiResult<T> {
-  isSuccess: boolean;
-  value?: T;
-  errors: string[];
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }
 
 export interface ProblemResponse {

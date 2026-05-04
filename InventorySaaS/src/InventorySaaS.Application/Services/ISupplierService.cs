@@ -21,4 +21,6 @@ public interface ISupplierService
         Guid id,
         UpdateSupplierRequest request,
         CancellationToken cancellationToken);
+
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 }

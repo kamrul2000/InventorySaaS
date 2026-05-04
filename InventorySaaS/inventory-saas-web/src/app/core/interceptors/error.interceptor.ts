@@ -14,9 +14,11 @@ export const errorInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, n
       } else if (error.status === 403) {
         notificationService.error('You do not have permission to perform this action.');
       } else if (error.status === 404) {
-        notificationService.error('The requested resource was not found.');
+        const pr = error.error as ProblemResponse;
+        notificationService.error(pr?.title ?? 'The requested resource was not found.');
       } else if (error.status === 409) {
-        notificationService.error('A conflict occurred. The resource may have been modified.');
+        const pr = error.error as ProblemResponse;
+        notificationService.error(pr?.title ?? 'A conflict occurred. The resource may have been modified.');
       } else if (error.status === 422 || error.status === 400) {
         const problemResponse = error.error as ProblemResponse;
         if (problemResponse?.errors) {

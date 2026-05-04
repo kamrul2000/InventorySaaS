@@ -1,13 +1,17 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDivider } from '@angular/material/divider';
+import { interval } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationApiService } from '../../core/services/notification-api.service';
 import { User } from '../../core/models/auth.models';
 import { NotificationDto } from '../../core/models/domain.models';
+
+const NOTIFICATION_POLL_INTERVAL_MS = 30_000;
 
 @Component({
   selector: 'app-header',
@@ -30,17 +34,27 @@ export class HeaderComponent implements OnInit {
   unreadCount = 0;
   recentNotifications: NotificationDto[] = [];
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     private authService: AuthService,
     private notificationApiService: NotificationApiService
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe((user) => {
-      this.currentUser = user;
-    });
+    this.authService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        this.currentUser = user;
+      });
+
     this.loadUnreadCount();
     this.loadRecentNotifications();
+
+    // Poll for new notifications every 30s while the header is alive.
+    interval(NOTIFICATION_POLL_INTERVAL_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadUnreadCount());
   }
 
   get userInitials(): string {

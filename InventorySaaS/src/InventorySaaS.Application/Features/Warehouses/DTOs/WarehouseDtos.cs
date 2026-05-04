@@ -31,8 +31,12 @@ public record CreateWarehouseRequest(
 
 public record UpdateWarehouseRequest(
     string? Name,
+    string? Code,
     string? Address,
     string? City,
+    string? Country,
+    string? ContactPerson,
+    string? ContactPhone,
     bool? IsDefault,
     bool? IsActive);
 

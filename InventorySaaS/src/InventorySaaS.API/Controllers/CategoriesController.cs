@@ -56,4 +56,12 @@ public class CategoriesController : ControllerBase
         var result = await _categoryService.UpdateAsync(id, request, cancellationToken);
         return Ok(result);
     }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "ManagerUp")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await _categoryService.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
 }
