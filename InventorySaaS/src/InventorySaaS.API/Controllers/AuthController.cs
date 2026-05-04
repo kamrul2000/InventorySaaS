@@ -1,6 +1,5 @@
-using InventorySaaS.Application.Features.Auth.Commands;
 using InventorySaaS.Application.Features.Auth.DTOs;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,66 +9,57 @@ namespace InventorySaaS.API.Controllers;
 [Route("api/v1/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IAuthService _authService;
 
-    public AuthController(IMediator mediator) => _mediator = mediator;
+    public AuthController(IAuthService authService) => _authService = authService;
 
     [HttpPost("register")]
     [AllowAnonymous]
-    public async Task<IActionResult> Register([FromBody] RegisterTenantRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterTenantRequest request, CancellationToken cancellationToken)
     {
-        var command = new RegisterTenantCommand(
-            request.CompanyName, request.AdminEmail, request.AdminPassword,
-            request.AdminFirstName, request.AdminLastName, request.Phone);
-
-        var result = await _mediator.Send(command);
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _authService.RegisterAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
-        var command = new LoginCommand(request.Email, request.Password);
-        var result = await _mediator.Send(command);
-        return result.IsSuccess ? Ok(result.Value) : Unauthorized(new { message = result.Errors.FirstOrDefault() });
+        var result = await _authService.LoginAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("refresh-token")]
     [AllowAnonymous]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        var command = new RefreshTokenCommand(request.RefreshToken);
-        var result = await _mediator.Send(command);
-        return result.IsSuccess ? Ok(result.Value) : Unauthorized(new { message = result.Errors.FirstOrDefault() });
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result = await _authService.RefreshTokenAsync(request.RefreshToken, ipAddress, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("forgot-password")]
     [AllowAnonymous]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
-        var command = new ForgotPasswordCommand(request.Email);
-        var result = await _mediator.Send(command);
+        await _authService.ForgotPasswordAsync(request.Email, cancellationToken);
         return Ok(new { message = "If an account with that email exists, a password reset link has been sent." });
     }
 
     [HttpPost("reset-password")]
     [AllowAnonymous]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
     {
-        var command = new ResetPasswordCommand(request.Email, request.Token, request.NewPassword);
-        var result = await _mediator.Send(command);
-        return result.IsSuccess ? Ok(new { message = "Password has been reset successfully." }) : BadRequest(result.Errors);
+        await _authService.ResetPasswordAsync(request, cancellationToken);
+        return Ok(new { message = "Password has been reset successfully." });
     }
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        // Revoke the refresh token by using RefreshTokenCommand-style approach
-        // Since RevokeTokenCommand doesn't exist, we use a simple revoke approach
-        var command = new RevokeTokenCommand(request.RefreshToken, HttpContext.Connection.RemoteIpAddress?.ToString());
-        await _mediator.Send(command);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+        await _authService.RevokeTokenAsync(request.RefreshToken, ipAddress, cancellationToken);
         return Ok(new { message = "Logged out successfully." });
     }
 }

@@ -1,8 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.SalesOrders.Commands;
 using InventorySaaS.Application.Features.SalesOrders.DTOs;
-using InventorySaaS.Application.Features.SalesOrders.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +11,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "ViewerUp")]
 public class SalesOrdersController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ISalesOrderService _salesOrderService;
 
-    public SalesOrdersController(IMediator mediator) => _mediator = mediator;
+    public SalesOrdersController(ISalesOrderService salesOrderService) => _salesOrderService = salesOrderService;
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -23,50 +21,47 @@ public class SalesOrdersController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetSalesOrdersQuery(pagination));
-        return Ok(result.Value);
+        var result = await _salesOrderService.GetAllAsync(pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetSalesOrderByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound();
+        var result = await _salesOrderService.GetByIdAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Create([FromBody] CreateSalesOrderRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateSalesOrderRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new CreateSalesOrderCommand(
-            request.CustomerId,
-            request.WarehouseId,
-            request.DeliveryDate,
-            request.ShippingAddress,
-            request.Notes,
-            request.Items));
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Errors);
+        var result = await _salesOrderService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPost("{id:guid}/confirm")]
     [Authorize(Policy = "ManagerUp")]
-    public async Task<IActionResult> Confirm(Guid id)
+    public async Task<IActionResult> Confirm(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new ConfirmSalesOrderCommand(id));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _salesOrderService.ConfirmAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("{id:guid}/deliver")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Deliver(Guid id, [FromBody] DeliverSalesOrderRequest request)
+    public async Task<IActionResult> Deliver(
+        Guid id,
+        [FromBody] DeliverSalesOrderRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeliverSalesOrderCommand(
-            id,
-            request.Items,
-            request.Notes));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _salesOrderService.DeliverAsync(id, request, cancellationToken);
+        return Ok(result);
     }
 }

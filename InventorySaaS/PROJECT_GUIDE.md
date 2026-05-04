@@ -102,8 +102,9 @@ Because if tomorrow you want to:
 - Defines what it MEANS to be a Product, not how it's stored
 
 #### `InventorySaaS.Application` — the use cases
-- Contains **commands** ("CreateProductCommand", "ApprovePurchaseOrderCommand") and **queries** ("GetProductsQuery")
-- Each command/query has a "handler" — the code that actually executes when that command is sent
+- Contains one **service per business module** — `IProductService`, `IInventoryService`, `IAuthService`, `ISalesOrderService`, etc.
+- Each service exposes the operations that module supports (`CreateAsync`, `GetByIdAsync`, `ApproveAsync`, etc.)
+- Services depend only on `IApplicationDbContext` (interface in this layer) and pure C# — no EF Core, no HTTP, no framework
 - This layer says *what* should happen, not *how*
 
 #### `InventorySaaS.Infrastructure` — the plumbing
@@ -124,12 +125,12 @@ Because if tomorrow you want to:
 A user clicks "Create Product" in the browser:
 
 1. **Frontend** sends `POST /api/v1/Products` with JSON
-2. **API layer** receives it (ProductsController)
-3. Controller creates a `CreateProductCommand` and sends it via MediatR
-4. **Application layer** picks up the command, validates it, runs the handler
-5. Handler asks **Infrastructure layer** to save to the database
-6. Database returns the saved product
-7. The result flows back up through Application → API → Frontend
+2. **API layer** receives it (`ProductsController`)
+3. Controller calls `_productService.CreateAsync(request, cancellationToken)`
+4. **Application layer**: `ProductService.CreateAsync` runs the use case — looks up the category, generates a unique SKU, builds the entity
+5. Service calls `_context.SaveChangesAsync()` on `IApplicationDbContext` — **Infrastructure layer**'s EF Core writes to SQL Server
+6. Service returns a `ProductDto`; the controller wraps it in `Ok(...)`
+7. If anything goes wrong, the service throws a typed exception (`NotFoundException` / `BadRequestException` / `ConflictException`); the global `ExceptionHandlingMiddleware` turns it into the right HTTP code + JSON envelope
 
 ---
 
@@ -151,37 +152,47 @@ The mechanism that makes sure tenant A can never see tenant B's data. In your pr
 #### **Clean Architecture**
 A way of organising code so the business rules are at the centre and don't depend on frameworks (database, web, etc.). Your four-project split is Clean Architecture.
 
-#### **CQRS (Command Query Responsibility Segregation)**
-A pattern where:
-- **Commands** = operations that change data (create, update, delete). They return success/failure.
-- **Queries** = operations that read data. They return data and never change anything.
+#### **Controller → Service pattern**
+The shape your project uses. Each controller action does **only** these three things:
+1. Bind the HTTP input (route + body + query) into a Request DTO
+2. Call the matching method on the service (`_productService.CreateAsync(request, ct)`)
+3. Wrap the returned DTO in `Ok(...)` (or `CreatedAtAction(...)`)
 
-You separate them so you can think about reads and writes differently. In your project, every action is either a `*Command` (e.g., `CreateProductCommand`) or a `*Query` (e.g., `GetProductsQuery`).
-
-#### **MediatR**
-A C# library that implements the **mediator pattern**. Instead of one class directly calling another, you "send" a message to a mediator and it finds the right handler.
-
-Why? Decoupling. Your controller doesn't know which class handles `CreateProductCommand` — it just sends the command. This makes it easy to add cross-cutting concerns like logging or validation in the middle (see "Pipeline Behaviors" below).
+The service is where the actual work lives — DB lookups, validations, business rules, building the response DTO. On failure the service **throws** a typed exception; it doesn't return a wrapper object.
 
 ```csharp
-// In ProductsController:
-var result = await _mediator.Send(new CreateProductCommand(...));
-// MediatR finds CreateProductCommandHandler and runs it.
+// In ProductsController — the whole action:
+[HttpPost]
+public async Task<IActionResult> Create(CreateProductRequest request, CancellationToken ct)
+{
+    var result = await _productService.CreateAsync(request, ct);
+    return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+}
 ```
 
-#### **Pipeline Behaviors**
-Code that runs **before/around** every command and query in MediatR. You have two:
-1. **ValidationBehavior** — runs FluentValidation on the command before the handler executes. Bad data never reaches your business logic.
-2. **LoggingBehavior** — logs every command with the user's email and timing.
+This used to be CQRS-with-MediatR (separate `*Command` + `*Handler` files dispatched via `IMediator`). It was migrated to plain services for clarity and lower file count. Validation and logging — previously implemented as MediatR pipeline behaviors — are now handled by ASP.NET's model binding and Serilog's request logger.
+
+#### **Domain exceptions**
+Defined in [Domain/Exceptions/DomainException.cs](src/InventorySaaS.Domain/Exceptions/DomainException.cs). Five types:
+- `NotFoundException` → 404
+- `ConflictException` → 409 (e.g. duplicate code, duplicate email)
+- `BadRequestException` → 400 (e.g. "quantity must be > 0")
+- `ForbiddenAccessException` → 403
+- `DomainException` (base) → 500 if uncaught
+
+Services throw them; the global [`ExceptionHandlingMiddleware`](src/InventorySaaS.API/Middleware/ExceptionHandlingMiddleware.cs) catches them and produces a uniform `ProblemResponse` JSON. This is *the* mechanism that keeps controllers thin.
 
 #### **DTO (Data Transfer Object)**
-A simple class that carries data between layers, e.g. between the API and the frontend, or between the handler and the controller. They're "anaemic" — no behaviour, just properties. Examples: `ProductDto`, `CategoryDto`.
+A simple class that carries data between layers, e.g. between the API and the frontend, or between the service and the controller. They're "anaemic" — no behaviour, just properties. Three flavours per module:
+- `XxxDto` — what the API returns
+- `CreateXxxRequest` — body for POST endpoints
+- `UpdateXxxRequest` — body for PUT endpoints
 
 #### **Entity**
 A class that represents a "thing" in your business — Product, Customer, Warehouse. Lives in the Domain layer. Maps to a database table via EF Core.
 
-#### **Repository pattern**
-Wrapping database access behind an interface so handlers don't directly know about EF Core. Your project uses a lighter version — handlers use `IApplicationDbContext` (an interface) which exposes `DbSet<>`s. Same idea, less ceremony.
+#### **Repository pattern (and why we don't use it)**
+The classic version wraps DbContext behind a per-entity interface (`IProductRepository`). Your project uses a lighter version — services depend on `IApplicationDbContext` (one interface, exposes every `DbSet<>`). Less ceremony, full LINQ power, identical testability via integration tests.
 
 ### Authentication & Authorization
 
@@ -383,29 +394,28 @@ USER CLICKS SAVE
   │
   ├─ 11. ProductsController.Create() runs
   │
-  ├─ 12. Controller creates CreateProductCommand and calls _mediator.Send(...)
+  ├─ 12. Controller calls _productService.CreateAsync(request, cancellationToken)
   │
-  ├─ 13. ValidationBehavior runs — FluentValidation rules run; if any fail, throw before handler
-  │
-  ├─ 14. LoggingBehavior logs "Handling CreateProductCommand by user x@y.com"
-  │
-  ├─ 15. CreateProductCommandHandler.Handle() runs:
+  ├─ 13. ProductService.CreateAsync runs:
   │      - reads tenant_id from ICurrentUserService
   │      - looks up category, brand, unit (or creates them)
   │      - generates unique SKU
   │      - creates new ProductInfo entity
   │      - calls _context.SaveChangesAsync()
+  │      (any business-rule failure → throws BadRequestException / NotFoundException /
+  │       ConflictException; ExceptionHandlingMiddleware turns it into the right status code)
   │
-  ├─ 16. EF Core translates to SQL: INSERT INTO Products (...) VALUES (...)
-  │      Global query filter ensures TenantId is always set
+  ├─ 14. SaveChangesAsync override auto-stamps CreatedAt / CreatedBy / TenantId
   │
-  ├─ 17. SQL Server executes the insert, returns the new row
+  ├─ 15. EF Core translates to SQL: INSERT INTO Products (...) VALUES (...)
   │
-  ├─ 18. Handler builds a ProductDto and returns Result<ProductDto>.Success(dto)
+  ├─ 16. SQL Server executes the insert, returns the new row
   │
-  ├─ 19. LoggingBehavior logs "Handled in 35ms"
+  ├─ 17. Service builds a ProductDto and returns it directly (no wrapper)
   │
-  ├─ 20. Controller returns CreatedAtAction(...) — HTTP 201 with the new product as JSON
+  ├─ 18. Serilog's built-in request logger emits "Request finished ... 201 ... 35ms"
+  │
+  ├─ 19. Controller returns CreatedAtAction(...) — HTTP 201 with the new product as JSON
   │
   ▼ NETWORK
   │
@@ -420,7 +430,7 @@ USER CLICKS SAVE
   └─ 25. User sees a green toast in the bottom-right
 ```
 
-That's the full path. ~25 steps for one button click. Most are invisible — the framework handles them. Your code lives in steps 1, 11, 12, 15, 22, 23.
+That's the full path. ~24 steps for one button click. Most are invisible — the framework handles them. Your code lives in steps 1, 11, 12, 13, 17, 21, 22.
 
 ---
 
@@ -431,20 +441,22 @@ That's the full path. ~25 steps for one button click. Most are invisible — the
 **What it does**: lets users register, log in, log out, refresh their token, reset their password.
 
 **Files**:
-- `Application/Features/Auth/` — commands (Login, Register, etc.)
+- `Application/Services/IAuthService.cs` + `AuthService.cs` — the 6 auth operations
+- `Application/Features/Auth/DTOs/AuthDtos.cs` — request and response shapes
 - `Infrastructure/Services/Auth/TokenService.cs` — generates and validates JWTs
 - `Infrastructure/Services/Auth/PasswordHasherService.cs` — hashes/verifies passwords
-- `API/Controllers/AuthController.cs` — HTTP endpoints
+- `API/Controllers/AuthController.cs` — HTTP endpoints (thin)
 
 **How login works (step by step)**:
 1. User POSTs `{ email, password }` to `/api/v1/auth/login`
-2. `LoginCommandHandler` looks up the user by email
-3. `PasswordHasherService.Verify(input, storedHash)` — slow PBKDF2 hash compare
-4. If valid, `TokenService.CreateAccessToken(user)` builds a JWT with claims (userId, tenantId, email, role)
-5. A **refresh token** row is also created in the database (long-lived, single-use)
-6. Both tokens are returned to the client
-7. Frontend stores both; the auth interceptor uses the JWT on every request
-8. When the JWT expires (60 min), the frontend silently calls `/auth/refresh-token` to get a new one
+2. `AuthController.Login` calls `_authService.LoginAsync(request, ct)`
+3. `AuthService.LoginAsync` looks up the user by email (`NormalizedEmail` index)
+4. `PasswordHasherService.Verify(input, storedHash)` — slow PBKDF2 hash compare
+5. If invalid → throws `UnauthorizedAccessException` → middleware → 401
+6. If valid → `TokenService.GenerateTokensAsync(user, roles)` builds a JWT (claims: userId, tenantId, email, role) **and** a refresh-token row in the database
+7. `LastLoginAt` is updated; both tokens are returned to the client
+8. Frontend stores both; the auth interceptor uses the JWT on every request
+9. When the JWT expires (60 min), the frontend silently calls `/auth/refresh-token` to get a new one (refresh-token rotation: old token revoked, new one issued)
 
 **Things you might be asked**:
 - *Why JWT and not session cookies?* → Stateless. No DB lookup per request. Easier to scale to multiple servers.
@@ -456,9 +468,10 @@ That's the full path. ~25 steps for one button click. Most are invisible — the
 **What it does**: lets users create, list, view, edit, delete products. Includes the AI-powered "Scan from Photo".
 
 **Files**:
-- `Application/Features/Products/Commands/CreateProductCommand.cs` etc.
-- `Application/Features/Products/Queries/GetProductsQuery.cs` etc.
-- `API/Controllers/ProductsController.cs`
+- `Application/Services/IProductService.cs` + `ProductService.cs` — `GetAllAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
+- `Application/Features/Products/DTOs/ProductDtos.cs` — `ProductDto`, `CreateProductRequest`, `UpdateProductRequest`
+- `Application/Features/Products/DTOs/ProductExtractionDtos.cs` — vision result shape
+- `API/Controllers/ProductsController.cs` — thin controller; the `extract-from-image` action calls `IProductExtractionService` directly (no service intermediation since it doesn't persist)
 - `Infrastructure/Services/AI/GeminiProductExtractionService.cs`
 
 **SKU auto-generation**:
@@ -474,7 +487,7 @@ That's the full path. ~25 steps for one button click. Most are invisible — the
 5. Gemini returns JSON: `{ name, brand, barcode, suggestedCategory, suggestedSellingPrice, ... }`
 6. The service parses and returns it as a `ProductExtractionResult` DTO
 7. Frontend pre-fills the form with these values
-8. User reviews/edits, clicks Save → goes through the normal `CreateProductCommand` path
+8. User reviews/edits, clicks Save → goes through the normal `POST /api/v1/Products` → `IProductService.CreateAsync` path
 
 The extract endpoint **does not save anything**. It's just a "draft generator". This is deliberate — the user always has the chance to review.
 
@@ -488,10 +501,10 @@ The extract endpoint **does not save anything**. It's just a "draft generator". 
 
 **Stock-in flow** (when goods arrive):
 1. User submits a "Stock In" form
-2. `StockInCommand` is sent
-3. Handler creates a new `InventoryTransaction` row (audit)
-4. Handler updates or creates the matching `InventoryBalance` row
-5. Both saves happen in the same DB transaction — either both succeed or both roll back
+2. `POST /api/v1/Inventory/stock-in` → `InventoryService.StockInAsync(request, ct)`
+3. Service creates a new `InventoryTransaction` row (audit)
+4. Service updates or creates the matching `InventoryBalance` row
+5. Both saves happen in the same `SaveChangesAsync` call — either both succeed or both roll back (EF Core transaction)
 
 **Why the ledger pattern?**:
 You can always reconstruct the current balance by summing the transactions. If something goes wrong with the cached balance, the ledger is the source of truth.
@@ -501,10 +514,10 @@ You can always reconstruct the current balance by summing the transactions. If s
 **What they do**: model the lifecycle of buying from suppliers (PO) and selling to customers (SO).
 
 **State machine**:
-- PO: Draft → Submitted → Approved → Receiving → Received
-- SO: Draft → Confirmed → Delivered → (Returned)
+- PO: Draft → Submitted → Approved → PartiallyReceived → Received
+- SO: Draft → Confirmed → PartiallyDelivered → Delivered → (Returned)
 
-Each state transition is a separate command (`ApprovePurchaseOrderCommand`, `ReceiveGoodsCommand`, etc.) — you can't skip steps.
+Each state transition is a separate service method (`PurchaseOrderService.ApproveAsync`, `PurchaseOrderService.ReceiveAsync`, `SalesOrderService.ConfirmAsync`, `SalesOrderService.DeliverAsync`, `SalesOrderService.ReturnAsync`) — you can't skip steps. The service inspects the current `Status` and throws `BadRequestException` if the transition is illegal (e.g. trying to deliver a Draft order).
 
 ### 6.5 Reports & PDF
 
@@ -564,7 +577,7 @@ Below: questions grouped by topic, each with a **30-second answer** (what to say
 #### Q: "Walk me through what this project does."
 **30s**: It's a multi-tenant SaaS inventory management system. Many companies can use it at the same time, each seeing only their own data. It covers products, warehouses, stock movements, purchase and sales orders, and reports. It also has two AI features: one that extracts product info from a photo, and one that's a chat assistant for asking questions about your inventory.
 
-**Deeper**: I built the backend in .NET 10 using Clean Architecture and CQRS via MediatR. The frontend is Angular 19. Data is in SQL Server with EF Core. Background tasks run on Hangfire. The AI is Google's Gemini, called over REST.
+**Deeper**: I built the backend in .NET 10 using Clean Architecture in four projects (Domain / Application / Infrastructure / API), with thin controllers delegating to one service per business module. The frontend is Angular 19. Data is in SQL Server with EF Core. Background tasks run on Hangfire. The AI is Google's Gemini, called over REST.
 
 #### Q: "Why did you build this?"
 **Honest answer**: It started as a learning project to combine modern .NET, Angular, AI, and proper architecture in one place. Inventory was the domain because it has rich relationships (warehouses, batches, expiries) that exercise the patterns properly.
@@ -576,11 +589,10 @@ Below: questions grouped by topic, each with a **30-second answer** (what to say
 
 **Deeper**: The benefit shows up when something changes. For example, when I added the AI scan feature, I added one interface in Application (`IProductExtractionService`), one implementation in Infrastructure (`GeminiProductExtractionService`), and one controller action — without touching anything in Domain. Adding bulk-CSV import would be the same pattern.
 
-#### Q: "What's CQRS?"
-**30s**: Command Query Responsibility Segregation. Commands change state — `CreateProductCommand`, `ApprovePurchaseOrderCommand`. Queries return data — `GetProductsQuery`. They never mix. Each has its own handler. I use MediatR to wire it all together.
+#### Q: "Why Controller → Service instead of CQRS / MediatR?"
+**30s**: I started with CQRS via MediatR — every endpoint had a separate `*Command` + `*Handler` + `*Validator` (3-4 files per endpoint). For an inventory app with ~80 endpoints, that's a lot of file churn for very little extra value: there's no read model that scales separately from the write model, no Event Sourcing, no message bus. So I migrated to one service per business module — `IProductService` with `CreateAsync` / `GetByIdAsync` / etc. Same Clean Architecture rings, same tests, half the files, simpler stack traces, and validation/logging are now framework-native (model-binding + Serilog request logger).
 
-#### Q: "Why MediatR?"
-**30s**: Decoupling. Controllers don't know which class handles a command, they just send it. That makes it easy to insert cross-cutting concerns — I have a ValidationBehavior that runs FluentValidation before any handler, and a LoggingBehavior that logs every command with timing. Adding more is one class.
+**Deeper**: The migration was incremental — one module at a time, build clean after each. Domain exceptions plus a single `ExceptionHandlingMiddleware` replaced the `Result<T>` wrapper. The controllers became genuinely thin (2 lines per action). The Infrastructure layer didn't change at all. If a module ever needs CQRS again — say, a separate read store backed by a denormalised view — adding it is a localised change to that one service.
 
 ### Multi-tenancy
 
@@ -672,9 +684,9 @@ Every architectural choice has a downside. Here are the ones in your project, wh
 **Gained**: cheap, simple, easy to onboard new tenants.
 **Lost**: data is physically mingled. A bug in the global filter could leak data. (Mitigation: aggressive testing, integration tests covering tenant boundaries.)
 
-### CQRS via MediatR
-**Gained**: clear separation, easy to add cross-cutting concerns (validation, logging).
-**Lost**: more files. Every action is a command + handler + DTO + validator. Worth it past ~30 endpoints; overkill for a 5-endpoint CRUD.
+### Controller → Service (replaced CQRS-via-MediatR)
+**Gained**: half the file count per module, flat stack traces (Controller → Service → DbContext), simpler onboarding for new devs, faster builds, no MediatR / FluentValidation / AutoMapper dependencies.
+**Lost**: MediatR's "free" cross-cutting concerns. Validation now lives at model-binding (data annotations) + inline service guards; logging is the framework's request logger plus correlation IDs. Trade was correct here because the project doesn't have separate read/write models, no event sourcing, and no message bus — i.e. CQRS wasn't earning its keep.
 
 ### Hangfire in-process
 **Gained**: simple deploy. The API and the job worker are the same binary.
@@ -729,7 +741,7 @@ Use this when showing the project. Hit the highlights, don't try to show everyth
 > "The backend builds a system prompt with a snapshot of my real inventory — totals, low stock items, recent transactions — and streams Gemini's response token-by-token via Server-Sent Events. So you see the answer appear in real time."
 
 ### Minute 5 — Architecture wrap-up
-> "Architecturally it's Clean Architecture in four projects — Domain, Application, Infrastructure, API — with CQRS via MediatR. Multi-tenancy is enforced by EF Core global query filters reading the tenant ID from the JWT. Background jobs (low stock checks, expiry alerts) run hourly and daily on Hangfire. JWT auth with refresh-token rotation. Reports export to PDF via QuestPDF. The chat and scan features both call Gemini's REST API directly — no SDK."
+> "Architecturally it's Clean Architecture in four projects — Domain, Application, Infrastructure, API. Controllers are thin and delegate to service classes; failures throw typed domain exceptions caught by one global middleware. Multi-tenancy uses EF Core global query filters reading the tenant ID from the JWT. Background jobs (low stock checks, expiry alerts) run hourly and daily on Hangfire. JWT auth with refresh-token rotation. Reports export to PDF via QuestPDF. The chat and scan features both call Gemini's REST API directly — no SDK."
 
 > "Everything is dockerised, with a GitHub Action that deploys to Azure App Service on push to main."
 
@@ -758,9 +770,9 @@ Confidence comes from honesty. "I haven't built X but I know what I'd do" is a s
 | SaaS | Software you log into, not install |
 | Multi-tenant | One app, many isolated customers |
 | Clean Architecture | Business rules don't depend on frameworks |
-| CQRS | Commands change data, queries read data |
-| MediatR | Library that routes commands to handlers |
-| MediatR pipeline behavior | Code that runs around every command (e.g. validation) |
+| Controller → Service pattern | Thin controller delegates to a focused service class |
+| Domain exception | Typed `Exception` subclass that the global middleware maps to an HTTP code |
+| `IApplicationDbContext` | Application-layer interface that exposes EF DbSets without referencing EF Core |
 | DTO | Plain object that carries data between layers |
 | Entity | Class representing a thing in your business |
 | EF Core | C# ORM that turns LINQ into SQL |

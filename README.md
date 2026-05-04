@@ -89,8 +89,8 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 
 - **AI Product Scan** — upload a product photo, the API extracts name, brand, unit, barcode, category suggestion, suggested price, and expiry-tracking hint via Gemini Vision. The Angular form pre-fills automatically.
 - **AI Inventory Copilot** — a context-aware chat assistant (Gemini, server-sent events) that has live access to the tenant's inventory, low-stock state, recent transactions, sales and purchase activity. Ask "what's running low?" and it answers with real numbers.
-- **Strict multi-tenancy** — every tenant-scoped table carries a `TenantId`; EF Core global query filters enforce isolation transparently. SuperAdmin can cross tenants; everyone else is bounded.
-- **Clean Architecture + CQRS** — Domain / Application / Infrastructure / API split, MediatR commands and queries, FluentValidation pipeline behavior, structured logging behavior.
+- **Strict multi-tenancy** — every tenant-scoped table carries a `TenantId`; EF Core global query filters and an automatic `SaveChangesAsync` interceptor stamp tenant context. SuperAdmin can cross tenants; everyone else is bounded.
+- **Clean Architecture + Controller→Service** — Domain / Application / Infrastructure / API split. Thin controllers delegate to focused service classes; failures flow through typed domain exceptions handled by a single global middleware.
 - **Operational depth** — multi-warehouse with locations, batch and expiry tracking, stock in/out/transfer/adjustment, purchase requisitions and goods receipts, sales-order lifecycle (draft → confirm → deliver → return), reorder-level alerts.
 - **PDF reporting** — stock summary, low stock, expiry, inventory valuation — each rendered server-side via QuestPDF.
 - **Proactive alerts** — Hangfire recurring jobs scan for low stock hourly and expiring stock daily, posting to an in-app notification feed.
@@ -108,9 +108,9 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 | Cache           | Redis (optional, falls back to in-memory)               |
 | Background jobs | Hangfire on SQL Server                                  |
 | Auth            | JWT Bearer + refresh-token rotation                     |
-| Validation      | FluentValidation (MediatR pipeline behavior)            |
-| Mapping         | AutoMapper                                              |
-| Logging         | Serilog (console + rolling file, structured)            |
+| App pattern     | Controller → Service → DbContext (no MediatR ceremony)  |
+| Errors          | Typed domain exceptions → global `ExceptionHandlingMiddleware` (uniform JSON envelope) |
+| Logging         | Serilog (console + rolling file, structured) with correlation IDs |
 | AI              | Google Gemini (`gemini-2.5-flash-lite`) — chat + vision |
 | PDF             | QuestPDF                                                |
 | Rate limiting   | AspNetCoreRateLimit (per-IP, per-endpoint rules)        |
@@ -123,8 +123,8 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 ```
 InventorySaaS/
 ├── src/
-│   ├── InventorySaaS.Domain/         entities, enums, value objects, domain interfaces
-│   ├── InventorySaaS.Application/    MediatR commands/queries, DTOs, validators, behaviors
+│   ├── InventorySaaS.Domain/         entities, enums, base classes, domain interfaces, exceptions
+│   ├── InventorySaaS.Application/    services (one per module), DTOs, IApplicationDbContext
 │   ├── InventorySaaS.Infrastructure/ EF Core, services (auth, AI, email, storage, PDF, jobs)
 │   └── InventorySaaS.API/            controllers, middleware, Program.cs
 ├── tests/
@@ -140,9 +140,12 @@ InventorySaaS/
 ```
 HTTP → CorrelationIdMiddleware → ExceptionHandlingMiddleware → JWT auth
      → TenantResolutionMiddleware → Authorization policy
-     → Controller → MediatR → ValidationBehavior → LoggingBehavior → Handler
-     → EF Core (with global tenant filter) → SQL Server
+     → Controller (thin) → Service → IApplicationDbContext
+     → EF Core (with global tenant filter + soft-delete filter) → SQL Server
 ```
+
+Services throw `NotFoundException` / `ConflictException` / `BadRequestException` on failure;
+the global exception middleware maps each to a uniform `ProblemResponse` JSON with the right HTTP code.
 
 ---
 
@@ -264,14 +267,11 @@ Examples:
 
 The frontend renders responses with markdown formatting.
 
-### 3. CQRS with Pipeline Behaviors
+### 3. Service-based Application Layer
 
-Every command and query flows through:
+Each module exposes a single `IXxxService` (e.g. `IProductService`, `IInventoryService`). Controllers are intentionally thin — they bind input, call the service, and return its DTO. There is no MediatR, no `Result<T>` wrapper, no per-request pipeline. Failures throw typed domain exceptions (`NotFoundException`, `ConflictException`, `BadRequestException`) which the [ExceptionHandlingMiddleware](InventorySaaS/src/InventorySaaS.API/Middleware/ExceptionHandlingMiddleware.cs) translates to 404 / 409 / 400 with a uniform JSON shape.
 
-- **ValidationBehavior** — runs all registered FluentValidation validators; failures short-circuit before the handler runs
-- **LoggingBehavior** — structured Serilog entries with user email, user ID, request type, and timing
-
-Adding a new validator or wrapping a new cross-cutting concern is a one-class change.
+Cross-cutting concerns are now framework-native: ASP.NET's request logging covers the timing dimension, Serilog correlation IDs tie everything to one request, and validation lives at the model-binding layer (data annotations on Request DTOs) plus inline guards in services. Adding a new endpoint is a single service method + a single controller action.
 
 ### 4. Hangfire Recurring Jobs + Dashboard
 

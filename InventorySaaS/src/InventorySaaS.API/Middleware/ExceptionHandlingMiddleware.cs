@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using FluentValidation;
 using InventorySaaS.Domain.Exceptions;
 
 namespace InventorySaaS.API.Middleware;
@@ -34,19 +33,6 @@ public class ExceptionHandlingMiddleware
 
         var (statusCode, response) = exception switch
         {
-            ValidationException validationEx => (
-                HttpStatusCode.BadRequest,
-                new ProblemResponse
-                {
-                    Type = "ValidationError",
-                    Title = "One or more validation errors occurred.",
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Errors = validationEx.Errors
-                        .GroupBy(e => e.PropertyName)
-                        .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()),
-                    CorrelationId = correlationId
-                }),
-
             NotFoundException notFoundEx => (
                 HttpStatusCode.NotFound,
                 new ProblemResponse

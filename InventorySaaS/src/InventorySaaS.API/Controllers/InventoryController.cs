@@ -1,8 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Inventory.Commands;
 using InventorySaaS.Application.Features.Inventory.DTOs;
-using InventorySaaS.Application.Features.Inventory.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +11,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "ViewerUp")]
 public class InventoryController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IInventoryService _inventoryService;
 
-    public InventoryController(IMediator mediator) => _mediator = mediator;
+    public InventoryController(IInventoryService inventoryService) => _inventoryService = inventoryService;
 
     [HttpGet("balances")]
     public async Task<IActionResult> GetBalances(
@@ -25,11 +23,12 @@ public class InventoryController : ControllerBase
         [FromQuery] Guid? productId = null,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetInventoryBalancesQuery(pagination, warehouseId, productId));
-        return Ok(result.Value);
+        var result = await _inventoryService.GetBalancesAsync(pagination, warehouseId, productId, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("transactions")]
@@ -40,68 +39,43 @@ public class InventoryController : ControllerBase
         [FromQuery] Guid? productId = null,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetInventoryTransactionsQuery(pagination, warehouseId, productId));
-        return Ok(result.Value);
+        var result = await _inventoryService.GetTransactionsAsync(pagination, warehouseId, productId, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("stock-in")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> StockIn([FromBody] StockInRequest request)
+    public async Task<IActionResult> StockIn([FromBody] StockInRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new StockInCommand(
-            request.ProductId,
-            request.WarehouseId,
-            request.LocationId,
-            request.Quantity,
-            request.UnitCost,
-            request.BatchNumber,
-            request.LotNumber,
-            request.ExpiryDate,
-            request.Notes));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _inventoryService.StockInAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("stock-out")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> StockOut([FromBody] StockOutRequest request)
+    public async Task<IActionResult> StockOut([FromBody] StockOutRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new StockOutCommand(
-            request.ProductId,
-            request.WarehouseId,
-            request.LocationId,
-            request.Quantity,
-            request.Notes));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _inventoryService.StockOutAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("transfer")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Transfer([FromBody] StockTransferRequest request)
+    public async Task<IActionResult> Transfer([FromBody] StockTransferRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new StockTransferCommand(
-            request.ProductId,
-            request.SourceWarehouseId,
-            request.SourceLocationId,
-            request.DestinationWarehouseId,
-            request.DestinationLocationId,
-            request.Quantity,
-            request.Notes));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _inventoryService.TransferAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("adjustment")]
     [Authorize(Policy = "ManagerUp")]
-    public async Task<IActionResult> Adjust([FromBody] StockAdjustmentRequest request)
+    public async Task<IActionResult> Adjust([FromBody] StockAdjustmentRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new StockAdjustmentCommand(
-            request.ProductId,
-            request.WarehouseId,
-            request.LocationId,
-            request.NewQuantity,
-            request.Reason));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _inventoryService.AdjustAsync(request, cancellationToken);
+        return Ok(result);
     }
 }

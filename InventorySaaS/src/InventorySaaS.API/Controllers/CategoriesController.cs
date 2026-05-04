@@ -1,8 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Categories.Commands;
 using InventorySaaS.Application.Features.Categories.DTOs;
-using InventorySaaS.Application.Features.Categories.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +11,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "ViewerUp")]
 public class CategoriesController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ICategoryService _categoryService;
 
-    public CategoriesController(IMediator mediator) => _mediator = mediator;
+    public CategoriesController(ICategoryService categoryService) => _categoryService = categoryService;
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -23,41 +21,39 @@ public class CategoriesController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetCategoriesQuery(pagination));
-        return Ok(result.Value);
+        var result = await _categoryService.GetAllAsync(pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetCategoryByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound();
+        var result = await _categoryService.GetByIdAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateCategoryRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new CreateCategoryCommand(
-            request.Name,
-            request.Description,
-            request.ParentCategoryId));
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Errors);
+        var result = await _categoryService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryRequest request)
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] UpdateCategoryRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new UpdateCategoryCommand(
-            id,
-            request.Name,
-            request.Description,
-            request.ParentCategoryId,
-            request.IsActive));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _categoryService.UpdateAsync(id, request, cancellationToken);
+        return Ok(result);
     }
 }

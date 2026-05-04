@@ -1,7 +1,5 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Notifications.Commands;
-using InventorySaaS.Application.Features.Notifications.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,9 +10,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize]
 public class NotificationsController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly INotificationService _notificationService;
 
-    public NotificationsController(IMediator mediator) => _mediator = mediator;
+    public NotificationsController(INotificationService notificationService) => _notificationService = notificationService;
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -22,24 +20,25 @@ public class NotificationsController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] bool? unreadOnly = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, null, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetNotificationsQuery(pagination, unreadOnly));
-        return Ok(result.Value);
+        var result = await _notificationService.GetAllAsync(pagination, unreadOnly, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPut("{id:guid}/read")]
-    public async Task<IActionResult> MarkRead(Guid id)
+    public async Task<IActionResult> MarkRead(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new MarkNotificationReadCommand(id));
-        return result.IsSuccess ? Ok() : BadRequest(result.Errors);
+        await _notificationService.MarkReadAsync(id, cancellationToken);
+        return Ok();
     }
 
     [HttpPut("read-all")]
-    public async Task<IActionResult> MarkAllRead()
+    public async Task<IActionResult> MarkAllRead(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new MarkAllNotificationsReadCommand());
+        await _notificationService.MarkAllReadAsync(cancellationToken);
         return Ok();
     }
 }

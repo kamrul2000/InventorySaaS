@@ -1,8 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Users.Commands;
 using InventorySaaS.Application.Features.Users.DTOs;
-using InventorySaaS.Application.Features.Users.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +11,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "TenantAdminOnly")]
 public class UsersController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IUserService _userService;
 
-    public UsersController(IMediator mediator) => _mediator = mediator;
+    public UsersController(IUserService userService) => _userService = userService;
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -23,54 +21,46 @@ public class UsersController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetUsersQuery(pagination));
-        return Ok(result.Value);
+        var result = await _userService.GetAllAsync(pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetUserByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound();
+        var result = await _userService.GetByIdAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateUserRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new CreateUserCommand(
-            request.Email,
-            request.FirstName,
-            request.LastName,
-            request.Password,
-            request.Phone,
-            request.Roles));
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Errors);
+        var result = await _userService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request)
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] UpdateUserRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new UpdateUserCommand(
-            id,
-            request.FirstName,
-            request.LastName,
-            request.Phone,
-            request.IsActive,
-            request.Roles));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _userService.UpdateAsync(id, request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("invite")]
-    public async Task<IActionResult> Invite([FromBody] InviteUserRequest request)
+    public async Task<IActionResult> Invite(
+        [FromBody] InviteUserRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new InviteUserCommand(
-            request.Email,
-            request.FirstName,
-            request.LastName,
-            request.Roles));
-        return result.IsSuccess ? Ok(new { message = "Invitation sent successfully." }) : BadRequest(result.Errors);
+        await _userService.InviteAsync(request, cancellationToken);
+        return Ok(new { message = "Invitation sent successfully." });
     }
 }

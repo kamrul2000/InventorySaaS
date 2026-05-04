@@ -694,19 +694,32 @@ Authorization: Bearer <your-jwt-token>
 }
 ```
 
-Response:
+Response (200):
 ```json
 {
-  "isSuccess": true,
-  "value": {
-    "accessToken": "eyJhbG...",
-    "refreshToken": "abc123...",
-    "expiresAt": "2026-03-14T13:00:00Z",
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123...",
+  "expiresAt": "2026-03-14T13:00:00Z",
+  "user": {
+    "id": "0607f382-eac0-485b-81fe-e62e569f83fe",
     "email": "admin@demo-company.com",
-    "fullName": "Demo Admin",
+    "firstName": "Demo",
+    "lastName": "Admin",
+    "phone": null,
+    "isActive": true,
     "roles": ["TenantAdmin"],
-    "tenantId": "..."
+    "createdAt": "2026-03-11T09:02:53Z"
   }
+}
+```
+
+Failure responses follow a uniform shape from the global exception middleware:
+```json
+{
+  "type": "Unauthorized",
+  "title": "Invalid email or password.",
+  "status": 401,
+  "correlationId": "<request-correlation-id>"
 }
 ```
 
@@ -932,6 +945,10 @@ docker-compose up -d --build
 **Error: "IApplicationDbContext not registered"**
 - Ensure `ApplicationDbContext` implements `IApplicationDbContext`
 - Check `Infrastructure/DependencyInjection.cs` has the registration
+
+**Error: service interface not registered (e.g. `IProductService`)**
+- Add `services.AddScoped<IProductService, ProductService>();` in `Application/DependencyInjection.cs`
+- All 14 services are registered there — if a new module is added, its registration line goes here
 
 ### Frontend won't start
 

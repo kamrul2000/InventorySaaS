@@ -1,9 +1,7 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Products.Commands;
 using InventorySaaS.Application.Features.Products.DTOs;
-using InventorySaaS.Application.Features.Products.Queries;
 using InventorySaaS.Application.Interfaces;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,16 +16,16 @@ public class ProductsController : ControllerBase
     private static readonly HashSet<string> AllowedImageMimeTypes =
         new(StringComparer.OrdinalIgnoreCase) { "image/jpeg", "image/png" };
 
-    private readonly IMediator _mediator;
+    private readonly IProductService _productService;
     private readonly IProductExtractionService _extractionService;
     private readonly ILogger<ProductsController> _logger;
 
     public ProductsController(
-        IMediator mediator,
+        IProductService productService,
         IProductExtractionService extractionService,
         ILogger<ProductsController> logger)
     {
-        _mediator = mediator;
+        _productService = productService;
         _extractionService = extractionService;
         _logger = logger;
     }
@@ -41,67 +39,48 @@ public class ProductsController : ControllerBase
         [FromQuery] Guid? brandId = null,
         [FromQuery] bool? isActive = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetProductsQuery(pagination, categoryId, brandId, isActive));
-        return Ok(result.Value);
+        var result = await _productService.GetAllAsync(pagination, categoryId, brandId, isActive, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetProductByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound();
+        var result = await _productService.GetByIdAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateProductRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new CreateProductCommand(
-            request.Name,
-            request.Description,
-            request.CategoryId,
-            request.BrandId,
-            request.UnitOfMeasureId,
-            request.CostPrice,
-            request.SellingPrice,
-            request.ReorderLevel ?? 0,
-            request.Barcode,
-            request.TrackExpiry,
-            request.MinimumOrderQuantity ?? 1,
-            request.BrandName,
-            request.UnitName));
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Errors);
+        var result = await _productService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] UpdateProductRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new UpdateProductCommand(
-            id,
-            request.Name,
-            request.Description,
-            request.CategoryId,
-            request.BrandId,
-            request.UnitOfMeasureId,
-            request.CostPrice,
-            request.SellingPrice,
-            request.ReorderLevel,
-            request.Barcode,
-            request.TrackExpiry,
-            request.IsActive));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _productService.UpdateAsync(id, request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = "ManagerUp")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteProductCommand(id));
-        return result.IsSuccess ? NoContent() : BadRequest(result.Errors);
+        await _productService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 
     /// <summary>

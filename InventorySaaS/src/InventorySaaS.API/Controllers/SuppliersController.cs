@@ -1,8 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Suppliers.Commands;
 using InventorySaaS.Application.Features.Suppliers.DTOs;
-using InventorySaaS.Application.Features.Suppliers.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +11,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "ViewerUp")]
 public class SuppliersController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ISupplierService _supplierService;
 
-    public SuppliersController(IMediator mediator) => _mediator = mediator;
+    public SuppliersController(ISupplierService supplierService) => _supplierService = supplierService;
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -23,50 +21,39 @@ public class SuppliersController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetSuppliersQuery(pagination));
-        return Ok(result.Value);
+        var result = await _supplierService.GetAllAsync(pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetSupplierByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound();
+        var result = await _supplierService.GetByIdAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Create([FromBody] CreateSupplierRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateSupplierRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new CreateSupplierCommand(
-            request.Name,
-            request.Code,
-            request.ContactPerson,
-            request.Email,
-            request.Phone,
-            request.Address,
-            request.City,
-            request.Country,
-            request.TaxId,
-            request.PaymentTerms));
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Errors);
+        var result = await _supplierService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSupplierRequest request)
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] UpdateSupplierRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new UpdateSupplierCommand(
-            id,
-            request.Name,
-            request.ContactPerson,
-            request.Email,
-            request.Phone,
-            request.Address,
-            request.IsActive));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _supplierService.UpdateAsync(id, request, cancellationToken);
+        return Ok(result);
     }
 }

@@ -1,8 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Tenants.Commands;
 using InventorySaaS.Application.Features.Tenants.DTOs;
-using InventorySaaS.Application.Features.Tenants.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +11,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize]
 public class TenantsController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ITenantService _tenantService;
 
-    public TenantsController(IMediator mediator) => _mediator = mediator;
+    public TenantsController(ITenantService tenantService) => _tenantService = tenantService;
 
     [HttpGet]
     [Authorize(Policy = "SuperAdminOnly")]
@@ -24,34 +22,28 @@ public class TenantsController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetAllTenantsQuery(pagination));
-        return Ok(result.Value);
+        var result = await _tenantService.GetAllAsync(pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("current")]
-    public async Task<IActionResult> GetCurrent()
+    public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetTenantQuery());
-        return result.IsSuccess ? Ok(result.Value) : NotFound();
+        var result = await _tenantService.GetCurrentAsync(cancellationToken);
+        return Ok(result);
     }
 
     [HttpPut("current")]
     [Authorize(Policy = "TenantAdminOnly")]
-    public async Task<IActionResult> Update([FromBody] UpdateTenantRequest request)
+    public async Task<IActionResult> Update(
+        [FromBody] UpdateTenantRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new UpdateTenantCommand(
-            request.Name,
-            request.ContactEmail,
-            request.ContactPhone,
-            request.Address,
-            request.City,
-            request.Country,
-            request.Currency,
-            request.Timezone,
-            request.LogoUrl));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _tenantService.UpdateCurrentAsync(request, cancellationToken);
+        return Ok(result);
     }
 }

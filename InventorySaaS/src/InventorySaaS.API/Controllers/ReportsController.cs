@@ -1,7 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.Reports.Queries;
 using InventorySaaS.Application.Interfaces;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,12 +11,12 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "ViewerUp")]
 public class ReportsController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IReportService _reportService;
     private readonly IPdfReportService _pdfService;
 
-    public ReportsController(IMediator mediator, IPdfReportService pdfService)
+    public ReportsController(IReportService reportService, IPdfReportService pdfService)
     {
-        _mediator = mediator;
+        _reportService = reportService;
         _pdfService = pdfService;
     }
 
@@ -29,23 +28,24 @@ public class ReportsController : ControllerBase
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false,
         [FromQuery] Guid? warehouseId = null,
-        [FromQuery] Guid? categoryId = null)
+        [FromQuery] Guid? categoryId = null,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetStockSummaryQuery(pagination, warehouseId, categoryId));
-        return Ok(result.Value);
+        var result = await _reportService.GetStockSummaryAsync(pagination, warehouseId, categoryId, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("stock-summary/pdf")]
     public async Task<IActionResult> StockSummaryPdf(
         [FromQuery] Guid? warehouseId = null,
-        [FromQuery] Guid? categoryId = null)
+        [FromQuery] Guid? categoryId = null,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(1, 10000, null, null, false);
-        var result = await _mediator.Send(new GetStockSummaryQuery(pagination, warehouseId, categoryId));
-        if (!result.IsSuccess) return BadRequest(result.Errors);
+        var result = await _reportService.GetStockSummaryAsync(pagination, warehouseId, categoryId, cancellationToken);
 
-        var pdf = _pdfService.GenerateStockSummaryPdf(result.Value!.Items, "InventorySaaS");
+        var pdf = _pdfService.GenerateStockSummaryPdf(result.Items, "InventorySaaS");
         return File(pdf, "application/pdf", $"Stock_Summary_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
@@ -55,21 +55,21 @@ public class ReportsController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetLowStockReportQuery(pagination));
-        return Ok(result.Value);
+        var result = await _reportService.GetLowStockAsync(pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("low-stock/pdf")]
-    public async Task<IActionResult> LowStockPdf()
+    public async Task<IActionResult> LowStockPdf(CancellationToken cancellationToken)
     {
         var pagination = new PaginationParams(1, 10000, null, null, false);
-        var result = await _mediator.Send(new GetLowStockReportQuery(pagination));
-        if (!result.IsSuccess) return BadRequest(result.Errors);
+        var result = await _reportService.GetLowStockAsync(pagination, cancellationToken);
 
-        var pdf = _pdfService.GenerateLowStockPdf(result.Value!.Items, "InventorySaaS");
+        var pdf = _pdfService.GenerateLowStockPdf(result.Items, "InventorySaaS");
         return File(pdf, "application/pdf", $"Low_Stock_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
@@ -80,38 +80,37 @@ public class ReportsController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false,
-        [FromQuery] int daysAhead = 30)
+        [FromQuery] int daysAhead = 30,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetExpiryReportQuery(pagination, daysAhead));
-        return Ok(result.Value);
+        var result = await _reportService.GetExpiryAsync(pagination, daysAhead, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("expiry/pdf")]
-    public async Task<IActionResult> ExpiryPdf([FromQuery] int daysAhead = 30)
+    public async Task<IActionResult> ExpiryPdf([FromQuery] int daysAhead = 30, CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(1, 10000, null, null, false);
-        var result = await _mediator.Send(new GetExpiryReportQuery(pagination, daysAhead));
-        if (!result.IsSuccess) return BadRequest(result.Errors);
+        var result = await _reportService.GetExpiryAsync(pagination, daysAhead, cancellationToken);
 
-        var pdf = _pdfService.GenerateExpiryPdf(result.Value!.Items, "InventorySaaS");
+        var pdf = _pdfService.GenerateExpiryPdf(result.Items, "InventorySaaS");
         return File(pdf, "application/pdf", $"Expiry_Report_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
     [HttpGet("inventory-valuation")]
-    public async Task<IActionResult> InventoryValuation()
+    public async Task<IActionResult> InventoryValuation(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetInventoryValuationQuery());
-        return Ok(result.Value);
+        var result = await _reportService.GetInventoryValuationAsync(cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("inventory-valuation/pdf")]
-    public async Task<IActionResult> InventoryValuationPdf()
+    public async Task<IActionResult> InventoryValuationPdf(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetInventoryValuationQuery());
-        if (!result.IsSuccess) return BadRequest(result.Errors);
+        var result = await _reportService.GetInventoryValuationAsync(cancellationToken);
 
-        var pdf = _pdfService.GenerateInventoryValuationPdf(result.Value!, "InventorySaaS");
+        var pdf = _pdfService.GenerateInventoryValuationPdf(result, "InventorySaaS");
         return File(pdf, "application/pdf", $"Inventory_Valuation_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 }

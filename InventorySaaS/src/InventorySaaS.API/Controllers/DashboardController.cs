@@ -1,5 +1,4 @@
-using InventorySaaS.Application.Features.Dashboard.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,14 +9,14 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "ViewerUp")]
 public class DashboardController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IDashboardService _dashboardService;
 
-    public DashboardController(IMediator mediator) => _mediator = mediator;
+    public DashboardController(IDashboardService dashboardService) => _dashboardService = dashboardService;
 
     [HttpGet]
-    public async Task<IActionResult> Get()
+    public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetDashboardQuery());
-        return Ok(result.Value);
+        var result = await _dashboardService.GetAsync(cancellationToken);
+        return Ok(result);
     }
 }

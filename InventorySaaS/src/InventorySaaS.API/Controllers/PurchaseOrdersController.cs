@@ -1,8 +1,6 @@
 using InventorySaaS.Application.Common.Models;
-using InventorySaaS.Application.Features.PurchaseOrders.Commands;
 using InventorySaaS.Application.Features.PurchaseOrders.DTOs;
-using InventorySaaS.Application.Features.PurchaseOrders.Queries;
-using MediatR;
+using InventorySaaS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +11,9 @@ namespace InventorySaaS.API.Controllers;
 [Authorize(Policy = "ViewerUp")]
 public class PurchaseOrdersController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IPurchaseOrderService _purchaseOrderService;
 
-    public PurchaseOrdersController(IMediator mediator) => _mediator = mediator;
+    public PurchaseOrdersController(IPurchaseOrderService purchaseOrderService) => _purchaseOrderService = purchaseOrderService;
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -23,49 +21,47 @@ public class PurchaseOrdersController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
-        [FromQuery] bool sortDescending = false)
+        [FromQuery] bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _mediator.Send(new GetPurchaseOrdersQuery(pagination));
-        return Ok(result.Value);
+        var result = await _purchaseOrderService.GetAllAsync(pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetPurchaseOrderByIdQuery(id));
-        return result.IsSuccess ? Ok(result.Value) : NotFound();
+        var result = await _purchaseOrderService.GetByIdAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> Create([FromBody] CreatePurchaseOrderRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreatePurchaseOrderRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new CreatePurchaseOrderCommand(
-            request.SupplierId,
-            request.WarehouseId,
-            request.ExpectedDeliveryDate,
-            request.Notes,
-            request.Items));
-        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value) : BadRequest(result.Errors);
+        var result = await _purchaseOrderService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPost("{id:guid}/approve")]
     [Authorize(Policy = "ManagerUp")]
-    public async Task<IActionResult> Approve(Guid id)
+    public async Task<IActionResult> Approve(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new ApprovePurchaseOrderCommand(id));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _purchaseOrderService.ApproveAsync(id, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("{id:guid}/receive")]
     [Authorize(Policy = "StaffUp")]
-    public async Task<IActionResult> ReceiveGoods(Guid id, [FromBody] ReceiveGoodsRequest request)
+    public async Task<IActionResult> ReceiveGoods(
+        Guid id,
+        [FromBody] ReceiveGoodsRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new ReceiveGoodsCommand(
-            id,
-            request.Items,
-            request.Notes));
-        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+        var result = await _purchaseOrderService.ReceiveAsync(id, request, cancellationToken);
+        return Ok(result);
     }
 }
