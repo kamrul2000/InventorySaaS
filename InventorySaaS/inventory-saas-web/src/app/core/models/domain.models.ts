@@ -192,6 +192,66 @@ export interface NotificationDto {
   actionUrl?: string;
 }
 
+export interface InvoiceItemDto {
+  id: string;
+  productId?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  discountRate: number;
+  lineTotal: number;
+}
+
+export interface InvoiceDto {
+  id: string;
+  invoiceNumber: string;
+  customerId: string;
+  customerName: string;
+  salesOrderId?: string;
+  salesOrderNumber?: string;
+  invoiceDate: string;
+  dueDate: string;
+  status: string;
+  subTotal: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+  notes?: string;
+  items: InvoiceItemDto[];
+}
+
+export interface OutstandingInvoiceDto {
+  id: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+}
+
+export interface PaymentAllocationDto {
+  invoiceId: string;
+  invoiceNumber: string;
+  amount: number;
+}
+
+export interface PaymentDto {
+  id: string;
+  paymentNumber: string;
+  customerId: string;
+  customerName: string;
+  paymentDate: string;
+  amount: number;
+  method: string;
+  reference?: string;
+  notes?: string;
+  allocations: PaymentAllocationDto[];
+}
+
 export interface DashboardDto {
   totalProducts: number;
   totalWarehouses: number;

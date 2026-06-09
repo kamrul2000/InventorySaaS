@@ -29,6 +29,8 @@ export class SidebarComponent {
     { label: 'Customers', icon: 'people', route: '/customers' },
     { label: 'Purchase Orders', icon: 'shopping_cart', route: '/purchase-orders' },
     { label: 'Sales Orders', icon: 'point_of_sale', route: '/sales-orders' },
+    { label: 'Invoices', icon: 'receipt_long', route: '/invoices' },
+    { label: 'Payments', icon: 'payments', route: '/payments' },
     { label: 'Reports', icon: 'bar_chart', route: '/reports' },
     { label: 'Notifications', icon: 'notifications', route: '/notifications' },
   ];

@@ -25,6 +25,11 @@ import { PoDetailComponent } from './features/purchase-orders/po-detail/po-detai
 import { SoListComponent } from './features/sales-orders/so-list/so-list.component';
 import { SoFormComponent } from './features/sales-orders/so-form/so-form.component';
 import { SoDetailComponent } from './features/sales-orders/so-detail/so-detail.component';
+import { InvoiceListComponent } from './features/invoices/invoice-list/invoice-list.component';
+import { InvoiceFormComponent } from './features/invoices/invoice-form/invoice-form.component';
+import { InvoiceDetailComponent } from './features/invoices/invoice-detail/invoice-detail.component';
+import { PaymentListComponent } from './features/payments/payment-list/payment-list.component';
+import { PaymentFormComponent } from './features/payments/payment-form/payment-form.component';
 import { ReportsComponent } from './features/reports/reports.component';
 import { NotificationsComponent } from './features/notifications/notifications.component';
 import { UserListComponent } from './features/users/user-list/user-list.component';
@@ -76,6 +81,11 @@ export const routes: Routes = [
       { path: 'sales-orders', component: SoListComponent },
       { path: 'sales-orders/new', component: SoFormComponent },
       { path: 'sales-orders/:id', component: SoDetailComponent },
+      { path: 'invoices', component: InvoiceListComponent },
+      { path: 'invoices/new', component: InvoiceFormComponent },
+      { path: 'invoices/:id', component: InvoiceDetailComponent },
+      { path: 'payments', component: PaymentListComponent },
+      { path: 'payments/new', component: PaymentFormComponent },
       { path: 'reports', component: ReportsComponent },
       { path: 'notifications', component: NotificationsComponent },
       {

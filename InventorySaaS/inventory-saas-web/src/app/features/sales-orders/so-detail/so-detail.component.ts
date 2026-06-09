@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { SalesOrderService } from '../../../core/services/sales-order.service';
+import { InvoiceService } from '../../../core/services/invoice.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SalesOrderDto } from '../../../core/models/domain.models';
 
@@ -19,7 +20,8 @@ export class SoDetailComponent implements OnInit {
 
   constructor(
     private soService: SalesOrderService, private route: ActivatedRoute,
-    private router: Router, private notification: NotificationService
+    private router: Router, private notification: NotificationService,
+    private invoiceService: InvoiceService
   ) {}
 
   ngOnInit(): void {
@@ -59,6 +61,18 @@ export class SoDetailComponent implements OnInit {
     if (!confirm('Cancel this sales order? Any reserved stock will be released.')) return;
     this.soService.cancel(this.order.id).subscribe({
       next: () => { this.notification.success('Sales order cancelled'); this.ngOnInit(); },
+    });
+  }
+
+  get canInvoice(): boolean {
+    if (!this.order) return false;
+    return this.order.status === 'Delivered' || this.order.status === 'PartiallyDelivered';
+  }
+
+  generateInvoice(): void {
+    if (!this.order) return;
+    this.invoiceService.createFromSalesOrder(this.order.id).subscribe({
+      next: (inv) => { this.notification.success('Invoice generated'); this.router.navigate(['/invoices', inv.id]); },
     });
   }
 

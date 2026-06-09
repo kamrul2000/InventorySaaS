@@ -20,6 +20,11 @@
             <mat-icon>local_shipping</mat-icon> Deliver
           </button>
         }
+        @if (canInvoice) {
+          <button class="btn-primary" (click)="generateInvoice()">
+            <mat-icon>receipt_long</mat-icon> Generate Invoice
+          </button>
+        }
         @if (order.status === 'Draft' || order.status === 'Confirmed' || order.status === 'PartiallyDelivered') {
           <button class="btn-danger" (click)="cancel()">
             <mat-icon>cancel</mat-icon> Cancel

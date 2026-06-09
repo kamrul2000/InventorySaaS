@@ -1,0 +1,93 @@
+@if (loading) {
+  <div class="loading-center"><div class="spinner"></div></div>
+} @else if (invoice) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ invoice.invoiceNumber }}</h1>
+        <span class="status-badge" [ngClass]="'status-' + invoice.status.toLowerCase()">{{ invoice.status }}</span>
+      </div>
+      <div class="btn-group">
+        @if (invoice.status === 'Draft') {
+          <button class="btn-primary" (click)="issue()">
+            <mat-icon>send</mat-icon> Issue
+          </button>
+        }
+        @if (canPay) {
+          <button class="btn-accent" (click)="recordPayment()">
+            <mat-icon>payments</mat-icon> Record Payment
+          </button>
+        }
+        @if (invoice.status !== 'Cancelled' && invoice.amountPaid === 0) {
+          <button class="btn-danger" (click)="cancel()">
+            <mat-icon>cancel</mat-icon> Cancel
+          </button>
+        }
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Customer</span>
+          <span class="detail-value">{{ invoice.customerName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Sales Order</span>
+          <span class="detail-value">{{ invoice.salesOrderNumber || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Invoice Date</span>
+          <span class="detail-value">{{ invoice.invoiceDate | date:'mediumDate' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Due Date</span>
+          <span class="detail-value">{{ invoice.dueDate | date:'mediumDate' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Total</span>
+          <span class="detail-value">{{ invoice.totalAmount | currency:'BDT':'৳':'1.2-2' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Paid</span>
+          <span class="detail-value">{{ invoice.amountPaid | currency:'BDT':'৳':'1.2-2' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Balance Due</span>
+          <span class="detail-value balance-due">{{ invoice.balanceDue | currency:'BDT':'৳':'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Line Items</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Tax %</th>
+            <th>Disc %</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of invoice.items; track item.id) {
+            <tr>
+              <td>{{ item.description }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.unitPrice | currency:'BDT':'৳':'1.2-2' }}</td>
+              <td>{{ item.taxRate }}</td>
+              <td>{{ item.discountRate }}</td>
+              <td>{{ item.lineTotal | currency:'BDT':'৳':'1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
