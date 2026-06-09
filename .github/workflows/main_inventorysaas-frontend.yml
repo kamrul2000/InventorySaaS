@@ -1,0 +1,68 @@
+# Docs for the Azure Web Apps Deploy action:
+# https://github.com/Azure/webapps-deploy
+
+name: Build and deploy Angular app to Azure Web App - inventorysaas-frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "InventorySaaS/inventory-saas-web/**"
+      - ".github/workflows/main_inventorysaas-frontend.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js version
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: npm install and build Angular app
+        working-directory: InventorySaaS/inventory-saas-web
+        run: |
+          npm install
+          npm run build
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: angular-app
+          path: InventorySaaS/inventory-saas-web/dist/inventory-saas-web/browser
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: angular-app
+          path: angular-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_864FDE28878048318B976356BE64056C }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_8392A86EE7C64C928C20986D2E17D5B8 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_4D23C8600FE046779DCB626ED8B86CC7 }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: "inventorysaas-frontend"
+          slot-name: "Production"
+          package: angular-app
