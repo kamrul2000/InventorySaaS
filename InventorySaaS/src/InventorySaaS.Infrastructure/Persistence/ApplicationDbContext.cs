@@ -2,6 +2,7 @@ using InventorySaaS.Application.Interfaces;
 using InventorySaaS.Domain.Common;
 using InventorySaaS.Domain.Common.Interfaces;
 using InventorySaaS.Domain.Entities.Audit;
+using InventorySaaS.Domain.Entities.Billing;
 using InventorySaaS.Domain.Entities.Customer;
 using InventorySaaS.Domain.Entities.Identity;
 using InventorySaaS.Domain.Entities.Inventory;
@@ -75,6 +76,12 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     // Sales
     public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
     public DbSet<SalesOrderItem> SalesOrderItems => Set<SalesOrderItem>();
+
+    // Billing (Accounts Receivable)
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
 
     // Notification & Audit
     public DbSet<NotificationInfo> Notifications => Set<NotificationInfo>();

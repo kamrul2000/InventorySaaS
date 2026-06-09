@@ -1,4 +1,5 @@
 using InventorySaaS.Domain.Entities.Audit;
+using InventorySaaS.Domain.Entities.Billing;
 using InventorySaaS.Domain.Entities.Customer;
 using InventorySaaS.Domain.Entities.Identity;
 using InventorySaaS.Domain.Entities.Inventory;
@@ -58,6 +59,12 @@ public interface IApplicationDbContext
     // Sales
     DbSet<SalesOrder> SalesOrders { get; }
     DbSet<SalesOrderItem> SalesOrderItems { get; }
+
+    // Billing (Accounts Receivable)
+    DbSet<Invoice> Invoices { get; }
+    DbSet<InvoiceItem> InvoiceItems { get; }
+    DbSet<Payment> Payments { get; }
+    DbSet<PaymentAllocation> PaymentAllocations { get; }
 
     // Notification & Audit
     DbSet<NotificationInfo> Notifications { get; }
