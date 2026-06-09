@@ -1,6 +1,8 @@
 # InventorySaaS — Project Understanding Guide
 
 > A study guide written for the developer of this project. It explains every term, how each piece is implemented, what it does, and the most likely questions someone will ask you about it — with prepared answers. Read it once end-to-end, then come back to it before any demo or interview.
+>
+> Companion file: [Q_AND_A.md](Q_AND_A.md) for interview/demo Q&A, and [USER_MANUAL.md](USER_MANUAL.md) for end-user workflows and the role permission matrix.
 
 ---
 
@@ -21,14 +23,15 @@
 
 ## 1. What this project is, in plain language
 
-**One sentence**: A web app that helps a business track its products, warehouses, and stock movements, and is built so many different companies can use the same app at the same time without seeing each other's data.
+**One sentence**: A web app that helps a business track its products, warehouses, stock movements, purchase and sales orders, and the money side (customer invoices/payments and supplier bills/payments), built so many different companies can use the same app at the same time without seeing each other's data.
 
 **Real-world analogy**: Think of Shopify. Many merchants use Shopify, but each merchant only sees their own products and orders. They share the same code and the same servers, but the data is isolated. That's exactly what we built.
 
 **Who would use it**:
 - A pharmacy chain tracking which medicines are about to expire
 - A retail manager who wants to see today's sales vs purchases
-- A warehouse worker recording incoming stock
+- A warehouse worker recording incoming stock or transferring it between locations
+- An accountant raising invoices to customers and paying supplier bills
 - An owner pulling a "what is my inventory worth?" report
 
 **What's the AI for?**:
@@ -42,7 +45,7 @@
 ```
 ┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
 │   Browser       │◄───────►│   API           │◄───────►│   SQL Server    │
-│   (Angular)     │  HTTPS  │   (.NET 10)     │  EF Core│                 │
+│   (Angular 19)  │  HTTPS  │   (.NET 10)     │  EF Core│  (2 databases)  │
 └─────────────────┘         └─────────────────┘         └─────────────────┘
                                     │
                                     │  REST calls
@@ -61,10 +64,10 @@
 ```
 
 You have:
-- **A frontend** the user sees (Angular)
-- **A backend** that does the work and talks to the database (.NET API)
-- **A database** that stores everything (SQL Server)
-- **An external AI** that the backend calls when needed (Google Gemini)
+- **A frontend** the user sees (Angular 19, standalone components + signals)
+- **A backend** that does the work and talks to the database (.NET 10 API)
+- **A database** that stores everything (SQL Server — one app DB plus a separate Hangfire DB)
+- **An external AI** that the backend calls when needed (Google Gemini, over plain REST — no SDK)
 - **A background worker** that runs scheduled tasks (Hangfire, lives inside the same .NET process)
 
 ---
@@ -78,7 +81,7 @@ Your backend is split into **four projects**:
 ```
 InventorySaaS.Domain          ← the rules of your business
        ▲
-InventorySaaS.Application     ← what the app DOES (commands like "create product")
+InventorySaaS.Application     ← what the app DOES (services like "create product")
        ▲
 InventorySaaS.Infrastructure  ← HOW it talks to the outside world (DB, email, AI)
        ▲
@@ -92,32 +95,36 @@ InventorySaaS.API             ← entry point (HTTP controllers)
 Because if tomorrow you want to:
 - Switch from SQL Server to PostgreSQL → you only change **Infrastructure**. Domain and Application don't even notice.
 - Switch from a REST API to a desktop app → you only change **API**. Application logic is unchanged.
-- Add a new way to create a product (e.g., bulk CSV import) → you write a new command in **Application**, the API just exposes it.
+- Add a new way to create a product (e.g., bulk CSV import) → you write a new method in a service in **Application**, the API just exposes it.
 
 ### Layer-by-layer
 
 #### `InventorySaaS.Domain` — the heart
-- Contains pure C# classes (entities) like `ProductInfo`, `TenantInfo`, `InventoryBalance`
-- **Knows nothing** about EF Core, HTTP, or any framework
+- Contains pure C# classes (entities) like `ProductInfo`, `TenantInfo`, `InventoryBalance`, `Invoice`, `SupplierBill` (36 entity files total)
+- **Knows nothing** about EF Core, HTTP, or any framework — it has zero NuGet references
 - Defines what it MEANS to be a Product, not how it's stored
+- Also holds enums (`OrderStatus`, `TransactionType`, `InvoiceStatus`, `BillStatus`, `PaymentMethod`, …), base classes (`BaseEntity`, `TenantEntity`), and the typed domain exceptions
 
 #### `InventorySaaS.Application` — the use cases
-- Contains one **service per business module** — `IProductService`, `IInventoryService`, `IAuthService`, `ISalesOrderService`, etc.
+- Contains one **service per business module** — **18 services** (`IProductService`, `IInventoryService`, `IAuthService`, `ISalesOrderService`, `IInvoiceService`, `ISupplierBillService`, etc.), each with an interface + an implementation
 - Each service exposes the operations that module supports (`CreateAsync`, `GetByIdAsync`, `ApproveAsync`, etc.)
 - Services depend only on `IApplicationDbContext` (interface in this layer) and pure C# — no EF Core, no HTTP, no framework
 - This layer says *what* should happen, not *how*
 
 #### `InventorySaaS.Infrastructure` — the plumbing
-- EF Core DbContext (talks to SQL Server)
+- EF Core `ApplicationDbContext` (talks to SQL Server) + per-entity `IEntityTypeConfiguration` classes
 - Hangfire setup (background jobs)
 - Email service (SMTP)
-- File storage
-- AI integrations (Gemini)
+- Local file storage
+- AI integrations (Gemini chat + Gemini product extraction)
+- Auth services: `TokenService` (JWT), `PasswordHasherService`, `TenantAccessor`, `CurrentUserService`
+- PDF report rendering (QuestPDF)
 - This is where the *how* lives
 
 #### `InventorySaaS.API` — the front door
-- ASP.NET Core controllers
-- Middleware (auth, tenant resolution, exception handling)
+- ASP.NET Core controllers (**19 of them**)
+- Middleware (correlation ID, exception handling, tenant resolution)
+- `Program.cs` — wiring, auth, CORS, rate limiting, Swagger, Hangfire dashboard, seeding, recurring jobs
 - The bit that actually accepts HTTP requests
 
 ### How does a request flow through the layers?
@@ -129,7 +136,7 @@ A user clicks "Create Product" in the browser:
 3. Controller calls `_productService.CreateAsync(request, cancellationToken)`
 4. **Application layer**: `ProductService.CreateAsync` runs the use case — looks up the category, generates a unique SKU, builds the entity
 5. Service calls `_context.SaveChangesAsync()` on `IApplicationDbContext` — **Infrastructure layer**'s EF Core writes to SQL Server
-6. Service returns a `ProductDto`; the controller wraps it in `Ok(...)`
+6. Service returns a `ProductDto`; the controller wraps it in `Ok(...)` / `CreatedAtAction(...)`
 7. If anything goes wrong, the service throws a typed exception (`NotFoundException` / `BadRequestException` / `ConflictException`); the global `ExceptionHandlingMiddleware` turns it into the right HTTP code + JSON envelope
 
 ---
@@ -145,9 +152,10 @@ You don't install the app — you log in to a website. Gmail, Shopify, Slack are
 One running app serves many customers ("tenants"). Each tenant only sees their own data. The alternative ("single-tenant") would be running a separate copy of the app for each customer — expensive and slow to update.
 
 #### **Tenant isolation**
-The mechanism that makes sure tenant A can never see tenant B's data. In your project this is done two ways:
-1. Every tenant-scoped row has a `TenantId` column.
-2. EF Core "global query filters" automatically add `WHERE TenantId = X` to every database query, where X comes from the user's JWT.
+The mechanism that makes sure tenant A can never see tenant B's data. In your project this is done three ways:
+1. Every tenant-scoped row inherits `TenantEntity`, which adds a `TenantId` column.
+2. EF Core "global query filters" automatically add `WHERE TenantId = X` to every read query, where X comes from the user's JWT.
+3. The `SaveChangesAsync` override **auto-stamps** `TenantId` on every newly inserted tenant row, so a developer can't forget.
 
 #### **Clean Architecture**
 A way of organising code so the business rules are at the centre and don't depend on frameworks (database, web, etc.). Your four-project split is Clean Architecture.
@@ -173,23 +181,23 @@ public async Task<IActionResult> Create(CreateProductRequest request, Cancellati
 This used to be CQRS-with-MediatR (separate `*Command` + `*Handler` files dispatched via `IMediator`). It was migrated to plain services for clarity and lower file count. Validation and logging — previously implemented as MediatR pipeline behaviors — are now handled by ASP.NET's model binding and Serilog's request logger.
 
 #### **Domain exceptions**
-Defined in [Domain/Exceptions/DomainException.cs](src/InventorySaaS.Domain/Exceptions/DomainException.cs). Five types:
+Defined in [Domain/Exceptions/DomainException.cs](src/InventorySaaS.Domain/Exceptions/DomainException.cs). The set:
 - `NotFoundException` → 404
-- `ConflictException` → 409 (e.g. duplicate code, duplicate email)
-- `BadRequestException` → 400 (e.g. "quantity must be > 0")
+- `ConflictException` → 409 (e.g. duplicate code, duplicate email, "PO already billed", "SO already invoiced")
+- `BadRequestException` → 400 (e.g. "quantity must be > 0", illegal state transition)
 - `ForbiddenAccessException` → 403
 - `DomainException` (base) → 500 if uncaught
 
 Services throw them; the global [`ExceptionHandlingMiddleware`](src/InventorySaaS.API/Middleware/ExceptionHandlingMiddleware.cs) catches them and produces a uniform `ProblemResponse` JSON. This is *the* mechanism that keeps controllers thin.
 
 #### **DTO (Data Transfer Object)**
-A simple class that carries data between layers, e.g. between the API and the frontend, or between the service and the controller. They're "anaemic" — no behaviour, just properties. Three flavours per module:
+A simple class/record that carries data between layers, e.g. between the API and the frontend, or between the service and the controller. They're "anaemic" — no behaviour, just properties. Typically per module:
 - `XxxDto` — what the API returns
 - `CreateXxxRequest` — body for POST endpoints
 - `UpdateXxxRequest` — body for PUT endpoints
 
 #### **Entity**
-A class that represents a "thing" in your business — Product, Customer, Warehouse. Lives in the Domain layer. Maps to a database table via EF Core.
+A class that represents a "thing" in your business — Product, Customer, Warehouse, Invoice. Lives in the Domain layer. Maps to a database table via EF Core. Some entities carry **behaviour methods** (e.g. `Invoice.ApplyPayment(amount)`, `InventoryBalance.ApplyInbound(qty, cost)`) — small bits of domain logic that live on the entity itself.
 
 #### **Repository pattern (and why we don't use it)**
 The classic version wraps DbContext behind a per-entity interface (`IProductRepository`). Your project uses a lighter version — services depend on `IApplicationDbContext` (one interface, exposes every `DbSet<>`). Less ceremony, full LINQ power, identical testability via integration tests.
@@ -208,27 +216,32 @@ header        payload (claims)   signature
 The backend doesn't need to look anything up to know who you are — it just verifies the signature using a secret key.
 
 #### **Refresh token**
-JWTs expire (yours: 60 minutes). Instead of making the user log in every hour, the frontend silently calls `/auth/refresh-token` with a long-lived **refresh token** to get a new JWT. Each refresh **rotates** the token (old one becomes invalid) — this catches stolen tokens.
+JWTs expire (yours: 60 minutes). Instead of making the user log in every hour, the frontend silently calls `/auth/refresh-token` with a long-lived **refresh token** to get a new JWT. Each refresh **rotates** the token (old one becomes invalid, `ReplacedByToken` points at the new one) — this catches stolen tokens.
 
 #### **Claim**
-A piece of information stored inside a JWT: `email`, `tenant_id`, `role`. The backend reads these to know who's making the request.
+A piece of information stored inside a JWT: `email`, `tenant_id`, `role`, `full_name`. The backend reads these to know who's making the request.
 
 #### **RBAC (Role-Based Access Control)**
-Each user has one or more **roles** (SuperAdmin, TenantAdmin, Manager, Staff, Viewer). Each role can do certain things. The simpler model than permission-by-permission.
+Each user has one or more **roles** (SuperAdmin, TenantAdmin, Manager, Staff, Viewer). Each role can do certain things. The seeder also creates a fine-grained **permission** table (12 modules with actions), though authorization at the API today is enforced by the five role-based policies.
 
 #### **Authorization Policy**
-ASP.NET Core's way of grouping role checks under a name. Yours:
-- `SuperAdminOnly`, `TenantAdminOnly`, `ManagerUp`, `StaffUp`, `ViewerUp`
+ASP.NET Core's way of grouping role checks under a name. Yours (in `Program.cs`):
+- `SuperAdminOnly` → SuperAdmin
+- `TenantAdminOnly` → TenantAdmin, SuperAdmin
+- `ManagerUp` → Manager, TenantAdmin, SuperAdmin
+- `StaffUp` → Staff, Manager, TenantAdmin, SuperAdmin
+- `ViewerUp` → Viewer, Staff, Manager, TenantAdmin, SuperAdmin
 
-You apply them with `[Authorize(Policy = "StaffUp")]` on a controller action.
+You apply them with `[Authorize(Policy = "StaffUp")]` on a controller or action. The common pattern: a controller is `[Authorize(Policy = "ViewerUp")]` at the class level (everyone can read), and write actions override with `StaffUp` (create/operate) or `ManagerUp` (approve/cancel/adjust).
 
 #### **Middleware**
-Code that runs before/after every HTTP request. Yours, in order:
-1. CorrelationIdMiddleware — assigns a unique ID to each request
-2. ExceptionHandlingMiddleware — catches errors and returns a clean JSON response
-3. JWT authentication
-4. TenantResolutionMiddleware — reads tenant ID from the JWT
-5. Authorization (policy checks)
+Code that runs before/after every HTTP request. Yours, in order (from `Program.cs`):
+1. `CorrelationIdMiddleware` — assigns a unique ID to each request
+2. `ExceptionHandlingMiddleware` — catches errors and returns a clean JSON response
+3. HTTPS redirect, CORS, IP rate limiting
+4. JWT authentication
+5. `TenantResolutionMiddleware` — runs after auth, logs/establishes tenant context
+6. Authorization (policy checks)
 
 ### Database
 
@@ -236,132 +249,153 @@ Code that runs before/after every HTTP request. Yours, in order:
 Microsoft's ORM. You write C# code like `db.Products.Where(p => p.Name == "X")`, and EF Core translates it to SQL. You don't write SQL by hand.
 
 #### **DbContext**
-The object that represents your database connection. `ApplicationDbContext` exposes `DbSet<ProductInfo>`, `DbSet<TenantInfo>`, etc.
+The object that represents your database connection. `ApplicationDbContext` exposes `DbSet<ProductInfo>`, `DbSet<TenantInfo>`, `DbSet<Invoice>`, `DbSet<SupplierBill>`, etc. — and overrides `OnModelCreating` (query filters) and `SaveChangesAsync` (audit + auto-stamping).
 
 #### **Migration**
-A C# file describing a change to the database schema (adding a column, etc.). When you run `dotnet ef database update`, EF Core applies pending migrations.
+A C# file describing a change to the database schema (adding a column, etc.). When the app starts, the seeder calls `Database.MigrateAsync()` to apply pending migrations. Current migrations include the initial create plus the recent billing additions (`AddBillingArInvoicesAndPayments`, `AddBillingApSupplierBillsAndPayments`, `AddPurchaseOrderItemReturnedQuantity`).
 
 #### **Global Query Filter**
-A LINQ expression EF Core silently adds to every query against an entity. Example: `modelBuilder.Entity<ProductInfo>().HasQueryFilter(p => p.TenantId == _currentTenantId)`. This is how tenant isolation is enforced — you literally cannot accidentally write code that returns another tenant's data.
+A LINQ expression EF Core silently adds to every query against an entity. This is how tenant isolation and soft-delete are enforced. The single combined filter per tenant entity is built in `ApplicationDbContext.OnModelCreating`:
+```csharp
+e => (_tenantAccessor.TenantId == null || e.TenantId == _tenantAccessor.TenantId) && !e.IsDeleted
+```
 
-> **Important gotcha (and the bug we fixed)**: EF Core allows **only one** query filter per entity — a second `HasQueryFilter` call **overwrites** the first, it does not combine them. The original code (a) wrote the tenant predicate as `EF.Property<Guid>(e, "TenantId") == Guid.Empty || true`, which always evaluates to `true` (no tenant scoping at all), and (b) then called `HasQueryFilter` a second time for soft-delete, silently discarding even that no-op. Net effect: **neither** tenant isolation nor soft-delete filtering was active. The fix builds **one** combined filter per tenant entity in `ApplicationDbContext.OnModelCreating`: `(_tenantAccessor.TenantId == null || e.TenantId == currentTenant) && !e.IsDeleted`. A `null` tenant (seeding, registration, a SuperAdmin acting without tenant context) bypasses the tenant clause but still respects soft-delete.
+> **Important gotcha (and the bug that was fixed)**: EF Core allows **only one** query filter per entity — a second `HasQueryFilter` call **overwrites** the first, it does not combine them. An earlier version (a) wrote the tenant predicate so it always evaluated to `true` (no tenant scoping at all), and (b) then called `HasQueryFilter` a second time for soft-delete, silently discarding the first. Net effect: **neither** tenant isolation nor soft-delete filtering was active. The current code builds **one** combined filter per tenant entity (shown above) via reflection over all entity types in `OnModelCreating`. A `null` tenant (seeding, registration, a SuperAdmin acting without tenant context) bypasses the tenant clause but still respects soft-delete. Non-tenant `BaseEntity` types get a soft-delete-only filter.
 
 #### **Soft delete**
-Instead of `DELETE FROM Products WHERE Id = X`, you set `IsActive = false` (or `IsDeleted = true`). The row stays in the database but is hidden. Lets you recover deletes and audit history.
+Instead of `DELETE FROM Products WHERE Id = X`, you set `IsDeleted = true`. The row stays in the database but is hidden by the global filter. Lets you recover deletes and audit history. (Use `IgnoreQueryFilters()` to see deleted rows.)
 
 #### **Optimistic concurrency**
-Two users edit the same record at the same time. Without protection, the second save silently overwrites the first. Optimistic concurrency uses a `RowVersion` column (auto-incremented on every save) — when the second user tries to save, EF Core sees their RowVersion is stale and throws an exception so you can show a "this record was modified" message.
+Two users edit the same record at the same time. Without protection, the second save silently overwrites the first. Optimistic concurrency uses a `RowVersion` column on `BaseEntity` (auto-managed by SQL Server) — when the second user tries to save, EF Core sees their `RowVersion` is stale and throws `DbUpdateConcurrencyException` so you can show a "this record was modified" message.
+
+#### **Audit log**
+Every change to a `BaseEntity` is recorded. The `SaveChangesAsync` override in `ApplicationDbContext` collects an `AuditLog` row for each Added/Modified/Deleted entity — capturing the action (Create/Update/Delete), the entity type and id, the changed fields (old vs new values as JSON), the acting user, and a timestamp — then writes them in a second save. A soft-delete is recorded as a `Delete` action. **This is live**, not a placeholder.
 
 #### **Seeding**
-Creating starter data when the database is first created (or empty). You seed: subscription plans, roles, permissions, a SuperAdmin user, a Demo Company tenant. See `DatabaseSeeder.cs`.
+Creating starter data when the database is empty. Each step in `DatabaseSeeder.cs` is **idempotent** (checks before inserting). It seeds: 4 subscription plans, 5 roles, 12 permission modules, a SuperAdmin user, a "Demo Company" tenant with admin user, and demo data (categories, brands, units, 5 products, 2 warehouses + 3 locations, 2 suppliers, 2 customers, randomized inventory balances).
+
+### Inventory mechanics
+
+#### **InventoryBalance**
+One row per (product, warehouse, location, batch/lot). Holds `QuantityOnHand`, `QuantityReserved`, and a moving weighted-average `UnitCost`. Computed `QuantityAvailable = QuantityOnHand − QuantityReserved`. Has an `ApplyInbound(qty, cost)` method that re-computes the weighted-average cost when new stock arrives.
+
+#### **InventoryTransaction**
+One row per movement — the full ledger. Records a `TransactionType`, quantity, unit cost, batch/expiry, and a cross-reference back to the source document (PO/SO number). `TransactionType` values: `StockIn, StockOut, Transfer, Adjustment, Return, Damaged, Lost, PurchaseReceive, SalesIssue, PurchaseReturn`.
+
+#### **Moving weighted-average cost**
+When stock arrives at a balance that already has units, the new unit cost is blended in proportionally rather than replaced. Keeps inventory valuation realistic across purchases at different prices.
+
+#### **FIFO by expiry**
+When goods are reserved (SO Confirm) or shipped (SO Deliver), the system consumes balances ordered by `ExpiryDate` (earliest first) — so perishable stock leaves first. Delivery records cost at **COGS** (actual cost), never the selling price.
 
 ### Background processing
 
 #### **Background job**
-Code that runs *outside* the request-response cycle. Three flavours:
-- **Fire-and-forget** — "send this email, don't make me wait"
-- **Delayed** — "remind this user in 7 days"
-- **Recurring (cron)** — "every hour, scan for low stock"
-
-Yours uses **recurring** for two jobs (low-stock check, expiry check). Both run via Hangfire.
+Code that runs *outside* the request-response cycle. Yours are **recurring** jobs registered in `Program.cs` and run via Hangfire.
 
 #### **Hangfire**
-A C# library that handles the queue, the retries, the persistence to SQL Server, and the dashboard for background jobs. Your project uses Hangfire for two recurring jobs and provides a dashboard at `/hangfire` (SuperAdmin only).
+A C# library that handles the queue, retries, persistence to SQL Server, and a dashboard for background jobs. Your project uses Hangfire for two recurring jobs (both methods on `InventoryAlertJob`) and provides a dashboard at `/hangfire`.
 
 #### **Cron expression**
-The string that says when a recurring job should run. `Cron.Hourly` (every hour at :00) and `Cron.Daily` (every day at midnight) are examples. Could also be `"*/5 * * * *"` (every 5 minutes).
+The string that says when a recurring job should run. `Cron.Hourly` (low-stock check) and `Cron.Daily` (expiry check) are used here.
 
 ### API & HTTP
 
 #### **REST API**
-A style of designing HTTP APIs where:
-- URLs represent resources: `/api/v1/Products/123`
-- HTTP verbs do operations: GET (read), POST (create), PUT (update), DELETE (delete)
-- Responses are JSON
-
-Yours is REST.
+URLs represent resources (`/api/v1/Products/123`), HTTP verbs do operations (GET/POST/PUT/DELETE), responses are JSON. Yours is REST, versioned under `/api/v1/`.
 
 #### **Swagger / OpenAPI**
-Auto-generated, interactive API documentation. Visit `/swagger` to see every endpoint, try them out, send test requests. Great for development.
+Auto-generated, interactive API documentation at `/swagger` (development only). Configured with a Bearer-token security scheme so you can authorize and try endpoints.
 
 #### **CORS (Cross-Origin Resource Sharing)**
-Browser security: a webpage at `localhost:4200` can't call an API at `localhost:5179` unless the API explicitly allows it. Your `Program.cs` configures CORS to allow your Angular dev server.
+Browser security: a page at `localhost:4200` can't call an API at `localhost:5179` unless the API allows it. In development, `Program.cs` allows any `localhost` origin; in production it reads `AllowedOrigins` from config.
 
 #### **Rate limiting**
-Stopping a single user/IP from making too many requests. Your project uses `AspNetCoreRateLimit` to cap login attempts at 10/minute (prevents brute-force) and general traffic at 60/minute.
+`AspNetCoreRateLimit` caps requests per IP — general traffic and stricter limits on `/auth` endpoints (configured under `IpRateLimiting` in `appsettings.json`).
 
 #### **Correlation ID**
-A unique GUID assigned to each HTTP request. It's logged in every log line for that request and returned in the response header. When something breaks, one ID lets you find every log entry related to that request.
+A unique GUID assigned to each HTTP request by `CorrelationIdMiddleware`. Pushed into Serilog's log scope, returned in the `X-Correlation-Id` header, and included in error responses. One ID ties together every log line for a request.
 
 #### **Server-Sent Events (SSE)**
-A way for the server to **stream** data to the browser over a single open HTTP connection. The AI chat endpoint uses SSE to stream tokens as the model generates them — you see text appear word-by-word instead of waiting for the whole response.
+A way for the server to **stream** data to the browser over a single open HTTP connection. The AI chat endpoint uses SSE to stream tokens as the model generates them — text appears word-by-word.
 
 ### Frontend (Angular)
 
 #### **Standalone components**
-Modern Angular components that don't need to be declared in a `NgModule`. Each component lists its own imports. Your project uses standalone components everywhere.
+Modern Angular components that don't need an `NgModule`. Each lists its own imports. The whole project uses standalone components.
 
 #### **Reactive Forms**
-A way of building forms in Angular where the form is a TypeScript object (`FormGroup`) instead of HTML-only. Validation, value tracking, dirty/touched state — all easy. Your `product-form.component.ts` uses Reactive Forms.
+Forms backed by a TypeScript `FormGroup` instead of HTML-only. Validation, value tracking, dirty/touched state — all easy. The product, invoice, payment, order forms use Reactive Forms.
 
 #### **Pipe**
-A small transformer in templates: `{{ price | currency:'BDT':'৳':'1.2-2' }}`. The pipe takes a value, transforms it, returns a new value for display.
+A small template transformer: `{{ price | currency:'BDT':'৳':'1.2-2' }}`.
 
 #### **Observable**
-A stream of values over time, from RxJS. HTTP calls return Observables. You `.subscribe()` to them to get the result.
+An RxJS stream of values over time. HTTP calls return Observables; you `.subscribe()` to get the result.
 
 #### **HTTP Interceptor**
-Code that runs before every outgoing HTTP request. Yours:
-- `auth.interceptor.ts` — adds `Authorization: Bearer <token>` to every request, handles 401 by silently refreshing the token
-- `error.interceptor.ts` — handles errors globally
-- `tenant.interceptor.ts` — adds tenant context
+Code that runs before every outgoing HTTP request. Yours (there are **two**):
+- `auth.interceptor.ts` — adds `Authorization: Bearer <token>`; on 401 silently refreshes the token and retries the request
+- `error.interceptor.ts` — global error handling, surfaces toasts
+
+(There is no separate tenant interceptor — the tenant comes from the JWT claim server-side.)
 
 #### **Signal**
-Angular's new (v16+) reactive primitive. A `signal<T>()` holds a value; reading it in a template tracks it; updating it re-renders the parts that read it. Your `NotificationService` uses signals to manage the toast list.
+Angular's reactive primitive. A `signal<T>()` holds a value; reading it in a template tracks it; updating it re-renders the parts that read it. `NotificationService` uses signals for the toast list.
 
 #### **Router outlet**
-The placeholder where Angular renders the current route's component. `<router-outlet></router-outlet>` in `app.html`.
+The placeholder where Angular renders the current route's component. `<router-outlet></router-outlet>`.
+
+#### **ngx-charts**
+The charting library used on the dashboard — bar charts (top products, stock alerts) and a doughnut chart (financial snapshot).
 
 ### AI
 
 #### **Gemini**
-Google's family of LLMs (Large Language Models). You use:
-- `gemini-2.5-flash-lite` — small, fast, free-tier eligible. Used for both chat and product extraction in your project.
+Google's family of LLMs. You use `gemini-2.5-flash-lite` — small, fast, free-tier eligible — for both chat and product extraction.
 
 #### **System prompt**
-Instructions you give the model that aren't visible to the user. Tell the model what it is, how to behave, what data it has access to. Your AI chat builds a system prompt with the tenant's inventory snapshot.
-
-#### **Token**
-The unit of text the model processes. Roughly: 1 token ≈ 0.75 of an English word. Both your input and the model's output are billed by token count (on paid tier).
+Hidden instructions to the model. Your AI chat builds a system prompt containing a live snapshot of the tenant's inventory.
 
 #### **Vision model**
-An LLM that accepts images alongside text. The image is sent base64-encoded inside the request. Gemini 2.5 Flash Lite supports vision — that's what powers your "Scan from Photo" feature.
+An LLM that accepts images. The image is sent base64-encoded inside the request. Gemini 2.5 Flash Lite supports vision — that's what powers "Scan from Photo".
 
 #### **JSON mode**
-Telling the model "your response MUST be valid JSON". Gemini accepts `responseMimeType: "application/json"` in the request, which forces JSON output. Your product extraction uses this so you can deserialize directly into a typed DTO.
+Telling the model its response MUST be valid JSON, via `responseMimeType: "application/json"`. Product extraction uses this so the result deserializes directly into a typed DTO.
 
 #### **Streaming (vs single response)**
-With streaming, the model sends chunks of the response as it generates them. With non-streaming, you wait for the full response. Your chat uses streaming (Server-Sent Events) so the user sees text appear in real time. Your product extraction uses non-streaming because it needs the full JSON before it can be parsed.
+Chat uses streaming (SSE) so the user sees text in real time. Product extraction uses non-streaming because it needs the full JSON before parsing.
+
+### Billing
+
+#### **Accounts Receivable (AR)**
+Money customers owe you. Modelled by `Invoice` (+ `InvoiceItem`) and `Payment` (+ `PaymentAllocation`). An invoice can be created manually or generated from a sales order; a payment can be split across several invoices.
+
+#### **Accounts Payable (AP)**
+Money you owe suppliers. Modelled by `SupplierBill` (+ `SupplierBillItem`) and `SupplierPayment` (+ `SupplierPaymentAllocation`). A bill can be created manually or generated from a purchase order; a supplier payment can be split across several bills.
+
+#### **Payment allocation**
+One payment, split across multiple invoices/bills. Each allocation row records how much of the payment applies to which document, and calls that document's `ApplyPayment(amount)` to advance its status (Issued/Open → PartiallyPaid → Paid).
 
 ### Security & operations
 
 #### **Hashing (PBKDF2-SHA512)**
-You don't store passwords. You store a **hash** of the password. PBKDF2-SHA512 is a slow, salted hash — even if the database leaks, attackers can't reverse the hash to recover passwords.
+You don't store passwords. You store a salted, slow PBKDF2-SHA512 **hash**. Even if the database leaks, attackers can't reverse it.
 
 #### **Salt**
-A random string mixed into the password before hashing, so the same password never produces the same hash twice. Stops attackers from using precomputed "rainbow tables".
+A random string mixed into the password before hashing, so the same password never produces the same hash twice. Stops precomputed "rainbow table" attacks.
 
 #### **Health check**
-An HTTP endpoint (`/health`) that returns 200 if the app is healthy, 500 if something's broken. Yours checks the database is reachable. Used by load balancers to know if a server should receive traffic.
+`/health` returns 200 if the app (and its database) is healthy. Used by load balancers.
 
 #### **Structured logging**
-Logging key-value pairs instead of plain text. `logger.LogInformation("User {Email} logged in", email)` produces a log entry like `{ "message": "User logged in", "email": "x@y.com" }`. Searchable, filterable. You use Serilog.
+Logging key-value pairs instead of plain text, via Serilog. Writes to console and a daily rolling file under `logs/`.
 
 #### **Connection string**
-The string that tells your app where the database is and how to connect: `Server=localhost;Database=InventorySaaS;...`. Lives in `appsettings.json`.
+Tells the app where the database is. Two are used: `DefaultConnection` (app DB) and `HangfireConnection` (Hangfire DB). Live in `appsettings.json` / env vars.
 
 #### **User secrets**
-A way to keep sensitive config (API keys, passwords) out of `appsettings.json` (which is in git). They live in your machine's user profile and are loaded automatically in development. Your Gemini API key is stored this way.
+A per-machine encrypted store for sensitive config (Gemini API key, JWT secret) in development, kept out of `appsettings.json`. In production, environment variables (`Section__Key` convention).
 
 ---
 
@@ -388,36 +422,38 @@ USER CLICKS SAVE
   │
   ├─ 7. ExceptionHandlingMiddleware wraps everything in try/catch
   │
-  ├─ 8. JWT auth: signature verified, claims (user_id, tenant_id, role) loaded into HttpContext.User
+  ├─ 8. CORS + IP rate limiting checks
   │
-  ├─ 9. TenantResolutionMiddleware reads tenant_id claim, makes it available via ITenantAccessor
+  ├─ 9. JWT auth: signature verified, claims (nameid, tenant_id, role) loaded into HttpContext.User
   │
-  ├─ 10. Authorization policy [Authorize(Policy = "StaffUp")] — pass
+  ├─ 10. TenantResolutionMiddleware establishes tenant context (ITenantAccessor)
   │
-  ├─ 11. ProductsController.Create() runs
+  ├─ 11. Authorization policy [Authorize(Policy = "StaffUp")] — pass
   │
-  ├─ 12. Controller calls _productService.CreateAsync(request, cancellationToken)
+  ├─ 12. ProductsController.Create() runs
   │
-  ├─ 13. ProductService.CreateAsync runs:
-  │      - reads tenant_id from ICurrentUserService
-  │      - looks up category, brand, unit (or creates them)
+  ├─ 13. Controller calls _productService.CreateAsync(request, cancellationToken)
+  │
+  ├─ 14. ProductService.CreateAsync runs:
+  │      - looks up category, brand, unit
   │      - generates unique SKU
   │      - creates new ProductInfo entity
   │      - calls _context.SaveChangesAsync()
   │      (any business-rule failure → throws BadRequestException / NotFoundException /
   │       ConflictException; ExceptionHandlingMiddleware turns it into the right status code)
   │
-  ├─ 14. SaveChangesAsync override auto-stamps CreatedAt / CreatedBy / TenantId
+  ├─ 15. SaveChangesAsync override auto-stamps CreatedAt / CreatedBy / TenantId
+  │      and collects AuditLog rows for the change
   │
-  ├─ 15. EF Core translates to SQL: INSERT INTO Products (...) VALUES (...)
+  ├─ 16. EF Core translates to SQL: INSERT INTO Products (...) VALUES (...)
   │
-  ├─ 16. SQL Server executes the insert, returns the new row
+  ├─ 17. SQL Server executes the insert, returns the new row
   │
-  ├─ 17. Service builds a ProductDto and returns it directly (no wrapper)
+  ├─ 18. Service builds a ProductDto and returns it directly (no wrapper)
   │
-  ├─ 18. Serilog's built-in request logger emits "Request finished ... 201 ... 35ms"
+  ├─ 19. Serilog's request logger emits "Request finished ... 201 ... 35ms"
   │
-  ├─ 19. Controller returns CreatedAtAction(...) — HTTP 201 with the new product as JSON
+  ├─ 20. Controller returns CreatedAtAction(...) — HTTP 201 with the new product as JSON
   │
   ▼ NETWORK
   │
@@ -429,10 +465,10 @@ USER CLICKS SAVE
   │
   ├─ 24. ToastContainerComponent re-renders (signal change)
   │
-  └─ 25. User sees a green toast in the bottom-right
+  └─ 25. User sees a green toast
 ```
 
-That's the full path. ~24 steps for one button click. Most are invisible — the framework handles them. Your code lives in steps 1, 11, 12, 13, 17, 21, 22.
+That's the full path. Most steps are invisible — the framework handles them. Your code lives in steps 1–4, 12–14, 18, and 21–24.
 
 ---
 
@@ -440,328 +476,229 @@ That's the full path. ~24 steps for one button click. Most are invisible — the
 
 ### 6.1 Authentication module
 
-**What it does**: lets users register, log in, log out, refresh their token, reset their password.
+**What it does**: lets users register a new tenant, log in, log out, refresh their token, reset their password.
 
 **Files**:
-- `Application/Services/IAuthService.cs` + `AuthService.cs` — the 6 auth operations
-- `Application/Features/Auth/DTOs/AuthDtos.cs` — request and response shapes
-- `Infrastructure/Services/Auth/TokenService.cs` — generates and validates JWTs
-- `Infrastructure/Services/Auth/PasswordHasherService.cs` — hashes/verifies passwords
-- `API/Controllers/AuthController.cs` — HTTP endpoints (thin)
+- `Application/Services/IAuthService.cs` + `AuthService.cs`
+- `Application/Features/Auth/DTOs/AuthDtos.cs`
+- `Infrastructure/Services/Auth/TokenService.cs` — generates and validates JWTs + refresh tokens
+- `Infrastructure/Services/Auth/PasswordHasherService.cs` (+ `PasswordHasher` static helper)
+- `API/Controllers/AuthController.cs`
 
-**How login works (step by step)**:
-1. User POSTs `{ email, password }` to `/api/v1/auth/login`
-2. `AuthController.Login` calls `_authService.LoginAsync(request, ct)`
-3. `AuthService.LoginAsync` looks up the user by email (`NormalizedEmail` index)
-4. `PasswordHasherService.Verify(input, storedHash)` — slow PBKDF2 hash compare
-5. If invalid → throws `UnauthorizedAccessException` → middleware → 401
-6. If valid → `TokenService.GenerateTokensAsync(user, roles)` builds a JWT (claims: userId, tenantId, email, role) **and** a refresh-token row in the database
-7. `LastLoginAt` is updated; both tokens are returned to the client
-8. Frontend stores both; the auth interceptor uses the JWT on every request
-9. When the JWT expires (60 min), the frontend silently calls `/auth/refresh-token` to get a new one (refresh-token rotation: old token revoked, new one issued)
+**How login works**:
+1. User POSTs `{ email, password }` to `/api/v1/Auth/login`
+2. `AuthService.LoginAsync` looks up the user by `NormalizedEmail`
+3. `PasswordHasherService.Verify(input, storedHash)` — slow PBKDF2 compare
+4. If invalid → throws `UnauthorizedAccessException` → middleware → 401
+5. If valid → `TokenService.GenerateTokensAsync` builds a JWT (claims: nameid, email, tenant_id, full_name, role) **and** a refresh-token row
+6. `LastLoginAt` is updated; both tokens + the user DTO are returned
+7. When the JWT expires (60 min), the frontend silently calls `/auth/refresh-token` (refresh-token rotation: old token revoked, new one issued)
 
-**Things you might be asked**:
-- *Why JWT and not session cookies?* → Stateless. No DB lookup per request. Easier to scale to multiple servers.
-- *What if a JWT is stolen?* → It's valid until expiry (60 min). That's why we keep them short-lived. The refresh token is rotated on every use, so a stolen refresh token reveals itself the moment the legit user uses theirs.
-- *How are passwords stored?* → PBKDF2-SHA512 hash with a per-user salt. Even if the DB leaks, raw passwords aren't recoverable.
+**How registration works**:
+1. POST `/api/v1/Auth/register` with company + admin details
+2. Creates a `TenantInfo` (auto slug = kebab-case name + GUID suffix), assigns the Free plan
+3. Creates the admin user (TenantAdmin role), hashes the password
+4. Issues a JWT + refresh token immediately — user is logged in
 
 ### 6.2 Product module
 
-**What it does**: lets users create, list, view, edit, delete products. Includes the AI-powered "Scan from Photo".
+**What it does**: create, list, view, edit, delete products. Includes the AI "Scan from Photo".
 
 **Files**:
-- `Application/Services/IProductService.cs` + `ProductService.cs` — `GetAllAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
-- `Application/Features/Products/DTOs/ProductDtos.cs` — `ProductDto`, `CreateProductRequest`, `UpdateProductRequest`
-- `Application/Features/Products/DTOs/ProductExtractionDtos.cs` — vision result shape
-- `API/Controllers/ProductsController.cs` — thin controller; the `extract-from-image` action calls `IProductExtractionService` directly (no service intermediation since it doesn't persist)
+- `Application/Services/IProductService.cs` + `ProductService.cs`
+- `Application/Features/Products/DTOs/ProductDtos.cs`, `ProductExtractionDtos.cs`
+- `API/Controllers/ProductsController.cs` — the `extract-from-image` action calls `IProductExtractionService` directly (no persistence)
 - `Infrastructure/Services/AI/GeminiProductExtractionService.cs`
 
-**SKU auto-generation**:
-1. Take the first 3 letters of the category name, uppercase: "Food & Beverage" → "FOO"
-2. Find the highest existing SKU number with that prefix
-3. New SKU = `{prefix}-{maxNumber + 1:D5}` → "FOO-00007"
+**SKU auto-generation**: take the first 3 letters of the category name uppercased ("Food & Beverage" → "FOO"), find the highest existing number with that prefix, new SKU = `{prefix}-{max+1:D5}` → "FOO-00007".
 
-**AI scan flow**:
-1. User clicks "Scan from Photo", picks an image
-2. Frontend POSTs the image as multipart to `/api/v1/Products/extract-from-image`
-3. Controller validates file (JPEG/PNG, ≤ 5 MB)
-4. `GeminiProductExtractionService` builds a request to Google Gemini with the image (base64) + a tuned prompt
-5. Gemini returns JSON: `{ name, brand, barcode, suggestedCategory, suggestedSellingPrice, ... }`
-6. The service parses and returns it as a `ProductExtractionResult` DTO
-7. Frontend pre-fills the form with these values
-8. User reviews/edits, clicks Save → goes through the normal `POST /api/v1/Products` → `IProductService.CreateAsync` path
-
-The extract endpoint **does not save anything**. It's just a "draft generator". This is deliberate — the user always has the chance to review.
+**AI scan flow**: upload image → `POST /api/v1/Products/extract-from-image` (JPEG/PNG, ≤ 5 MB) → Gemini vision with strict-JSON prompt → parsed `ProductExtractionResult` → frontend pre-fills the form → user reviews → normal `POST /api/v1/Products`. The extract endpoint **never saves** — it's a draft generator.
 
 ### 6.3 Inventory module
 
-**What it does**: tracks how much of each product is in each warehouse, including by batch.
+**What it does**: tracks how much of each product is in each warehouse/location/batch, plus the full movement ledger.
 
-**Key concepts**:
-- **InventoryBalance** — one row per (product, warehouse, batch). Shows quantity on hand.
-- **InventoryTransaction** — one row per movement. The full ledger.
+**Key concepts**: `InventoryBalance` (quantity on hand + reserved + weighted-avg cost) and `InventoryTransaction` (the ledger).
 
-**Stock-in flow** (when goods arrive):
-1. User submits a "Stock In" form
-2. `POST /api/v1/Inventory/stock-in` → `InventoryService.StockInAsync(request, ct)`
-3. Service creates a new `InventoryTransaction` row (audit)
-4. Service updates or creates the matching `InventoryBalance` row
-5. Both saves happen in the same `SaveChangesAsync` call — either both succeed or both roll back (EF Core transaction)
+**Operations** (`InventoryController` → `InventoryService`):
+| Operation | Route | Policy | What it does |
+|---|---|---|---|
+| Balances | `GET /api/v1/Inventory/balances` | ViewerUp | list balances |
+| Transactions | `GET /api/v1/Inventory/transactions` | ViewerUp | list the ledger |
+| Stock In | `POST /api/v1/Inventory/stock-in` | StaffUp | `ApplyInbound` (blends cost), writes `StockIn` txn |
+| Stock Out | `POST /api/v1/Inventory/stock-out` | StaffUp | decrements on-hand, writes `StockOut` txn |
+| Transfer | `POST /api/v1/Inventory/transfer` | StaffUp | moves stock between warehouses/locations, carries cost forward, writes `Transfer` txn |
+| Adjustment | `POST /api/v1/Inventory/adjustment` | ManagerUp | reconciles to a new quantity with a reason, writes `Adjustment` txn |
 
-**Why the ledger pattern?**:
-You can always reconstruct the current balance by summing the transactions. If something goes wrong with the cached balance, the ledger is the source of truth.
+Each operation writes a transaction (audit) and updates the matching balance in the same `SaveChangesAsync` — both succeed or both roll back. **Why the ledger pattern?** You can always reconstruct the balance by summing transactions; the ledger is the source of truth.
 
-### 6.4 Purchase Orders / Sales Orders
+### 6.4 Purchase Orders & Sales Orders
 
-**What they do**: model the lifecycle of buying from suppliers (PO) and selling to customers (SO).
+**Purchase Orders** (`PurchaseOrderService`): `Create` (Draft, auto number `PO-yyyyMMdd-####`) → `Approve` (ManagerUp) → `Receive` (StaffUp; increments `ReceivedQuantity`, calls `ApplyInbound` at PO unit price, writes `PurchaseReceive` txns, sets `Received`/`PartiallyReceived`) → `Return` (ManagerUp; decrements inventory, tracks `ReturnedQuantity`). `OrderStatus` for PO: Draft, Submitted, Approved, PartiallyReceived, Received, Cancelled, Returned.
 
-**State machine**:
-- PO: Draft → Submitted → Approved → PartiallyReceived → Received
-- SO: Draft → Confirmed → PartiallyDelivered → Delivered → (Returned)
+**Sales Orders** (`SalesOrderService`): `Create` (Draft, `SO-yyyyMMdd-####`) → `Confirm` (ManagerUp; validates available stock, **reserves** it FIFO by expiry via `QuantityReserved`) → `Deliver` (StaffUp; ships FIFO by expiry, decrements on-hand, releases reservation, writes `SalesIssue` txns at COGS) → `Return` (ManagerUp; re-absorbs stock at cost) / `Cancel` (ManagerUp; releases reservations). `OrderStatus` for SO: Draft, Confirmed, PartiallyDelivered, Delivered, Cancelled, Returned.
 
-Each state transition is a separate service method (`PurchaseOrderService.ApproveAsync`, `PurchaseOrderService.ReceiveAsync`, `SalesOrderService.ConfirmAsync`, `SalesOrderService.DeliverAsync`, `SalesOrderService.ReturnAsync`) — you can't skip steps. The service inspects the current `Status` and throws `BadRequestException` if the transition is illegal (e.g. trying to deliver a Draft order).
+Each transition is a separate service method that inspects the current `Status` and throws `BadRequestException` if the transition is illegal — you can't skip steps.
 
-### 6.5 Reports & PDF
+### 6.5 Billing — Accounts Receivable (customer side)
 
-**What it does**: generates 4 reports as JSON or PDF: stock summary, low stock, expiry, inventory valuation.
+**What it does**: raise invoices to customers and record their payments.
 
-**How PDF generation works**:
-1. User clicks "Export PDF"
-2. Frontend calls `/api/v1/Reports/stock-summary/pdf`
-3. Controller asks `PdfReportService` to render the report
-4. `PdfReportService` uses **QuestPDF** — a C# library that builds PDFs declaratively (like writing HTML, but for PDF)
-5. Result is a byte array, returned as `application/pdf`
-6. Browser downloads it
+**Entities**: `Invoice` (+ `InvoiceItem`), `Payment` (+ `PaymentAllocation`).
 
-### 6.6 Hangfire background jobs
+**Invoice flow** (`InvoiceService`, `InvoicesController`):
+- `POST /api/v1/Invoices` (StaffUp) — manual invoice, starts **Draft**
+- `POST /api/v1/Invoices/from-sales-order` (StaffUp) — `CreateFromSalesOrderAsync` copies SO items, starts **Issued**, refuses to invoice the same SO twice (ConflictException), and backfills the SO with the invoice number
+- `POST /api/v1/Invoices/{id}/issue` (StaffUp) — Draft → Issued
+- `POST /api/v1/Invoices/{id}/cancel` (ManagerUp) — only if nothing has been paid
+- `GET /api/v1/Invoices/outstanding/{customerId}` (ViewerUp) — unpaid/partial invoices, used by the payment UI
 
-**What it does**: runs scheduled tasks even when nobody is using the app.
+Invoice number = `INV-yyyyMMdd-####` (daily counter). Status: Draft → Issued → PartiallyPaid → Paid (also Overdue, Cancelled). Totals: `TotalAmount = SubTotal + Tax − Discount`; `BalanceDue = TotalAmount − AmountPaid`.
 
-**Two jobs**:
-- `check-low-stock` (hourly) — finds products at/below reorder level, creates notifications
-- `check-expiry-alerts` (daily) — finds inventory expiring within 30 days, creates notifications
+**Payment flow** (`PaymentService`, `PaymentsController`):
+- `POST /api/v1/Payments` (StaffUp) — record a customer payment and split it across invoices. Validates: amount > 0, allocations sum ≤ amount, no invoice allocated twice, each invoice belongs to the same customer, isn't Draft/Cancelled, and the allocation ≤ that invoice's balance. For each allocation it calls `invoice.ApplyPayment(amount)` (advancing status) and writes a `PaymentAllocation` row. Payment number = `PAY-yyyyMMdd-####`.
 
-**Why these run as jobs (not on user action)**:
-A warehouse manager logs in at 9 AM expecting to see today's alerts. If the alerts only ran when someone visited the dashboard, they wouldn't be there. Jobs run on a schedule independent of users.
+### 6.6 Billing — Accounts Payable (supplier side)
 
-**The dashboard at `/hangfire`**:
-SuperAdmin only. Shows job history, success/fail counts, lets you trigger a job manually.
+**What it does**: record bills from suppliers and the payments you make against them.
 
-### 6.7 AI Chat
+**Entities**: `SupplierBill` (+ `SupplierBillItem`), `SupplierPayment` (+ `SupplierPaymentAllocation`).
 
-**What it does**: a chat panel where the user can ask questions like "what's running low?" and the AI answers using their real inventory data.
+**Bill flow** (`SupplierBillService`, `SupplierBillsController`):
+- `POST /api/v1/SupplierBills` (StaffUp) — manual bill, starts **Draft**
+- `POST /api/v1/SupplierBills/from-purchase-order` (StaffUp) — `CreateFromPurchaseOrderAsync` copies PO items, starts **Open**, refuses to bill the same PO twice (ConflictException)
+- `POST /api/v1/SupplierBills/{id}/approve` (StaffUp) — Draft → Open
+- `POST /api/v1/SupplierBills/{id}/cancel` (ManagerUp) — only if unpaid
+- `GET /api/v1/SupplierBills/outstanding/{supplierId}` (ViewerUp) — open/partial bills for the payment UI
 
-**Flow**:
-1. User types a message
-2. Frontend POSTs to `/api/v1/Chat`
-3. `AiChatService` builds a **system prompt** containing a snapshot of the tenant's inventory:
-   - Total products, warehouses, suppliers, customers
-   - Total inventory value, total sales, total purchases
-   - Low stock items
-   - Top products
-   - Recent transactions, sales orders, purchase orders
-4. Service calls Gemini's **streaming** endpoint with this system prompt + user message
-5. Gemini streams back chunks of text via Server-Sent Events
-6. Service forwards the chunks to the browser as SSE
-7. Frontend renders text token-by-token in real time
+Bill number = `BILL-yyyyMMdd-####`. Status: Draft → Open → PartiallyPaid → Paid (also Overdue, Cancelled). Default terms: due in 30 days.
 
-**Key implementation detail — retry logic**:
-Gemini sometimes returns 429 (rate limited) or 503 (overloaded). The service retries up to 3 times with exponential backoff (2s, 4s, 6s) before giving up.
+**Supplier payment flow** (`SupplierPaymentService`, `SupplierPaymentsController`):
+- `POST /api/v1/SupplierPayments` (StaffUp) — record a payment to a supplier and split it across bills (same validation shape as customer payments). Payment number = `SPAY-yyyyMMdd-####`. Allocations are optional (you can record unallocated cash).
+
+> **Note on where "generate bill / invoice" lives**: the PO and SO services do *not* generate billing documents. Generation is owned by the billing services — `SupplierBillService.CreateFromPurchaseOrderAsync` and `InvoiceService.CreateFromSalesOrderAsync` — exposed via the `/from-purchase-order` and `/from-sales-order` endpoints.
+
+### 6.7 Reports & PDF
+
+**What it does**: generates reports as JSON or PDF (stock summary, low stock, expiry, inventory valuation).
+
+**How PDF works**: `ReportsController` → `IReportService` builds the data, `IPdfReportService` (QuestPDF) renders it declaratively to a byte array, returned as `application/pdf`.
+
+### 6.8 Dashboard
+
+**What it does**: one call (`GET /api/v1/Dashboard`) returns a `DashboardDto` with KPIs and lists; the Angular dashboard renders cards plus three **ngx-charts** visualisations.
+
+- KPI cards: total sales, total purchases, inventory value, total orders
+- Secondary stats: total products, warehouses, low-stock count, expiring-soon count
+- Charts: **Top Products by Value** (vertical bar), **Financial Snapshot** (doughnut: sales / purchases / inventory value), **Stock Alerts** (horizontal bar: current vs reorder level)
+- Lists: recent transactions, top products, low-stock products, recent sales orders
+
+`DashboardService` computes low stock as `0 < QuantityOnHand ≤ ReorderLevel`, expiring as `ExpiryDate ≤ 30 days away`, and excludes Draft/Cancelled orders from money totals.
+
+### 6.9 Hangfire background jobs
+
+**Two recurring jobs** (both methods on `InventoryAlertJob`, registered in `Program.cs`):
+- `check-low-stock` (`Cron.Hourly`) — finds products at/below reorder level, creates `LowStock` notifications
+- `check-expiry-alerts` (`Cron.Daily`) — finds inventory expiring within 30 days, creates `ExpiryAlert` notifications
+
+**Why jobs (not on user action)**: a manager logging in at 9 AM expects today's alerts to already exist. Jobs run on a schedule independent of users. Hangfire gives persistence, retries, distributed locks (the job runs once across N instances), and the `/hangfire` dashboard.
+
+### 6.10 AI Chat
+
+**Flow**: user types → `POST /api/v1/Chat` → `AiChatService` builds a system prompt with a live inventory snapshot (KPIs, low stock, top products, recent transactions/orders) → calls Gemini's **streaming** endpoint → forwards SSE chunks to the browser → text renders token-by-token. Retry: up to 3 attempts with backoff (2s/4s/6s) on 429/503.
 
 ---
 
 ## 7. Common interview / demo questions and how to answer them
 
-Below: questions grouped by topic, each with a **30-second answer** (what to say) and a **deeper answer** (if they ask for more).
-
-### Project overview
+> A fuller, categorized set lives in [Q_AND_A.md](Q_AND_A.md). The essentials:
 
 #### Q: "Walk me through what this project does."
-**30s**: It's a multi-tenant SaaS inventory management system. Many companies can use it at the same time, each seeing only their own data. It covers products, warehouses, stock movements, purchase and sales orders, and reports. It also has two AI features: one that extracts product info from a photo, and one that's a chat assistant for asking questions about your inventory.
+**30s**: A multi-tenant SaaS inventory management system. Many companies use it at once, each seeing only their own data. It covers products, warehouses, stock movements (with batch/expiry and weighted-average costing), purchase and sales orders, customer invoicing and payments, supplier bills and payments, reports, and a dashboard. Two AI features: extract product info from a photo, and a chat assistant over your live inventory.
 
-**Deeper**: I built the backend in .NET 10 using Clean Architecture in four projects (Domain / Application / Infrastructure / API), with thin controllers delegating to one service per business module. The frontend is Angular 19. Data is in SQL Server with EF Core. Background tasks run on Hangfire. The AI is Google's Gemini, called over REST.
-
-#### Q: "Why did you build this?"
-**Honest answer**: It started as a learning project to combine modern .NET, Angular, AI, and proper architecture in one place. Inventory was the domain because it has rich relationships (warehouses, batches, expiries) that exercise the patterns properly.
-
-### Architecture
-
-#### Q: "What is Clean Architecture and why did you use it?"
-**30s**: It's a way of organising code so business rules don't depend on frameworks. I split the backend into four projects: Domain (entities), Application (commands/queries), Infrastructure (DB, AI, email), API (controllers). The dependencies only point inward. Tomorrow if I want to swap SQL Server for Postgres, I only change Infrastructure — Domain and Application don't notice.
-
-**Deeper**: The benefit shows up when something changes. For example, when I added the AI scan feature, I added one interface in Application (`IProductExtractionService`), one implementation in Infrastructure (`GeminiProductExtractionService`), and one controller action — without touching anything in Domain. Adding bulk-CSV import would be the same pattern.
+**Deeper**: .NET 10 backend in Clean Architecture (Domain / Application / Infrastructure / API), thin controllers delegating to 18 services. Angular 19 frontend. SQL Server with EF Core. Hangfire for background jobs. Google Gemini over REST for AI.
 
 #### Q: "Why Controller → Service instead of CQRS / MediatR?"
-**30s**: I started with CQRS via MediatR — every endpoint had a separate `*Command` + `*Handler` + `*Validator` (3-4 files per endpoint). For an inventory app with ~80 endpoints, that's a lot of file churn for very little extra value: there's no read model that scales separately from the write model, no Event Sourcing, no message bus. So I migrated to one service per business module — `IProductService` with `CreateAsync` / `GetByIdAsync` / etc. Same Clean Architecture rings, same tests, half the files, simpler stack traces, and validation/logging are now framework-native (model-binding + Serilog request logger).
-
-**Deeper**: The migration was incremental — one module at a time, build clean after each. Domain exceptions plus a single `ExceptionHandlingMiddleware` replaced the `Result<T>` wrapper. The controllers became genuinely thin (2 lines per action). The Infrastructure layer didn't change at all. If a module ever needs CQRS again — say, a separate read store backed by a denormalised view — adding it is a localised change to that one service.
-
-### Multi-tenancy
+**30s**: I started with CQRS via MediatR — every endpoint had a separate Command + Handler + Validator. For a CRUD-heavy app with no separate read model, no event sourcing, and no message bus, that's a lot of files for little value. I migrated to one service per module: same Clean Architecture rings, half the files, flatter stack traces, validation/logging now framework-native.
 
 #### Q: "How do you make sure tenants can't see each other's data?"
-**30s**: Two layers. First, every tenant-scoped row has a `TenantId` column. Second, EF Core has global query filters that automatically add `WHERE TenantId = X` to every query. The TenantId comes from a claim in the user's JWT. So even if I forget to filter in code, the database query is filtered automatically.
+**30s**: Three layers. Every tenant-scoped row inherits `TenantEntity` (a `TenantId` column). EF Core global query filters add `WHERE TenantId = X && !IsDeleted` to every read, where X comes from the JWT. And `SaveChangesAsync` auto-stamps `TenantId` on insert so you can't forget. A `null` tenant (seeding/registration/SuperAdmin) bypasses the tenant clause but still respects soft-delete.
 
-**Deeper**: There's a SuperAdmin role that can bypass the filter for cross-tenant operations. The tenant ID is read from the JWT claim by `TenantResolutionMiddleware` and stored in `ITenantAccessor`, which is what the EF query filter consults.
+#### Q: "How does the money side work — invoices and bills?"
+**30s**: Two mirror modules. Accounts receivable: invoices to customers (manual or generated from a sales order) and payments that allocate across invoices. Accounts payable: supplier bills (manual or generated from a purchase order) and supplier payments that allocate across bills. Each document tracks `AmountPaid` / `BalanceDue` and moves through Draft → Issued/Open → PartiallyPaid → Paid as allocations land. Generating a billing doc from an order is idempotent — you can't invoice the same SO or bill the same PO twice.
 
-#### Q: "What's the alternative to row-level isolation?"
-- **Database-per-tenant** — each tenant has their own database. More isolation, more cost, harder migrations.
-- **Schema-per-tenant** — each tenant has their own schema in one database. Middle ground.
-- **Row-level (what you have)** — cheapest, simplest, requires discipline. Global query filters provide that discipline.
+#### Q: "What happens to stock when you receive a PO or deliver an SO?"
+**30s**: Receiving a PO calls `ApplyInbound` on the balance (blending the PO unit price into a moving weighted-average cost) and writes a `PurchaseReceive` transaction. Delivering an SO consumes balances FIFO by expiry, decrements on-hand, releases the reservation made at Confirm, and writes a `SalesIssue` transaction at COGS — actual cost, never the selling price.
 
-### Authentication
+#### Q: "How does the AI scan work / what if it returns garbage?"
+**30s**: The image goes to Gemini vision with a strict-JSON prompt and `responseMimeType: application/json`. I strip stray markdown fences and deserialize into a typed DTO; if it still fails to parse, the endpoint returns a clean error and the user just types the product. The endpoint never saves — it pre-fills a form the user reviews.
 
-#### Q: "Why JWT instead of cookies/sessions?"
-**30s**: Stateless. The token contains everything the server needs (user ID, tenant ID, role) signed with a secret. No database lookup per request. Easier to horizontally scale — any server can validate any token.
-
-#### Q: "How do you handle token expiry?"
-**30s**: Access tokens expire in 60 minutes. The frontend has an HTTP interceptor that catches 401 responses, calls `/auth/refresh-token` with the long-lived refresh token, gets a new access token, and replays the original request. Refresh tokens are rotated on each use to detect theft.
+#### Q: "Why Hangfire instead of `Task.Run`?"
+**30s**: `Task.Run` dies with the process. Hangfire persists jobs to SQL, retries on failure, uses distributed locks so a job runs once across N servers, and gives me a dashboard — persistence, retry, distribution, observability for free.
 
 #### Q: "How are passwords stored?"
-**30s**: PBKDF2-SHA512 with a per-user salt. Even if the database leaks, the original passwords can't be recovered. Verifying a password is intentionally slow (~100 ms) so brute-forcing is impractical.
-
-### AI features
-
-#### Q: "How does the AI scan work?"
-**30s**: User uploads a product photo. The backend buffers the image, encodes it as base64, sends it to Google's Gemini vision API along with a prompt that instructs the model to return strict JSON with name, brand, barcode, etc. The response is parsed into a typed DTO and returned to the Angular form, which pre-fills the fields. The user reviews and saves through the normal product-create endpoint.
-
-#### Q: "What if Gemini returns garbage?"
-**30s**: Three layers of defence. First, the prompt explicitly says "return ONLY valid JSON with this exact shape". Second, the request uses `responseMimeType: application/json` which forces Gemini to validate its own output. Third, my code strips ```` ```json ```` markdown fences if Gemini wraps the JSON anyway, then calls `JsonSerializer.Deserialize<ProductExtractionResult>`. If parsing fails, the controller returns 502 with a clean message — the user just doesn't get an auto-fill.
-
-#### Q: "Why doesn't the scan endpoint save the product?"
-**30s**: Deliberate UX choice. The AI is right ~80% of the time, but the user knows their inventory better than any model — they should have a chance to review and correct. So the endpoint returns a draft, and the user submits it through the existing create-product flow. It's a two-step pipeline by design.
-
-#### Q: "How does the chat work?"
-**30s**: When the user sends a message, the backend builds a system prompt containing a real-time snapshot of their inventory — totals, low stock items, top products, recent transactions. That prompt plus the user's message goes to Gemini's streaming endpoint via SSE, and tokens are forwarded to the browser as they arrive. The model has retry-on-429 with exponential backoff because Gemini's free tier rate-limits aggressively.
-
-### Background jobs
-
-#### Q: "Why Hangfire instead of just `Task.Run`?"
-**30s**: `Task.Run` dies with the process. Hangfire persists jobs to SQL Server, retries on failure, distributes work across multiple servers, and gives me a dashboard to inspect runs. I get retry, persistence, distribution, and observability for free instead of building all four myself.
-
-#### Q: "What if the same job runs on two servers?"
-**30s**: Hangfire uses distributed locks in SQL Server. Even if I scale the API to 5 instances, the hourly low-stock job runs exactly once per hour, total — not 5 times.
-
-### Database
-
-#### Q: "Why SQL Server?"
-**30s**: It pairs well with .NET (best EF Core support), has solid Hangfire integration, and supports row-versioning for optimistic concurrency. Could swap to PostgreSQL by changing one line in Infrastructure if needed.
-
-#### Q: "How do you handle concurrent edits?"
-**30s**: Optimistic concurrency via a `RowVersion` column. EF Core auto-increments it on every update. When two users edit the same record, the second save throws `DbUpdateConcurrencyException` — I catch it and tell the user "this record was modified, refresh and try again".
-
-### Frontend
-
-#### Q: "Why Angular?"
-**30s**: Strong tooling for large enterprise apps, built-in dependency injection, reactive forms, and HTTP interceptors. The component model (standalone components, signals) is mature. I considered React, but Angular's structure suits a multi-feature business app better.
-
-#### Q: "How does the frontend stay in sync with API auth?"
-**30s**: An HTTP interceptor adds the bearer token to every request. On 401, the interceptor silently calls `/auth/refresh-token`, swaps the token, and retries the original request — the user never sees a re-login screen unless the refresh token itself is invalid.
-
-### Security
-
-#### Q: "What protects against brute-force login?"
-**30s**: Rate limiting via `AspNetCoreRateLimit`. Login is capped at 10 attempts per minute per IP. Plus, password verification uses PBKDF2 which is intentionally slow (~100 ms) — that alone makes brute-force impractical.
-
-#### Q: "What about SQL injection?"
-**30s**: EF Core parameterises every query. I never concatenate user input into SQL. Even my custom queries use LINQ which compiles to parameterised SQL.
-
-#### Q: "Where do secrets live?"
-**30s**: In development, .NET user-secrets — a per-machine encrypted store outside the project tree. In production, environment variables (Azure App Service / Docker / k8s convention `Section__Key`). Never in source control. The Gemini API key, JWT signing secret, and SMTP password all go through this path.
-
-### Deployment
-
-#### Q: "How would you deploy this?"
-**30s**: Three options that scale up:
-1. **Azure App Service** — easiest. There's a GitHub Action wired up that builds and deploys on push to main.
-2. **Docker** — `docker-compose.yml` runs SQL Server, Redis, API, and frontend in containers. Good for self-hosted.
-3. **Kubernetes** — for serious scale: API as a Deployment with a HorizontalPodAutoscaler, SQL Server as a StatefulSet (or managed DB), Redis as a StatefulSet, Hangfire dashboard exposed only internally.
+**30s**: PBKDF2-SHA512 with a per-user salt. Verifying is intentionally slow (~100 ms), so brute-force is impractical; a DB leak doesn't reveal raw passwords.
 
 ---
 
 ## 8. Tradeoffs and decisions you should be able to defend
 
-Every architectural choice has a downside. Here are the ones in your project, what you gained, and what you gave up.
-
 ### Multi-tenancy via shared DB + global query filters
-**Gained**: cheap, simple, easy to onboard new tenants.
-**Lost**: data is physically mingled. A bug in the global filter could leak data. (Mitigation: aggressive testing, integration tests covering tenant boundaries.)
+**Gained**: cheap, simple, easy to onboard new tenants. **Lost**: data is physically mingled; a bug in the filter could leak data. Mitigation: the filter is combined (tenant + soft-delete) and applied by reflection to every tenant entity, plus the write-side auto-stamp, plus integration tests on tenant boundaries.
 
 ### Controller → Service (replaced CQRS-via-MediatR)
-**Gained**: half the file count per module, flat stack traces (Controller → Service → DbContext), simpler onboarding for new devs, faster builds, no MediatR / FluentValidation / AutoMapper dependencies.
-**Lost**: MediatR's "free" cross-cutting concerns. Validation now lives at model-binding (data annotations) + inline service guards; logging is the framework's request logger plus correlation IDs. Trade was correct here because the project doesn't have separate read/write models, no event sourcing, and no message bus — i.e. CQRS wasn't earning its keep.
+**Gained**: half the files per module, flat stack traces, simpler onboarding, faster builds, no MediatR / FluentValidation / AutoMapper. **Lost**: MediatR's "free" cross-cutting validation/logging — now model-binding + inline guards + Serilog. Correct here because there's no separate read/write model, no event sourcing, no message bus.
+
+### Entity-level behaviour for billing/inventory
+**Gained**: invariants (status transitions, weighted-average cost, balance-due) live on the entity (`Invoice.ApplyPayment`, `InventoryBalance.ApplyInbound`), so services stay thin and the rules are reused. **Lost**: a little "anaemic vs rich model" purity debate — fine for this size.
 
 ### Hangfire in-process
-**Gained**: simple deploy. The API and the job worker are the same binary.
-**Lost**: jobs and HTTP traffic compete for the same threads. For high job volume you'd run Hangfire on dedicated worker nodes.
+**Gained**: simple deploy — API and worker are the same binary. **Lost**: jobs and HTTP traffic share threads. For high job volume you'd run Hangfire on dedicated workers.
 
 ### Free-tier Gemini for AI
-**Gained**: zero infrastructure, zero cost during dev.
-**Lost**: 20 free vision calls/day. Hits production scale only with billing enabled. Different model availability changes over time.
+**Gained**: zero infra, zero cost during dev. **Lost**: limited free vision calls/day; model availability shifts over time.
 
 ### JWT with 60 min expiry
-**Gained**: simple, stateless, no DB lookup per request.
-**Lost**: a stolen JWT works for up to 60 minutes. Could shorten to 5–15 min for very security-sensitive deployments, paying for more refresh-token round-trips.
+**Gained**: simple, stateless, no DB lookup per request. **Lost**: a stolen JWT works up to 60 min — mitigated by short expiry + refresh rotation.
 
-### Soft delete
-**Gained**: undelete, audit, no cascading data loss.
-**Lost**: every query has to remember to filter `IsActive = true` (or `!IsDeleted`). Global query filters help here too.
-
-### Angular Material + custom CSS (rather than Bootstrap)
-**Gained**: cohesive design system, accessibility built-in.
-**Lost**: bigger bundle, opinionated styling. The toast component is custom CSS to avoid pulling in Bootstrap just for toasts.
+### Soft delete + live audit log
+**Gained**: undelete, full change history (who changed what, old vs new). **Lost**: every query carries `!IsDeleted`; the audit write is a second `SaveChanges` per request that mutates data (small write amplification).
 
 ---
 
 ## 9. Demo script — 5 minute version
 
-Use this when showing the project. Hit the highlights, don't try to show everything.
-
 ### Minute 1 — Set the stage
-> "InventorySaaS is a multi-tenant inventory management SaaS, built with .NET 10 and Angular 19. Multi-tenant means many companies can use it simultaneously, each seeing only their own data. I'll show you the demo tenant."
+> "InventorySaaS is a multi-tenant inventory + light-ERP SaaS, .NET 10 and Angular 19. Multi-tenant means many companies use it at once, each seeing only their own data. I'll log into the demo tenant."
 
-[Log in as `admin@demo-company.com`]
+[Log in as `admin@demo-company.com` / `Demo@123456`]
 
 ### Minute 2 — The dashboard
-> "On the dashboard you can see total sales, total purchase, inventory value, and total orders. Below that, secondary stats and a recent transactions list. All of this is one API call to `/api/v1/Dashboard`."
+> "Total sales, purchases, inventory value, orders up top — then charts: top products by value, a financial snapshot doughnut, and stock alerts. It's one call to `/api/v1/Dashboard`."
 
-[Click around the KPI cards]
+### Minute 3 — The AI scan (headline feature)
+> "Adding products one by one is slow, so I built AI scan." [Products → Add → Scan from Photo → pick an image] "The form filled itself in — the image went to Gemini vision with a strict-JSON prompt, parsed into a typed DTO, patched into the form. I review, click Save."
 
-### Minute 3 — The AI scan (your headline feature)
-> "Adding products one by one is slow, so I built an AI feature. Watch."
-
-[Go to Products → Add → Scan from Photo → pick `1_cola_can.png`]
-
-> "The form just filled itself in. Behind the scenes, the image went to my API, which sent it to Google's Gemini vision model with a strict-JSON prompt. The response was parsed into a typed DTO and patched into the Angular form. I fill in cost price and category, click Save, and I have a new product."
-
-[Save the product]
-
-### Minute 4 — The AI chat
-> "There's also an inventory copilot."
-
-[Open chat, type "What items are running low?"]
-
-> "The backend builds a system prompt with a snapshot of my real inventory — totals, low stock items, recent transactions — and streams Gemini's response token-by-token via Server-Sent Events. So you see the answer appear in real time."
+### Minute 4 — Orders → money
+> "I'll confirm and deliver a sales order — that reserves then ships stock FIFO by expiry and records COGS. Then 'generate invoice from this order', and record a customer payment that allocates against it. The invoice moves to Paid. The supplier side mirrors this: receive a PO, generate a bill, pay it."
 
 ### Minute 5 — Architecture wrap-up
-> "Architecturally it's Clean Architecture in four projects — Domain, Application, Infrastructure, API. Controllers are thin and delegate to service classes; failures throw typed domain exceptions caught by one global middleware. Multi-tenancy uses EF Core global query filters reading the tenant ID from the JWT. Background jobs (low stock checks, expiry alerts) run hourly and daily on Hangfire. JWT auth with refresh-token rotation. Reports export to PDF via QuestPDF. The chat and scan features both call Gemini's REST API directly — no SDK."
-
-> "Everything is dockerised, with a GitHub Action that deploys to Azure App Service on push to main."
-
-Done.
+> "Clean Architecture in four projects; thin controllers delegating to services; failures throw typed domain exceptions caught by one middleware. Multi-tenancy via EF Core global query filters reading the tenant from the JWT, plus a live audit log. Hangfire runs hourly/daily stock + expiry checks. JWT with refresh rotation, PBKDF2 passwords. Reports export to PDF via QuestPDF. Chat and scan call Gemini's REST API directly. Dockerised with a GitHub Action deploying to Azure on push to main."
 
 ---
 
 ## 10. Things you don't know yet, and that's OK
 
-You don't have to know everything. Here are topics it's reasonable to say "I haven't gone deep on that yet" if asked:
+Reasonable to say "I haven't gone deep on that yet":
 
-- **Database migration management in production** — what to do when a migration takes 10 minutes on a 100M-row table. (Answer: zero-downtime migration techniques like backfilling in batches.)
-- **High-availability deployment** — running the API on multiple servers with a load balancer, primary/secondary SQL Server, etc. You've got the foundation but haven't run it at that scale.
-- **Performance tuning** — query plans, index design, caching strategies. You have Redis available but haven't profiled real workloads.
-- **Localization (i18n)** — the app is English only. Angular has `@angular/localize` for this; the backend would need to externalise strings.
-- **Comprehensive testing** — you have unit and integration test projects but they're light on coverage. Saying "the next thing I'd add is more integration tests around tenant isolation" is a great answer.
+- **Production migration management** — what to do when a migration takes minutes on a large table (batched backfills, zero-downtime techniques).
+- **High-availability deployment** — multiple API nodes, load balancer, primary/secondary SQL.
+- **Performance tuning** — query plans, index design, caching. Redis is wired up but real workloads aren't profiled.
+- **Subscription-limit enforcement** — plans/limits are seeded but not yet enforced at the API.
+- **Localization (i18n)** — English only today.
+- **Comprehensive testing** — unit + integration projects exist but coverage is light; the highest-value additions are tenant-isolation tests and the order/billing state-machine flows.
 
-Confidence comes from honesty. "I haven't built X but I know what I'd do" is a stronger answer than pretending.
+Confidence comes from honesty. "I haven't built X but I know what I'd do" beats pretending.
 
 ---
 
@@ -772,45 +709,33 @@ Confidence comes from honesty. "I haven't built X but I know what I'd do" is a s
 | SaaS | Software you log into, not install |
 | Multi-tenant | One app, many isolated customers |
 | Clean Architecture | Business rules don't depend on frameworks |
-| Controller → Service pattern | Thin controller delegates to a focused service class |
-| Domain exception | Typed `Exception` subclass that the global middleware maps to an HTTP code |
-| `IApplicationDbContext` | Application-layer interface that exposes EF DbSets without referencing EF Core |
+| Controller → Service | Thin controller delegates to a focused service class |
+| Domain exception | Typed `Exception` the global middleware maps to an HTTP code |
+| `IApplicationDbContext` | Application-layer interface exposing EF DbSets without referencing EF Core |
 | DTO | Plain object that carries data between layers |
-| Entity | Class representing a thing in your business |
+| Entity | Class representing a thing in your business (some carry behaviour) |
 | EF Core | C# ORM that turns LINQ into SQL |
 | Migration | C# file describing a DB schema change |
-| Global query filter | LINQ added to every query (used for tenant isolation) |
+| Global query filter | Combined tenant + soft-delete LINQ added to every read |
+| Audit log | Auto-written change history (who/what/old→new) on every save |
 | JWT | Signed token that proves your identity |
-| Refresh token | Long-lived token used to get new JWTs |
-| Claim | Field inside a JWT (email, role, tenantId) |
-| RBAC | Permission model based on roles |
-| Authorization policy | Named role check applied to controllers |
-| Middleware | Code running before/after every HTTP request |
-| Hangfire | Library for background jobs |
-| Cron expression | String describing a job schedule |
-| Soft delete | Marking deleted instead of removing |
-| Optimistic concurrency | Detecting concurrent edits via RowVersion |
-| Rate limiting | Capping requests per IP/user |
-| Correlation ID | Unique ID tying log entries to a single request |
-| SSE | Streaming text from server to browser |
-| REST | URL+verb-based API style |
-| Swagger | Auto-generated API explorer |
-| CORS | Browser rule for cross-origin requests |
-| Hash + salt | Irreversible password storage |
-| Reactive Forms | Angular forms backed by TypeScript objects |
-| Standalone component | Angular component without an NgModule |
-| Pipe | Template transformer (`| currency`) |
-| Observable | RxJS stream (HTTP responses) |
-| Signal | Angular's reactive primitive (toasts use it) |
-| HTTP Interceptor | Code running before every Angular HTTP call |
-| Gemini | Google's LLM, used for chat + vision |
-| System prompt | Hidden instructions to the model |
-| Token (LLM sense) | Unit of text the model bills by |
-| JSON mode | Forcing the model to return valid JSON |
-| User secrets | Encrypted local config for dev |
-| QuestPDF | C# library for generating PDFs |
+| Refresh token | Long-lived, rotated token used to get new JWTs |
+| RBAC / policy | Role-based access, grouped under named policies |
+| InventoryBalance | On-hand + reserved + weighted-average cost per product/warehouse/batch |
+| InventoryTransaction | The movement ledger (StockIn, Transfer, SalesIssue, …) |
+| Weighted-average cost | New stock blends into the existing unit cost |
+| FIFO by expiry | Reservations/shipments consume earliest-expiry stock first |
+| AR (invoices/payments) | Money customers owe you, with payment allocation |
+| AP (bills/payments) | Money you owe suppliers, with payment allocation |
+| Payment allocation | One payment split across several invoices/bills |
+| Hangfire | Library for background jobs (hourly/daily checks) |
+| SSE | Streaming text from server to browser (AI chat) |
+| Gemini | Google's LLM, used for chat + vision scan |
+| ngx-charts | Dashboard charting library |
+| QuestPDF | C# library for generating PDF reports |
 | Serilog | Structured logging library |
+| Correlation ID | Unique ID tying log entries to one request |
 
 ---
 
-*Read the file. Re-read sections that feel hazy. Open the actual code while reading — every term in this guide maps to a specific file in the project. The fastest way to internalise it is to open the file and re-trace what the code is doing while the explanation is fresh in your head.*
+*Read the file. Re-read sections that feel hazy. Open the actual code while reading — every term here maps to a specific file. The fastest way to internalise it is to open the file and re-trace what the code is doing while the explanation is fresh.*
