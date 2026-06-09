@@ -66,6 +66,12 @@ public interface IApplicationDbContext
     DbSet<Payment> Payments { get; }
     DbSet<PaymentAllocation> PaymentAllocations { get; }
 
+    // Billing (Accounts Payable)
+    DbSet<SupplierBill> SupplierBills { get; }
+    DbSet<SupplierBillItem> SupplierBillItems { get; }
+    DbSet<SupplierPayment> SupplierPayments { get; }
+    DbSet<SupplierPaymentAllocation> SupplierPaymentAllocations { get; }
+
     // Notification & Audit
     DbSet<NotificationInfo> Notifications { get; }
     DbSet<AuditLog> AuditLogs { get; }

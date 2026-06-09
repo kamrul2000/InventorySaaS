@@ -83,6 +83,12 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
 
+    // Billing (Accounts Payable)
+    public DbSet<SupplierBill> SupplierBills => Set<SupplierBill>();
+    public DbSet<SupplierBillItem> SupplierBillItems => Set<SupplierBillItem>();
+    public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
+    public DbSet<SupplierPaymentAllocation> SupplierPaymentAllocations => Set<SupplierPaymentAllocation>();
+
     // Notification & Audit
     public DbSet<NotificationInfo> Notifications => Set<NotificationInfo>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

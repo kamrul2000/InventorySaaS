@@ -19,3 +19,13 @@ public enum PaymentMethod
     MobileBanking = 4,
     Other = 5
 }
+
+public enum BillStatus
+{
+    Draft = 0,
+    Open = 1,
+    PartiallyPaid = 2,
+    Paid = 3,
+    Overdue = 4,
+    Cancelled = 5
+}
