@@ -24,7 +24,8 @@ export class PoDetailComponent implements OnInit {
 
   constructor(
     private poService: PurchaseOrderService, private route: ActivatedRoute,
-    private router: Router, private notification: NotificationService
+    private router: Router, private notification: NotificationService,
+    private billService: SupplierBillService
   ) {}
 
   ngOnInit(): void {
@@ -61,6 +62,18 @@ export class PoDetailComponent implements OnInit {
     };
     this.poService.receiveGoods(this.order.id, data).subscribe({
       next: () => { this.notification.success('Goods received'); this.ngOnInit(); },
+    });
+  }
+
+  get canBill(): boolean {
+    if (!this.order) return false;
+    return this.order.status === 'Received' || this.order.status === 'PartiallyReceived';
+  }
+
+  generateBill(): void {
+    if (!this.order) return;
+    this.billService.createFromPurchaseOrder(this.order.id).subscribe({
+      next: (bill) => { this.notification.success('Supplier bill generated'); this.router.navigate(['/supplier-bills', bill.id]); },
     });
   }
 

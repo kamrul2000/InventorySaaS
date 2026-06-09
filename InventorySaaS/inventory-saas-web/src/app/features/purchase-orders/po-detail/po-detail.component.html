@@ -21,6 +21,11 @@
             <mat-icon>inventory</mat-icon> Receive Goods
           </button>
         }
+        @if (canBill) {
+          <button class="btn-accent" (click)="generateBill()">
+            <mat-icon>request_quote</mat-icon> Generate Bill
+          </button>
+        }
         @if (canReturn) {
           <button class="btn-danger" (click)="returnGoods()">
             <mat-icon>assignment_return</mat-icon> Return to Supplier
