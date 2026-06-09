@@ -165,6 +165,77 @@
       </div>
     </div>
 
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="chart-card chart-card-wide">
+        <h3 class="info-title">Top Products by Value</h3>
+        @if (topProductsChart.length) {
+          <div class="chart-box">
+            <ngx-charts-bar-vertical
+              [results]="topProductsChart"
+              [scheme]="chartScheme"
+              [xAxis]="true"
+              [yAxis]="true"
+              [roundDomains]="true"
+              [yAxisTickFormatting]="currencyAxisFormat"
+              [gradient]="true">
+            </ngx-charts-bar-vertical>
+          </div>
+        } @else {
+          <div class="empty-state">No product data yet</div>
+        }
+      </div>
+
+      <div class="chart-card">
+        <h3 class="info-title">Financial Snapshot</h3>
+        @if (financialChart.length) {
+          <div class="finance-snapshot">
+            <div class="donut-wrap">
+              <ngx-charts-pie-chart
+                [results]="financialChart"
+                [scheme]="chartScheme"
+                [doughnut]="true"
+                [arcWidth]="0.4"
+                [labels]="false"
+                [legend]="false"
+                [tooltipDisabled]="false">
+              </ngx-charts-pie-chart>
+            </div>
+            <div class="finance-legend">
+              @for (item of financialChart; track item.name; let i = $index) {
+                <div class="finance-row">
+                  <span class="finance-dot" [style.background]="chartScheme.domain[i]"></span>
+                  <span class="finance-name">{{ item.name }}</span>
+                  <span class="finance-val">{{ item.value | currency:'BDT':'৳':'1.0-0' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="empty-state">No financial data yet</div>
+        }
+      </div>
+    </div>
+
+    @if (stockAlertsChart.length) {
+      <div class="charts-row">
+        <div class="chart-card chart-card-full">
+          <h3 class="info-title">Stock Alerts &mdash; Current vs Reorder Level</h3>
+          <div class="chart-box chart-box-tall">
+            <ngx-charts-bar-horizontal-2d
+              [results]="stockAlertsChart"
+              [scheme]="chartScheme"
+              [xAxis]="true"
+              [yAxis]="true"
+              [legend]="true"
+              legendTitle=""
+              [roundDomains]="true">
+            </ngx-charts-bar-horizontal-2d>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Bottom Row: Top Products, Low Stock, Recent Sales -->
     <div class="bottom-row">
       <!-- Top Selling Products -->

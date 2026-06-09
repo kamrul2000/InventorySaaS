@@ -290,6 +290,12 @@ Viewers have read-only access. They can see all data but cannot create, edit, or
 
 The dashboard provides a quick overview of your business:
 
+**Charts (above the lists):**
+Three visual charts (powered by ngx-charts) give an at-a-glance picture:
+- **Top Products by Value** - Bar chart of your highest-value products
+- **Financial Snapshot** - Donut chart with a legend showing Sales, Purchases, and Inventory Value
+- **Stock Alerts - Current vs Reorder Level** - Grouped bar chart comparing current stock against the reorder level for items needing attention
+
 **KPI Cards (top row):**
 - **Total Products** - Number of active products in your catalog
 - **Total Warehouses** - Number of warehouses
@@ -507,6 +513,7 @@ Purchase Orders (POs) track what you buy from suppliers.
 ```
 Draft → Submitted → Approved → Received
                               ↘ Partially Received → Received
+                                                   ↘ Returned (all received goods returned)
 ```
 
 #### Creating a Purchase Order
@@ -537,6 +544,20 @@ Draft → Submitted → Approved → Received
    - Records inventory transactions
    - Updates PO status to "Received" or "Partially Received"
 
+The PO detail page shows a **Returned** column per line item so you can see how much of each received line has been returned to the supplier.
+
+#### Returning Goods to Supplier (Manager+ only)
+1. Open a Received or Partially Received PO
+2. Click **"Return to Supplier"**
+3. Enter the quantities to return for each line
+4. The system automatically:
+   - Deducts the returned quantity from on-hand stock
+   - Records a purchase-return transaction
+   - Sets PO status to **Returned** once everything received has been returned
+
+#### Generating a Supplier Bill
+When a PO is Received or Partially Received, a **"Generate Bill"** button appears on the detail page. Click it to create a supplier bill from the PO (see [Supplier Bills](#915-supplier-bills)).
+
 ---
 
 ### 9.9 Sales Orders
@@ -550,6 +571,7 @@ Sales Orders (SOs) track what you sell to customers.
 ```
 Draft → Confirmed → Delivered
                   ↘ Partially Delivered → Delivered
+                  ↘ Cancelled (releases reserved stock)
 ```
 
 #### Creating a Sales Order
@@ -576,6 +598,14 @@ Draft → Confirmed → Delivered
    - Deducts inventory (Stock Out)
    - Records inventory transactions
    - Updates SO status
+
+#### Cancelling a Sales Order (Manager+ only)
+1. Open a Confirmed or Partially Delivered SO
+2. Click **"Cancel"**
+3. The order status becomes **Cancelled** and any reserved-but-undelivered stock is released back to availability
+
+#### Generating an Invoice
+When an SO is Delivered or Partially Delivered, a **"Generate Invoice"** button appears on the detail page. Click it to create a customer invoice from the SO (see [Invoices](#914-invoices)).
 
 ---
 
@@ -668,6 +698,113 @@ Update your company information:
 - **Currency** (e.g., USD, EUR, BDT)
 - **Timezone** (e.g., UTC, America/New_York)
 - **Logo URL**
+
+---
+
+### 9.14 Invoices
+
+**Path:** `/invoices` (sidebar → Invoices)
+
+Invoices are customer invoices (Accounts Receivable). All amounts are in BDT (৳).
+
+#### Invoice Workflow
+
+```
+Draft → Issued → Partially Paid → Paid
+              ↘ (record payments)
+Draft/Issued → Cancelled (only if no payments applied)
+```
+
+#### Creating an Invoice
+There are two ways:
+- **Automatically** - Click **"Generate Invoice"** on a Delivered (or Partially Delivered) Sales Order. The line items are copied from the SO.
+- **Manually** - Click **"New Invoice"**, then:
+  1. Pick the **Customer**
+  2. Set the **Due Date**
+  3. Add line items (product, quantity, unit price)
+  4. Click **Save**
+
+#### Issuing an Invoice
+1. Open a Draft invoice
+2. Click **"Issue"** to finalize it and make it payable
+
+#### Recording a Payment
+- Click **"Record Payment"** on an issued invoice (see [Payments](#915-payments))
+
+#### Invoice Detail
+The detail page shows the line items, totals, **Amount Paid**, and **Balance Due**, with **Issue**, **Cancel**, and **Record Payment** buttons. An invoice can be **Cancelled** only while no payments have been applied.
+
+---
+
+### 9.15 Payments
+
+**Path:** `/payments` (sidebar → Payments)
+
+Payments record money received from customers (Accounts Receivable receipts). A single payment can be allocated across one or more invoices, and partial payments are supported.
+
+#### Recording a Payment
+1. Click **"Record Payment"**
+2. Pick the **Customer** - the screen loads that customer's outstanding invoices
+3. Enter the **Payment Amount**
+4. Choose the **Method**: Cash, Bank Transfer, Card, Cheque, Mobile Banking, or Other
+5. Enter a **Reference** (e.g., cheque number, transaction ID)
+6. **Allocate** the amount across the outstanding invoices:
+   - Type an amount against each invoice, or
+   - Click **"Auto-allocate"** to fill the oldest invoices first
+   - Live **Allocated** and **Unallocated** totals update as you type
+7. Click **Submit**
+
+Applying the payment updates each invoice's status and balance accordingly.
+
+---
+
+### 9.16 Supplier Bills
+
+**Path:** `/supplier-bills` (sidebar → Supplier Bills)
+
+Supplier Bills are bills you owe to suppliers (Accounts Payable). Amounts are in BDT (৳).
+
+#### Bill Workflow
+
+```
+Draft → Approved → Partially Paid → Paid
+              ↘ (record payments)
+Draft/Approved → Cancelled (only if no payments applied)
+```
+
+#### Creating a Bill
+There are two ways:
+- **Automatically** - Click **"Generate Bill"** on a Received (or Partially Received) Purchase Order. The line items are copied from the PO.
+- **Manually** - Click **"New Bill"**, then:
+  1. Pick the **Supplier**
+  2. Enter the **Supplier Invoice #**
+  3. Set the **Due Date**
+  4. Add line items
+  5. Click **Save**
+
+#### Approving a Bill
+1. Open a Draft bill
+2. Click **"Approve"** to make it payable
+
+#### Bill Detail
+The detail page shows **Total**, **Paid**, and **Balance Due**, with **Approve**, **Cancel**, and **Record Payment** buttons. A bill can be **Cancelled** only while no payments have been applied.
+
+---
+
+### 9.17 Supplier Payments
+
+**Path:** `/supplier-payments` (sidebar → Supplier Payments)
+
+Supplier Payments record money paid out to suppliers (Accounts Payable). The allocation experience is the same as customer [Payments](#915-payments), but for paying suppliers.
+
+#### Recording a Supplier Payment
+1. Click **"Record Payment"**
+2. Pick the **Supplier** - the screen loads that supplier's outstanding bills
+3. Enter the **Amount**, **Method**, and **Reference**
+4. **Allocate** the amount across the outstanding bills (or click **"Auto-allocate"** to fill the oldest first), watching the live Allocated / Unallocated totals
+5. Click **Submit**
+
+A single payment can settle multiple bills; partial payments are supported.
 
 ---
 

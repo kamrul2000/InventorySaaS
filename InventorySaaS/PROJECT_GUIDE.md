@@ -244,6 +244,8 @@ A C# file describing a change to the database schema (adding a column, etc.). Wh
 #### **Global Query Filter**
 A LINQ expression EF Core silently adds to every query against an entity. Example: `modelBuilder.Entity<ProductInfo>().HasQueryFilter(p => p.TenantId == _currentTenantId)`. This is how tenant isolation is enforced — you literally cannot accidentally write code that returns another tenant's data.
 
+> **Important gotcha (and the bug we fixed)**: EF Core allows **only one** query filter per entity — a second `HasQueryFilter` call **overwrites** the first, it does not combine them. The original code (a) wrote the tenant predicate as `EF.Property<Guid>(e, "TenantId") == Guid.Empty || true`, which always evaluates to `true` (no tenant scoping at all), and (b) then called `HasQueryFilter` a second time for soft-delete, silently discarding even that no-op. Net effect: **neither** tenant isolation nor soft-delete filtering was active. The fix builds **one** combined filter per tenant entity in `ApplicationDbContext.OnModelCreating`: `(_tenantAccessor.TenantId == null || e.TenantId == currentTenant) && !e.IsDeleted`. A `null` tenant (seeding, registration, a SuperAdmin acting without tenant context) bypasses the tenant clause but still respects soft-delete.
+
 #### **Soft delete**
 Instead of `DELETE FROM Products WHERE Id = X`, you set `IsActive = false` (or `IsDeleted = true`). The row stays in the database but is hidden. Lets you recover deletes and audit history.
 

@@ -20,7 +20,7 @@
     "@angular/material": "^21.2.1",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
-    "ngx-charts": "^3.0.2",
+    "@swimlane/ngx-charts": "^24.0.0-alpha.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "^0.16.1"
