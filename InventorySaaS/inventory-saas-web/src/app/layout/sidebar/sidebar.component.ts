@@ -31,6 +31,8 @@ export class SidebarComponent {
     { label: 'Sales Orders', icon: 'point_of_sale', route: '/sales-orders' },
     { label: 'Invoices', icon: 'receipt_long', route: '/invoices' },
     { label: 'Payments', icon: 'payments', route: '/payments' },
+    { label: 'Supplier Bills', icon: 'request_quote', route: '/supplier-bills' },
+    { label: 'Supplier Payments', icon: 'account_balance_wallet', route: '/supplier-payments' },
     { label: 'Reports', icon: 'bar_chart', route: '/reports' },
     { label: 'Notifications', icon: 'notifications', route: '/notifications' },
   ];

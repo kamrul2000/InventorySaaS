@@ -30,6 +30,11 @@ import { InvoiceFormComponent } from './features/invoices/invoice-form/invoice-f
 import { InvoiceDetailComponent } from './features/invoices/invoice-detail/invoice-detail.component';
 import { PaymentListComponent } from './features/payments/payment-list/payment-list.component';
 import { PaymentFormComponent } from './features/payments/payment-form/payment-form.component';
+import { SupplierBillListComponent } from './features/supplier-bills/supplier-bill-list/supplier-bill-list.component';
+import { SupplierBillFormComponent } from './features/supplier-bills/supplier-bill-form/supplier-bill-form.component';
+import { SupplierBillDetailComponent } from './features/supplier-bills/supplier-bill-detail/supplier-bill-detail.component';
+import { SupplierPaymentListComponent } from './features/supplier-payments/supplier-payment-list/supplier-payment-list.component';
+import { SupplierPaymentFormComponent } from './features/supplier-payments/supplier-payment-form/supplier-payment-form.component';
 import { ReportsComponent } from './features/reports/reports.component';
 import { NotificationsComponent } from './features/notifications/notifications.component';
 import { UserListComponent } from './features/users/user-list/user-list.component';
@@ -86,6 +91,11 @@ export const routes: Routes = [
       { path: 'invoices/:id', component: InvoiceDetailComponent },
       { path: 'payments', component: PaymentListComponent },
       { path: 'payments/new', component: PaymentFormComponent },
+      { path: 'supplier-bills', component: SupplierBillListComponent },
+      { path: 'supplier-bills/new', component: SupplierBillFormComponent },
+      { path: 'supplier-bills/:id', component: SupplierBillDetailComponent },
+      { path: 'supplier-payments', component: SupplierPaymentListComponent },
+      { path: 'supplier-payments/new', component: SupplierPaymentFormComponent },
       { path: 'reports', component: ReportsComponent },
       { path: 'notifications', component: NotificationsComponent },
       {

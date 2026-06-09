@@ -1,0 +1,99 @@
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">Record Supplier Payment</h1>
+  </div>
+
+  <div class="form-card">
+    <div class="form-row">
+      <div class="form-field">
+        <label>Supplier *</label>
+        <select [(ngModel)]="supplierId" (ngModelChange)="onSupplierChange()">
+          <option value="">Select supplier</option>
+          @for (s of suppliers; track s.id) {
+            <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Payment Date</label>
+        <input type="date" [(ngModel)]="paymentDate" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Amount *</label>
+        <input type="number" min="0" step="0.01" [(ngModel)]="amount" />
+      </div>
+      <div class="form-field">
+        <label>Method</label>
+        <select [(ngModel)]="method">
+          @for (m of methods; track m) { <option [value]="m">{{ m }}</option> }
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Reference</label>
+        <input type="text" [(ngModel)]="reference" placeholder="Cheque / txn no." />
+      </div>
+      <div class="form-field">
+        <label>Notes</label>
+        <input type="text" [(ngModel)]="notes" placeholder="Optional" />
+      </div>
+    </div>
+
+    @if (supplierId) {
+      <div class="alloc-header">
+        <h3 class="section-title">Outstanding Bills</h3>
+        <button type="button" class="btn-add" (click)="autoAllocate()">
+          <mat-icon>auto_fix_high</mat-icon> Auto-allocate
+        </button>
+      </div>
+
+      @if (rows.length === 0) {
+        <p class="empty">No outstanding bills for this supplier.</p>
+      } @else {
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Bill #</th>
+              <th>Due</th>
+              <th>Total</th>
+              <th>Balance</th>
+              <th>Allocate</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.bill.id) {
+              <tr>
+                <td>{{ row.bill.billNumber }}</td>
+                <td>{{ row.bill.dueDate | date:'mediumDate' }}</td>
+                <td>{{ row.bill.totalAmount | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ row.bill.balanceDue | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>
+                  <input type="number" min="0" [max]="row.bill.balanceDue" step="0.01" [(ngModel)]="row.allocate" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div><span>Allocated</span><strong>{{ totalAllocated | currency:'BDT':'৳':'1.2-2' }}</strong></div>
+          <div [class.warn]="unallocated < 0">
+            <span>Unallocated</span><strong>{{ unallocated | currency:'BDT':'৳':'1.2-2' }}</strong>
+          </div>
+        </div>
+      }
+    }
+
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn-primary" [disabled]="saving" (click)="submit()">
+        <mat-icon>payments</mat-icon> Record Payment
+      </button>
+    </div>
+  </div>
+</div>

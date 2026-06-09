@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PurchaseOrderService } from '../../../core/services/purchase-order.service';
+import { SupplierBillService } from '../../../core/services/supplier-bill.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PurchaseOrderDto } from '../../../core/models/domain.models';
 

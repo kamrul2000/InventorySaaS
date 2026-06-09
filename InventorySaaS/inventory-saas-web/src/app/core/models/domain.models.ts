@@ -252,6 +252,67 @@ export interface PaymentDto {
   allocations: PaymentAllocationDto[];
 }
 
+export interface SupplierBillItemDto {
+  id: string;
+  productId?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  discountRate: number;
+  lineTotal: number;
+}
+
+export interface SupplierBillDto {
+  id: string;
+  billNumber: string;
+  supplierId: string;
+  supplierName: string;
+  purchaseOrderId?: string;
+  purchaseOrderNumber?: string;
+  supplierInvoiceNumber?: string;
+  billDate: string;
+  dueDate: string;
+  status: string;
+  subTotal: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+  notes?: string;
+  items: SupplierBillItemDto[];
+}
+
+export interface OutstandingBillDto {
+  id: string;
+  billNumber: string;
+  billDate: string;
+  dueDate: string;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+}
+
+export interface SupplierPaymentAllocationDto {
+  billId: string;
+  billNumber: string;
+  amount: number;
+}
+
+export interface SupplierPaymentDto {
+  id: string;
+  paymentNumber: string;
+  supplierId: string;
+  supplierName: string;
+  paymentDate: string;
+  amount: number;
+  method: string;
+  reference?: string;
+  notes?: string;
+  allocations: SupplierPaymentAllocationDto[];
+}
+
 export interface DashboardDto {
   totalProducts: number;
   totalWarehouses: number;
