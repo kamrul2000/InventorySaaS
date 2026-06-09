@@ -64,6 +64,34 @@
   height: 20px;
 }
 
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #e53e3e;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background: #c53030;
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.25);
+}
+
+.btn-danger mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;

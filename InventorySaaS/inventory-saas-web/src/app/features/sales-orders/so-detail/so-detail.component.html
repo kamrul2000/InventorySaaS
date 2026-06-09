@@ -20,6 +20,11 @@
             <mat-icon>local_shipping</mat-icon> Deliver
           </button>
         }
+        @if (order.status === 'Draft' || order.status === 'Confirmed' || order.status === 'PartiallyDelivered') {
+          <button class="btn-danger" (click)="cancel()">
+            <mat-icon>cancel</mat-icon> Cancel
+          </button>
+        }
         <button class="btn-secondary" (click)="back()">
           <mat-icon>arrow_back</mat-icon> Back
         </button>

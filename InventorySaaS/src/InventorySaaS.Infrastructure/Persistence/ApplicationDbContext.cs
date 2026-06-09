@@ -13,6 +13,8 @@ using InventorySaaS.Domain.Entities.Supplier;
 using InventorySaaS.Domain.Entities.Tenant;
 using InventorySaaS.Domain.Entities.Warehouse;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Text.Json;
 
 namespace InventorySaaS.Infrastructure.Persistence;
 
@@ -83,19 +85,18 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
-        // Global query filter for multi-tenant isolation
+        // Global query filters. EF Core allows only ONE query filter per entity, so the
+        // tenant-isolation and soft-delete predicates must be combined into a single filter.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(TenantEntity).IsAssignableFrom(entityType.ClrType))
             {
                 var method = typeof(ApplicationDbContext)
-                    .GetMethod(nameof(SetTenantQueryFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                    .GetMethod(nameof(SetTenantAndSoftDeleteFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
                     .MakeGenericMethod(entityType.ClrType);
-                method.Invoke(null, [modelBuilder]);
+                method.Invoke(this, [modelBuilder]);
             }
-
-            // Global soft-delete filter
-            if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+            else if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
             {
                 var method = typeof(ApplicationDbContext)
                     .GetMethod(nameof(SetSoftDeleteFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
@@ -105,9 +106,13 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         }
     }
 
-    private static void SetTenantQueryFilter<T>(ModelBuilder modelBuilder) where T : TenantEntity
+    // Instance method so the filter can reference the (per-request) resolved tenant.
+    // A null tenant (system operations: seeding, registration, SuperAdmin without a tenant
+    // context) bypasses tenant scoping; authenticated tenant users always carry a tenant id.
+    private void SetTenantAndSoftDeleteFilter<T>(ModelBuilder modelBuilder) where T : TenantEntity
     {
-        modelBuilder.Entity<T>().HasQueryFilter(e => EF.Property<Guid>(e, "TenantId") == Guid.Empty || true);
+        modelBuilder.Entity<T>().HasQueryFilter(e =>
+            (_tenantAccessor.TenantId == null || e.TenantId == _tenantAccessor.TenantId) && !e.IsDeleted);
     }
 
     private static void SetSoftDeleteFilter<T>(ModelBuilder modelBuilder) where T : BaseEntity
@@ -115,7 +120,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<T>().HasQueryFilter(e => !e.IsDeleted);
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var tenantId = _tenantAccessor.TenantId;
         var userId = _currentUserService.UserId?.ToString();
@@ -147,6 +152,79 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             }
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        // Capture change history before saving (original values are reset after SaveChanges).
+        var auditEntries = CollectAuditEntries(tenantId);
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        if (auditEntries.Count > 0)
+        {
+            AuditLogs.AddRange(auditEntries);
+            await base.SaveChangesAsync(cancellationToken);
+        }
+
+        return result;
     }
+
+    private List<AuditLog> CollectAuditEntries(Guid? tenantId)
+    {
+        var entries = new List<AuditLog>();
+
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted))
+                continue;
+
+            // A soft-delete surfaces as a Modified entry with IsDeleted flipped to true.
+            var action = entry.State switch
+            {
+                EntityState.Added => "Create",
+                EntityState.Deleted => "Delete",
+                _ => entry.Entity.IsDeleted ? "Delete" : "Update"
+            };
+
+            string? oldValues = null;
+            string? newValues = null;
+
+            if (entry.State == EntityState.Modified)
+            {
+                var changed = entry.Properties
+                    .Where(p => p.IsModified && p.Metadata.Name != nameof(BaseEntity.RowVersion))
+                    .ToList();
+                oldValues = Serialize(changed.ToDictionary(p => p.Metadata.Name, p => p.OriginalValue));
+                newValues = Serialize(changed.ToDictionary(p => p.Metadata.Name, p => p.CurrentValue));
+            }
+            else if (entry.State == EntityState.Added)
+            {
+                newValues = Serialize(ScalarValues(entry));
+            }
+            else
+            {
+                oldValues = Serialize(ScalarValues(entry));
+            }
+
+            entries.Add(new AuditLog
+            {
+                TenantId = tenantId,
+                UserId = _currentUserService.UserId,
+                UserEmail = _currentUserService.Email,
+                Action = action,
+                EntityType = entry.Entity.GetType().Name,
+                EntityId = entry.Entity.Id.ToString(),
+                OldValues = oldValues,
+                NewValues = newValues,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+
+        return entries;
+    }
+
+    private static Dictionary<string, object?> ScalarValues(EntityEntry entry) =>
+        entry.Properties
+            .Where(p => p.Metadata.Name != nameof(BaseEntity.RowVersion))
+            .ToDictionary(p => p.Metadata.Name, p => p.CurrentValue);
+
+    private static string Serialize(Dictionary<string, object?> values) =>
+        JsonSerializer.Serialize(values);
 }

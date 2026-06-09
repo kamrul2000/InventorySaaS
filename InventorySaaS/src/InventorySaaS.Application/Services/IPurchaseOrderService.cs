@@ -10,4 +10,5 @@ public interface IPurchaseOrderService
     Task<PurchaseOrderDto> CreateAsync(CreatePurchaseOrderRequest request, CancellationToken cancellationToken);
     Task<PurchaseOrderDto> ApproveAsync(Guid id, CancellationToken cancellationToken);
     Task<PurchaseOrderDto> ReceiveAsync(Guid id, ReceiveGoodsRequest request, CancellationToken cancellationToken);
+    Task<PurchaseOrderDto> ReturnAsync(Guid id, ReturnPurchaseOrderRequest request, CancellationToken cancellationToken);
 }

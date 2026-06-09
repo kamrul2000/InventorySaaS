@@ -41,4 +41,8 @@ export class SalesOrderService {
   return(id: string, data: unknown): Observable<void> {
     return this.api.post<void>(`${this.endpoint}/${id}/return`, data);
   }
+
+  cancel(id: string): Observable<void> {
+    return this.api.post<void>(`${this.endpoint}/${id}/cancel`, {});
+  }
 }

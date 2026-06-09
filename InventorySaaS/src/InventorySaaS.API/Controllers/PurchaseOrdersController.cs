@@ -64,4 +64,15 @@ public class PurchaseOrdersController : ControllerBase
         var result = await _purchaseOrderService.ReceiveAsync(id, request, cancellationToken);
         return Ok(result);
     }
+
+    [HttpPost("{id:guid}/return")]
+    [Authorize(Policy = "ManagerUp")]
+    public async Task<IActionResult> Return(
+        Guid id,
+        [FromBody] ReturnPurchaseOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _purchaseOrderService.ReturnAsync(id, request, cancellationToken);
+        return Ok(result);
+    }
 }

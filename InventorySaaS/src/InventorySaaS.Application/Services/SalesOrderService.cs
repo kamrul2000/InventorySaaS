@@ -253,15 +253,20 @@ public class SalesOrderService : ISalesOrderService
                 .ToListAsync(cancellationToken);
 
             var remainingToDeduct = deliverItem.Quantity;
+            decimal totalCost = 0;
             foreach (var balance in balances)
             {
                 if (remainingToDeduct <= 0) break;
 
                 var toDeduct = Math.Min(balance.QuantityOnHand, remainingToDeduct);
+                totalCost += toDeduct * balance.UnitCost;
                 balance.QuantityOnHand -= toDeduct;
                 balance.QuantityReserved = Math.Max(0, balance.QuantityReserved - toDeduct);
                 remainingToDeduct -= toDeduct;
             }
+
+            // COGS = actual cost of the stock drawn down, not the selling price.
+            var cogsUnitCost = deliverItem.Quantity > 0 ? totalCost / deliverItem.Quantity : 0m;
 
             var txnNumber = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpperInvariant()}";
             var transaction = new InventoryTransaction
@@ -272,7 +277,7 @@ public class SalesOrderService : ISalesOrderService
                 ProductId = deliverItem.ProductId,
                 WarehouseId = so.WarehouseId,
                 Quantity = deliverItem.Quantity,
-                UnitCost = soItem.UnitPrice,
+                UnitCost = cogsUnitCost,
                 ReferenceNumber = so.OrderNumber,
                 ReferenceType = "SalesOrder",
                 ReferenceId = so.Id,
@@ -334,19 +339,24 @@ public class SalesOrderService : ISalesOrderService
                     ib.WarehouseId == so.WarehouseId,
                     cancellationToken);
 
+            // Returned goods re-enter at their cost basis (existing average cost, or the
+            // product's standard cost when no balance remains) — never the selling price.
+            decimal returnUnitCost;
             if (balance is not null)
             {
-                balance.QuantityOnHand += returnItem.Quantity;
+                returnUnitCost = balance.UnitCost;
+                balance.ApplyInbound(returnItem.Quantity, balance.UnitCost);
             }
             else
             {
+                returnUnitCost = soItem.Product.CostPrice;
                 balance = new InventoryBalance
                 {
                     TenantId = tenantId,
                     ProductId = returnItem.ProductId,
                     WarehouseId = so.WarehouseId,
                     QuantityOnHand = returnItem.Quantity,
-                    UnitCost = soItem.UnitPrice
+                    UnitCost = returnUnitCost
                 };
                 _context.InventoryBalances.Add(balance);
             }
@@ -360,7 +370,7 @@ public class SalesOrderService : ISalesOrderService
                 ProductId = returnItem.ProductId,
                 WarehouseId = so.WarehouseId,
                 Quantity = returnItem.Quantity,
-                UnitCost = soItem.UnitPrice,
+                UnitCost = returnUnitCost,
                 ReferenceNumber = so.OrderNumber,
                 ReferenceType = "SalesOrder",
                 ReferenceId = so.Id,
@@ -374,6 +384,49 @@ public class SalesOrderService : ISalesOrderService
         if (allReturned)
             so.Status = SalesOrderStatus.Returned;
 
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ToDto(so);
+    }
+
+    public async Task<SalesOrderDto> CancelAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var so = await _context.SalesOrders
+            .Include(s => s.Customer)
+            .Include(s => s.Warehouse)
+            .Include(s => s.Items)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken)
+            ?? throw new NotFoundException(nameof(SalesOrder), id);
+
+        if (so.Status is SalesOrderStatus.Delivered or SalesOrderStatus.Cancelled or SalesOrderStatus.Returned)
+            throw new BadRequestException($"Cannot cancel a sales order with status '{so.Status}'.");
+
+        // Release stock still reserved for undelivered quantities so it isn't locked forever.
+        if (so.Status is SalesOrderStatus.Confirmed or SalesOrderStatus.PartiallyDelivered)
+        {
+            foreach (var item in so.Items)
+            {
+                var toRelease = item.Quantity - item.DeliveredQuantity;
+                if (toRelease <= 0) continue;
+
+                var balances = await _context.InventoryBalances
+                    .Where(ib => ib.ProductId == item.ProductId && ib.WarehouseId == so.WarehouseId)
+                    .OrderBy(ib => ib.ExpiryDate)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var balance in balances)
+                {
+                    if (toRelease <= 0) break;
+
+                    var releasable = Math.Min(balance.QuantityReserved, toRelease);
+                    balance.QuantityReserved -= releasable;
+                    toRelease -= releasable;
+                }
+            }
+        }
+
+        so.Status = SalesOrderStatus.Cancelled;
         await _context.SaveChangesAsync(cancellationToken);
 
         return ToDto(so);

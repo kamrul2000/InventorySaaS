@@ -21,6 +21,11 @@
             <mat-icon>inventory</mat-icon> Receive Goods
           </button>
         }
+        @if (canReturn) {
+          <button class="btn-danger" (click)="returnGoods()">
+            <mat-icon>assignment_return</mat-icon> Return to Supplier
+          </button>
+        }
         <button class="btn-secondary" (click)="back()">
           <mat-icon>arrow_back</mat-icon> Back
         </button>
@@ -62,6 +67,7 @@
             <th>SKU</th>
             <th>Ordered</th>
             <th>Received</th>
+            <th>Returned</th>
             <th>Unit Price</th>
             <th>Total</th>
           </tr>
@@ -73,6 +79,7 @@
               <td>{{ item.productSku }}</td>
               <td>{{ item.quantity }}</td>
               <td>{{ item.receivedQuantity }}</td>
+              <td>{{ item.returnedQuantity || 0 }}</td>
               <td>{{ item.unitPrice | currency:'BDT':'৳':'1.2-2' }}</td>
               <td class="line-total">{{ item.lineTotal | currency:'BDT':'৳':'1.2-2' }}</td>
             </tr>

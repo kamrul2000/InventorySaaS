@@ -54,5 +54,13 @@ export class SoDetailComponent implements OnInit {
     });
   }
 
+  cancel(): void {
+    if (!this.order) return;
+    if (!confirm('Cancel this sales order? Any reserved stock will be released.')) return;
+    this.soService.cancel(this.order.id).subscribe({
+      next: () => { this.notification.success('Sales order cancelled'); this.ngOnInit(); },
+    });
+  }
+
   back(): void { this.router.navigate(['/sales-orders']); }
 }

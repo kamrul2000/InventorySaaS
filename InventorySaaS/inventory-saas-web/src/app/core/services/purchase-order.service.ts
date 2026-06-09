@@ -37,4 +37,8 @@ export class PurchaseOrderService {
   receiveGoods(id: string, data?: unknown): Observable<void> {
     return this.api.post<void>(`${this.endpoint}/${id}/receive`, data || {});
   }
+
+  returnGoods(id: string, data: unknown): Observable<void> {
+    return this.api.post<void>(`${this.endpoint}/${id}/return`, data);
+  }
 }

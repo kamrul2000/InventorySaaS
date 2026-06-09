@@ -10,5 +10,6 @@ public enum TransactionType
     Damaged = 5,
     Lost = 6,
     PurchaseReceive = 7,
-    SalesIssue = 8
+    SalesIssue = 8,
+    PurchaseReturn = 9
 }

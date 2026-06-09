@@ -75,4 +75,12 @@ public class SalesOrdersController : ControllerBase
         var result = await _salesOrderService.ReturnAsync(id, request, cancellationToken);
         return Ok(result);
     }
+
+    [HttpPost("{id:guid}/cancel")]
+    [Authorize(Policy = "ManagerUp")]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _salesOrderService.CancelAsync(id, cancellationToken);
+        return Ok(result);
+    }
 }

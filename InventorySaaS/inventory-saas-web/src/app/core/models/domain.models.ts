@@ -155,6 +155,7 @@ export interface PurchaseOrderItemDto {
   productSku: string;
   quantity: number;
   receivedQuantity: number;
+  returnedQuantity: number;
   unitPrice: number;
   lineTotal: number;
 }

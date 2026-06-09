@@ -8,6 +8,7 @@ public class PurchaseOrderItem : TenantEntity
     public Guid ProductId { get; set; }
     public int Quantity { get; set; }
     public int ReceivedQuantity { get; set; }
+    public int ReturnedQuantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal TaxRate { get; set; }
     public decimal DiscountRate { get; set; }

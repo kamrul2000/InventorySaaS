@@ -63,5 +63,32 @@ export class PoDetailComponent implements OnInit {
     });
   }
 
+  get canReturn(): boolean {
+    if (!this.order) return false;
+    if (this.order.status !== 'Received' && this.order.status !== 'PartiallyReceived') return false;
+    return this.order.items.some(
+      (item: any) => (item.receivedQuantity || 0) - (item.returnedQuantity || 0) > 0
+    );
+  }
+
+  returnGoods(): void {
+    if (!this.order) return;
+    if (!confirm('Return all outstanding received goods to the supplier? Stock on hand will be reduced.')) return;
+    const data = {
+      purchaseOrderId: this.order.id,
+      items: this.order.items
+        .map((item: any) => ({
+          productId: item.productId,
+          quantity: (item.receivedQuantity || 0) - (item.returnedQuantity || 0),
+          reason: null,
+        }))
+        .filter((item) => item.quantity > 0),
+      reason: null,
+    };
+    this.poService.returnGoods(this.order.id, data).subscribe({
+      next: () => { this.notification.success('Goods returned to supplier'); this.ngOnInit(); },
+    });
+  }
+
   back(): void { this.router.navigate(['/purchase-orders']); }
 }

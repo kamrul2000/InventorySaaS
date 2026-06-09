@@ -18,6 +18,7 @@ public record PurchaseOrderItemDto(
     string ProductSku,
     int Quantity,
     int ReceivedQuantity,
+    int ReturnedQuantity,
     decimal UnitPrice,
     decimal LineTotal);
 
@@ -48,3 +49,13 @@ public record ReceiveGoodsItemRequest(
     string? BatchNumber,
     string? LotNumber,
     DateTime? ExpiryDate);
+
+public record ReturnPurchaseOrderRequest(
+    Guid PurchaseOrderId,
+    List<ReturnPurchaseOrderItemRequest> Items,
+    string? Reason);
+
+public record ReturnPurchaseOrderItemRequest(
+    Guid ProductId,
+    int Quantity,
+    string? Reason);

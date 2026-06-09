@@ -145,8 +145,8 @@ public class InventoryService : IInventoryService
             _context.InventoryBalances.Add(balance);
         }
 
-        balance.QuantityOnHand += request.Quantity;
-        balance.UnitCost = request.UnitCost;
+        // Recompute moving weighted-average cost rather than overwriting with the latest cost.
+        balance.ApplyInbound(request.Quantity, request.UnitCost);
 
         var transactionNumber = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpperInvariant()}";
 
@@ -291,7 +291,8 @@ public class InventoryService : IInventoryService
             _context.InventoryBalances.Add(destBalance);
         }
 
-        destBalance.QuantityOnHand += request.Quantity;
+        // Carry the source cost into the destination via weighted-average blend.
+        destBalance.ApplyInbound(request.Quantity, sourceBalance.UnitCost);
 
         var transactionNumber = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpperInvariant()}";
 

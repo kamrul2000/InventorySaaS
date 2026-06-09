@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using InventorySaaS.Domain.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace InventorySaaS.API.Middleware;
 
@@ -49,6 +50,18 @@ public class ExceptionHandlingMiddleware
                 {
                     Type = "Conflict",
                     Title = conflictEx.Message,
+                    Status = (int)HttpStatusCode.Conflict,
+                    CorrelationId = correlationId
+                }),
+
+            // Optimistic-concurrency clash (e.g. two simultaneous stock movements on the
+            // same balance). Surface as a retryable conflict rather than a 500.
+            DbUpdateConcurrencyException => (
+                HttpStatusCode.Conflict,
+                new ProblemResponse
+                {
+                    Type = "ConcurrencyConflict",
+                    Title = "The record was modified by another operation. Please retry.",
                     Status = (int)HttpStatusCode.Conflict,
                     CorrelationId = correlationId
                 }),

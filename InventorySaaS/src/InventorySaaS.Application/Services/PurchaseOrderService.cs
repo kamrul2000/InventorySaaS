@@ -57,7 +57,7 @@ public class PurchaseOrderService : IPurchaseOrderService
             po.OrderDate, po.ExpectedDeliveryDate, po.Status.ToString(), po.TotalAmount,
             po.Items.Select(i => new PurchaseOrderItemDto(
                 i.Id, i.ProductId, i.Product.Name, i.Product.Sku,
-                i.Quantity, i.ReceivedQuantity, i.UnitPrice, i.LineTotal)).ToList()));
+                i.Quantity, i.ReceivedQuantity, i.ReturnedQuantity, i.UnitPrice, i.LineTotal)).ToList()));
 
         return await PaginatedList<PurchaseOrderDto>.CreateAsync(
             projected, pagination.PageNumber, pagination.PageSize, cancellationToken);
@@ -148,7 +148,8 @@ public class PurchaseOrderService : IPurchaseOrderService
 
             itemDtos.Add(new PurchaseOrderItemDto(
                 orderItem.Id, item.ProductId, product.Name, product.Sku,
-                orderItem.Quantity, orderItem.ReceivedQuantity, orderItem.UnitPrice, orderItem.LineTotal));
+                orderItem.Quantity, orderItem.ReceivedQuantity, orderItem.ReturnedQuantity,
+                orderItem.UnitPrice, orderItem.LineTotal));
         }
 
         purchaseOrder.SubTotal = subTotal;
@@ -266,8 +267,8 @@ public class PurchaseOrderService : IPurchaseOrderService
                     _context.InventoryBalances.Add(balance);
                 }
 
-                balance.QuantityOnHand += acceptedQuantity;
-                balance.UnitCost = poItem.UnitPrice;
+                // Blend the purchase cost into the moving weighted-average cost.
+                balance.ApplyInbound(acceptedQuantity, poItem.UnitPrice);
 
                 var txnNumber = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpperInvariant()}";
                 var transaction = new InventoryTransaction
@@ -309,10 +310,97 @@ public class PurchaseOrderService : IPurchaseOrderService
         return ToDto(po);
     }
 
+    public async Task<PurchaseOrderDto> ReturnAsync(
+        Guid id,
+        ReturnPurchaseOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        var po = await _context.PurchaseOrders
+            .Include(p => p.Supplier)
+            .Include(p => p.Warehouse)
+            .Include(p => p.Items)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
+            ?? throw new NotFoundException(nameof(PurchaseOrder), id);
+
+        if (po.Status != PurchaseOrderStatus.Received && po.Status != PurchaseOrderStatus.PartiallyReceived)
+            throw new BadRequestException($"Cannot return goods for a purchase order with status '{po.Status}'.");
+
+        var tenantId = _currentUserService.TenantId!.Value;
+
+        foreach (var returnItem in request.Items)
+        {
+            if (returnItem.Quantity <= 0)
+                throw new BadRequestException("Return quantity must be greater than zero.");
+
+            var poItem = po.Items.FirstOrDefault(i => i.ProductId == returnItem.ProductId)
+                ?? throw new BadRequestException($"Product {returnItem.ProductId} is not part of this purchase order.");
+
+            var maxReturnable = poItem.ReceivedQuantity - poItem.ReturnedQuantity;
+            if (returnItem.Quantity > maxReturnable)
+                throw new BadRequestException($"Cannot return more than received quantity ({maxReturnable}) for product {poItem.Product.Name}.");
+
+            // Goods physically leave the warehouse back to the supplier: deduct from the
+            // unreserved on-hand stock so we never return stock promised to a customer.
+            var balances = await _context.InventoryBalances
+                .Where(ib => ib.ProductId == returnItem.ProductId && ib.WarehouseId == po.WarehouseId)
+                .OrderBy(ib => ib.ExpiryDate)
+                .ToListAsync(cancellationToken);
+
+            var available = balances.Sum(b => b.QuantityOnHand - b.QuantityReserved);
+            if (available < returnItem.Quantity)
+                throw new BadRequestException($"Insufficient unreserved stock to return ({available} available) for product {poItem.Product.Name}.");
+
+            var remainingToDeduct = returnItem.Quantity;
+            decimal totalCost = 0;
+            foreach (var balance in balances)
+            {
+                if (remainingToDeduct <= 0) break;
+
+                var deductable = balance.QuantityOnHand - balance.QuantityReserved;
+                if (deductable <= 0) continue;
+
+                var toDeduct = Math.Min(deductable, remainingToDeduct);
+                totalCost += toDeduct * balance.UnitCost;
+                balance.QuantityOnHand -= toDeduct;
+                remainingToDeduct -= toDeduct;
+            }
+
+            var unitCost = returnItem.Quantity > 0 ? totalCost / returnItem.Quantity : 0m;
+            poItem.ReturnedQuantity += returnItem.Quantity;
+
+            var txnNumber = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpperInvariant()}";
+            _context.InventoryTransactions.Add(new InventoryTransaction
+            {
+                TenantId = tenantId,
+                TransactionNumber = txnNumber,
+                TransactionType = TransactionType.PurchaseReturn,
+                ProductId = returnItem.ProductId,
+                WarehouseId = po.WarehouseId,
+                Quantity = returnItem.Quantity,
+                UnitCost = unitCost,
+                ReferenceNumber = po.OrderNumber,
+                ReferenceType = "PurchaseOrder",
+                ReferenceId = po.Id,
+                Notes = $"Return to supplier for PO {po.OrderNumber}. Reason: {returnItem.Reason ?? request.Reason ?? "N/A"}",
+                TransactionDate = DateTime.UtcNow
+            });
+        }
+
+        var allReturned = po.Items.Any(i => i.ReceivedQuantity > 0)
+            && po.Items.All(i => i.ReturnedQuantity >= i.ReceivedQuantity);
+        if (allReturned)
+            po.Status = PurchaseOrderStatus.Returned;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ToDto(po);
+    }
+
     private static PurchaseOrderDto ToDto(PurchaseOrder po) => new(
         po.Id, po.OrderNumber, po.Supplier.Name, po.Warehouse.Name,
         po.OrderDate, po.ExpectedDeliveryDate, po.Status.ToString(), po.TotalAmount,
         po.Items.Select(i => new PurchaseOrderItemDto(
             i.Id, i.ProductId, i.Product.Name, i.Product.Sku,
-            i.Quantity, i.ReceivedQuantity, i.UnitPrice, i.LineTotal)).ToList());
+            i.Quantity, i.ReceivedQuantity, i.ReturnedQuantity, i.UnitPrice, i.LineTotal)).ToList());
 }
