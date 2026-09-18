@@ -7,6 +7,7 @@ public record InventoryBalanceDto(
     string ProductSku,
     Guid WarehouseId,
     string WarehouseName,
+    Guid? LocationId,
     string? LocationName,
     string? BatchNumber,
     DateTime? ExpiryDate,

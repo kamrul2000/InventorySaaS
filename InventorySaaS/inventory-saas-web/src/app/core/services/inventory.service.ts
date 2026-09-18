@@ -15,7 +15,8 @@ export class InventoryService {
     pageSize?: number;
     warehouseId?: string;
     productId?: string;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
   }): Observable<PaginatedList<InventoryBalanceDto>> {
     return this.api.getList<InventoryBalanceDto>(`${this.endpoint}/balances`, params as Record<string, string | number | boolean>);
   }
@@ -71,10 +72,10 @@ export class InventoryService {
   adjustment(data: {
     productId: string;
     warehouseId: string;
-    locationId?: string;
+    locationId?: string | null;
     newQuantity: number;
+    /** The API folds this into the transaction note — it does not take a separate notes field. */
     reason: string;
-    notes?: string;
   }): Observable<void> {
     return this.api.post<void>(`${this.endpoint}/adjustment`, data);
   }

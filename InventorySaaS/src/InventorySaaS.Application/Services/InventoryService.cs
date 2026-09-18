@@ -55,7 +55,7 @@ public class InventoryService : IInventoryService
 
         var projected = query.Select(ib => new InventoryBalanceDto(
             ib.Id, ib.ProductId, ib.Product.Name, ib.Product.Sku,
-            ib.WarehouseId, ib.Warehouse.Name, ib.Location != null ? ib.Location.Name : null,
+            ib.WarehouseId, ib.Warehouse.Name, ib.LocationId, ib.Location != null ? ib.Location.Name : null,
             ib.BatchNumber, ib.ExpiryDate,
             ib.QuantityOnHand, ib.QuantityReserved, ib.QuantityOnHand - ib.QuantityReserved,
             ib.UnitCost));

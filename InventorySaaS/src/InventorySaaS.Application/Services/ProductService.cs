@@ -56,7 +56,7 @@ public class ProductService : IProductService
 
         var projected = query.Select(p => new ProductDto(
             p.Id, p.Name, p.Sku, p.Barcode,
-            p.Category.Name, p.Brand != null ? p.Brand.Name : null, p.UnitOfMeasure.Name,
+            p.CategoryId, p.Category.Name, p.BrandId, p.Brand != null ? p.Brand.Name : null, p.UnitOfMeasureId, p.UnitOfMeasure.Name,
             p.CostPrice, p.SellingPrice, p.ReorderLevel, p.TrackExpiry, p.IsActive, p.CreatedAt));
 
         return await PaginatedList<ProductDto>.CreateAsync(
@@ -75,7 +75,7 @@ public class ProductService : IProductService
 
         return new ProductDto(
             product.Id, product.Name, product.Sku, product.Barcode,
-            product.Category.Name, product.Brand?.Name, product.UnitOfMeasure.Name,
+            product.CategoryId, product.Category.Name, product.BrandId, product.Brand?.Name, product.UnitOfMeasureId, product.UnitOfMeasure.Name,
             product.CostPrice, product.SellingPrice, product.ReorderLevel,
             product.TrackExpiry, product.IsActive, product.CreatedAt);
     }
@@ -177,7 +177,7 @@ public class ProductService : IProductService
 
         return new ProductDto(
             saved.Id, saved.Name, saved.Sku, saved.Barcode,
-            saved.Category.Name, saved.Brand?.Name, saved.UnitOfMeasure.Name,
+            saved.CategoryId, saved.Category.Name, saved.BrandId, saved.Brand?.Name, saved.UnitOfMeasureId, saved.UnitOfMeasure.Name,
             saved.CostPrice, saved.SellingPrice, saved.ReorderLevel,
             saved.TrackExpiry, saved.IsActive, saved.CreatedAt);
     }
@@ -197,7 +197,8 @@ public class ProductService : IProductService
         if (request.Name is not null) product.Name = request.Name;
         if (request.Description is not null) product.Description = request.Description;
         if (request.CategoryId.HasValue) product.CategoryId = request.CategoryId.Value;
-        if (request.BrandId.HasValue) product.BrandId = request.BrandId.Value;
+        if (request.ClearBrand) product.BrandId = null;
+        else if (request.BrandId.HasValue) product.BrandId = request.BrandId.Value;
         if (request.UnitOfMeasureId.HasValue) product.UnitOfMeasureId = request.UnitOfMeasureId.Value;
         if (request.CostPrice.HasValue) product.CostPrice = request.CostPrice.Value;
         if (request.SellingPrice.HasValue) product.SellingPrice = request.SellingPrice.Value;
@@ -208,7 +209,7 @@ public class ProductService : IProductService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        if (request.CategoryId.HasValue || request.BrandId.HasValue || request.UnitOfMeasureId.HasValue)
+        if (request.CategoryId.HasValue || request.BrandId.HasValue || request.ClearBrand || request.UnitOfMeasureId.HasValue)
         {
             product = await _context.Products
                 .Include(p => p.Category)
@@ -219,7 +220,7 @@ public class ProductService : IProductService
 
         return new ProductDto(
             product.Id, product.Name, product.Sku, product.Barcode,
-            product.Category.Name, product.Brand?.Name, product.UnitOfMeasure.Name,
+            product.CategoryId, product.Category.Name, product.BrandId, product.Brand?.Name, product.UnitOfMeasureId, product.UnitOfMeasure.Name,
             product.CostPrice, product.SellingPrice, product.ReorderLevel,
             product.TrackExpiry, product.IsActive, product.CreatedAt);
     }

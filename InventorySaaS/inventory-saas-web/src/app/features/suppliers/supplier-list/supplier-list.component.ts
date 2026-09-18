@@ -21,7 +21,7 @@ import { SupplierDto } from '../../../core/models/domain.models';
 })
 export class SupplierListComponent implements OnInit {
   columns: TableColumn[] = [
-    { key: 'name', label: 'Name' },
+    { key: 'name', label: 'Name', sortable: true },
     { key: 'code', label: 'Code' },
     { key: 'contactPerson', label: 'Contact' },
     { key: 'email', label: 'Email' },
@@ -36,6 +36,8 @@ export class SupplierListComponent implements OnInit {
   pageNumber = 1;
   loading = false;
   searchTerm = '';
+  sortBy = '';
+  sortDescending = false;
 
   constructor(
     private supplierService: SupplierService,
@@ -48,7 +50,7 @@ export class SupplierListComponent implements OnInit {
 
   loadSuppliers(): void {
     this.loading = true;
-    this.supplierService.getAll({ pageNumber: this.pageNumber, pageSize: this.pageSize, searchTerm: this.searchTerm }).subscribe({
+    this.supplierService.getAll({ pageNumber: this.pageNumber, pageSize: this.pageSize, search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending }).subscribe({
       next: (r) => { this.suppliers = r.items; this.totalCount = r.totalCount; this.loading = false; },
       error: () => { this.loading = false; },
     });
@@ -57,7 +59,12 @@ export class SupplierListComponent implements OnInit {
   addSupplier(): void { this.router.navigate(['/suppliers/new']); }
 
   onPageChange(e: PageEvent): void { this.pageNumber = e.pageIndex + 1; this.pageSize = e.pageSize; this.loadSuppliers(); }
-  onSortChange(_s: Sort): void { this.loadSuppliers(); }
+  onSortChange(sort: Sort): void {
+    // Material reports 'asc' | 'desc' | ''; the API takes a boolean, and '' means default order.
+    this.sortBy = sort.direction ? sort.active : '';
+    this.sortDescending = sort.direction === 'desc';
+    this.loadSuppliers();
+  }
   onSearch(t: string): void { this.searchTerm = t; this.pageNumber = 1; this.loadSuppliers(); }
 
   onRowAction(event: { action: string; row: unknown }): void {

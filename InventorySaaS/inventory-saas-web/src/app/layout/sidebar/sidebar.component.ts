@@ -23,6 +23,8 @@ export class SidebarComponent {
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Products', icon: 'inventory_2', route: '/products' },
     { label: 'Categories', icon: 'category', route: '/categories' },
+    { label: 'Brands', icon: 'sell', route: '/brands' },
+    { label: 'Units', icon: 'straighten', route: '/units' },
     { label: 'Warehouses', icon: 'warehouse', route: '/warehouses' },
     { label: 'Inventory', icon: 'assessment', route: '/inventory' },
     { label: 'Suppliers', icon: 'local_shipping', route: '/suppliers' },

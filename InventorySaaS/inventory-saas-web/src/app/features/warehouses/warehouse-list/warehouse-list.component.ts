@@ -21,8 +21,8 @@ import { WarehouseDto } from '../../../core/models/domain.models';
 })
 export class WarehouseListComponent implements OnInit {
   columns: TableColumn[] = [
-    { key: 'name', label: 'Name' },
-    { key: 'code', label: 'Code' },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'code', label: 'Code', sortable: true },
     { key: 'city', label: 'City' },
     { key: 'isDefault', label: 'Default', type: 'boolean' },
     { key: 'isActive', label: 'Active', type: 'boolean' },
@@ -35,6 +35,8 @@ export class WarehouseListComponent implements OnInit {
   pageNumber = 1;
   loading = false;
   searchTerm = '';
+  sortBy = '';
+  sortDescending = false;
 
   constructor(
     private warehouseService: WarehouseService,
@@ -52,7 +54,7 @@ export class WarehouseListComponent implements OnInit {
     this.warehouseService.getAll({
       pageNumber: this.pageNumber,
       pageSize: this.pageSize,
-      searchTerm: this.searchTerm,
+      search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending,
     }).subscribe({
       next: (result) => {
         this.warehouses = result.items;
@@ -73,7 +75,10 @@ export class WarehouseListComponent implements OnInit {
     this.loadWarehouses();
   }
 
-  onSortChange(_sort: Sort): void {
+  onSortChange(sort: Sort): void {
+    // Material reports 'asc' | 'desc' | ''; the API takes a boolean, and '' means default order.
+    this.sortBy = sort.direction ? sort.active : '';
+    this.sortDescending = sort.direction === 'desc';
     this.loadWarehouses();
   }
 

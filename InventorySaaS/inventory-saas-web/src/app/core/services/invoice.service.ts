@@ -13,7 +13,8 @@ export class InvoiceService {
   getAll(params?: {
     pageNumber?: number;
     pageSize?: number;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
     customerId?: string;
     status?: string;
     sortBy?: string;

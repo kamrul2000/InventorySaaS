@@ -8,7 +8,11 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { InventoryBalanceDto, InventoryTransactionDto, WarehouseDto } from '../../../core/models/domain.models';
+
+/** Roles the API's ManagerUp policy lets post a stock adjustment. */
+const ADJUSTMENT_ROLES = ['TenantAdmin', 'Manager', 'SuperAdmin'];
 
 @Component({
   selector: 'app-inventory-list',
@@ -43,8 +47,14 @@ export class InventoryListComponent implements OnInit {
   constructor(
     private inventoryService: InventoryService,
     private warehouseService: WarehouseService,
+    private authService: AuthService,
     private router: Router
   ) {}
+
+  get canAdjust(): boolean {
+    const roles = this.authService.getUserRoles();
+    return ADJUSTMENT_ROLES.some((role) => roles.includes(role));
+  }
 
   ngOnInit(): void {
     this.warehouseService.getAll({ pageSize: 100 }).subscribe({
@@ -111,7 +121,15 @@ export class InventoryListComponent implements OnInit {
     this.router.navigate(['/inventory/stock-in']);
   }
 
+  openStockOut(): void {
+    this.router.navigate(['/inventory/stock-out']);
+  }
+
   openTransfer(): void {
     this.router.navigate(['/inventory/transfer']);
+  }
+
+  openAdjustment(): void {
+    this.router.navigate(['/inventory/adjustment']);
   }
 }

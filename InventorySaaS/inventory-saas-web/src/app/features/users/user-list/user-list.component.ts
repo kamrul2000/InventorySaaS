@@ -19,8 +19,8 @@ import { User } from '../../../core/models/auth.models';
 })
 export class UserListComponent implements OnInit {
   columns: TableColumn[] = [
-    { key: 'email', label: 'Email' },
-    { key: 'firstName', label: 'First Name' },
+    { key: 'email', label: 'Email', sortable: true },
+    { key: 'firstName', label: 'First Name', sortable: true, sortKey: 'name' },
     { key: 'lastName', label: 'Last Name' },
     { key: 'isActive', label: 'Active', type: 'boolean' },
     { key: 'createdAt', label: 'Created', type: 'date' },
@@ -32,6 +32,8 @@ export class UserListComponent implements OnInit {
   pageNumber = 1;
   loading = false;
   searchTerm = '';
+  sortBy = '';
+  sortDescending = false;
 
   constructor(
     private userService: UserService, private router: Router, private dialog: MatDialog
@@ -41,7 +43,7 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading = true;
-    this.userService.getAll({ pageNumber: this.pageNumber, pageSize: this.pageSize, searchTerm: this.searchTerm }).subscribe({
+    this.userService.getAll({ pageNumber: this.pageNumber, pageSize: this.pageSize, search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending }).subscribe({
       next: (r) => { this.users = r.items; this.totalCount = r.totalCount; this.loading = false; },
       error: () => { this.loading = false; },
     });
@@ -55,7 +57,12 @@ export class UserListComponent implements OnInit {
   }
 
   onPageChange(e: PageEvent): void { this.pageNumber = e.pageIndex + 1; this.pageSize = e.pageSize; this.loadUsers(); }
-  onSortChange(_s: Sort): void { this.loadUsers(); }
+  onSortChange(sort: Sort): void {
+    // Material reports 'asc' | 'desc' | ''; the API takes a boolean, and '' means default order.
+    this.sortBy = sort.direction ? sort.active : '';
+    this.sortDescending = sort.direction === 'desc';
+    this.loadUsers();
+  }
   onSearch(t: string): void { this.searchTerm = t; this.pageNumber = 1; this.loadUsers(); }
 
   onRowAction(event: { action: string; row: unknown }): void {

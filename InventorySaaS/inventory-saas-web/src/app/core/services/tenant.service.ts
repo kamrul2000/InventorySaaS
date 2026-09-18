@@ -21,7 +21,8 @@ export class TenantService {
   getAll(params?: {
     pageNumber?: number;
     pageSize?: number;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
   }): Observable<PaginatedList<TenantDto>> {
     return this.api.getList<TenantDto>(this.endpoint, params as Record<string, string | number | boolean>);
   }

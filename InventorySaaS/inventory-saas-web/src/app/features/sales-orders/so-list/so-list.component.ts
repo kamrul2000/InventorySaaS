@@ -17,12 +17,12 @@ import { SalesOrderDto } from '../../../core/models/domain.models';
 })
 export class SoListComponent implements OnInit {
   columns: TableColumn[] = [
-    { key: 'orderNumber', label: 'Order #' },
-    { key: 'customerName', label: 'Customer' },
+    { key: 'orderNumber', label: 'Order #', sortable: true, sortKey: 'ordernumber' },
+    { key: 'customerName', label: 'Customer', sortable: true, sortKey: 'customer' },
     { key: 'warehouseName', label: 'Warehouse' },
     { key: 'orderDate', label: 'Date', type: 'date' },
-    { key: 'status', label: 'Status' },
-    { key: 'totalAmount', label: 'Total', type: 'currency' },
+    { key: 'status', label: 'Status', sortable: true },
+    { key: 'totalAmount', label: 'Total', type: 'currency', sortable: true, sortKey: 'amount' },
   ];
 
   orders: SalesOrderDto[] = [];
@@ -31,6 +31,8 @@ export class SoListComponent implements OnInit {
   pageNumber = 1;
   loading = false;
   searchTerm = '';
+  sortBy = '';
+  sortDescending = false;
   statusFilter = '';
 
   constructor(private soService: SalesOrderService, private router: Router) {}
@@ -41,7 +43,7 @@ export class SoListComponent implements OnInit {
     this.loading = true;
     this.soService.getAll({
       pageNumber: this.pageNumber, pageSize: this.pageSize,
-      searchTerm: this.searchTerm, status: this.statusFilter,
+      search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending, status: this.statusFilter,
     }).subscribe({
       next: (r) => { this.orders = r.items; this.totalCount = r.totalCount; this.loading = false; },
       error: () => { this.loading = false; },
@@ -50,7 +52,12 @@ export class SoListComponent implements OnInit {
 
   create(): void { this.router.navigate(['/sales-orders/new']); }
   onPageChange(e: PageEvent): void { this.pageNumber = e.pageIndex + 1; this.pageSize = e.pageSize; this.loadOrders(); }
-  onSortChange(_s: Sort): void { this.loadOrders(); }
+  onSortChange(sort: Sort): void {
+    // Material reports 'asc' | 'desc' | ''; the API takes a boolean, and '' means default order.
+    this.sortBy = sort.direction ? sort.active : '';
+    this.sortDescending = sort.direction === 'desc';
+    this.loadOrders();
+  }
   onSearch(t: string): void { this.searchTerm = t; this.pageNumber = 1; this.loadOrders(); }
 
   onRowAction(event: { action: string; row: unknown }): void {

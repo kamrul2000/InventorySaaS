@@ -13,7 +13,10 @@ export class CustomerService {
   getAll(params?: {
     pageNumber?: number;
     pageSize?: number;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
+    sortBy?: string;
+    sortDescending?: boolean;
     isActive?: boolean;
   }): Observable<PaginatedList<CustomerDto>> {
     return this.api.getList<CustomerDto>(this.endpoint, params as Record<string, string | number | boolean>);

@@ -13,7 +13,8 @@ export class SupplierPaymentService {
   getAll(params?: {
     pageNumber?: number;
     pageSize?: number;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
     supplierId?: string;
     sortBy?: string;
     sortDescending?: boolean;
