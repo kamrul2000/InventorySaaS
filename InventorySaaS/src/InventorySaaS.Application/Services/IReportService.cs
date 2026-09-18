@@ -21,4 +21,19 @@ public interface IReportService
         CancellationToken cancellationToken);
 
     Task<List<InventoryValuationDto>> GetInventoryValuationAsync(CancellationToken cancellationToken);
+
+    /// <summary>Outstanding customer invoices, bucketed by how overdue they are.</summary>
+    Task<List<AgingReportDto>> GetArAgingAsync(DateTime asOf, CancellationToken cancellationToken);
+
+    /// <summary>Outstanding supplier bills, bucketed by how overdue they are.</summary>
+    Task<List<AgingReportDto>> GetApAgingAsync(DateTime asOf, CancellationToken cancellationToken);
+
+    Task<List<SalesSummaryDto>> GetSalesSummaryAsync(
+        DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
+
+    Task<List<PurchaseSummaryDto>> GetPurchaseSummaryAsync(
+        DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
+
+    Task<List<ProfitabilityDto>> GetProfitabilityAsync(
+        DateTime? startDate, DateTime? endDate, CancellationToken cancellationToken);
 }

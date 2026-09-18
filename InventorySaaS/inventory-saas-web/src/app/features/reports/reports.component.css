@@ -230,3 +230,67 @@
     overflow-x: auto;
   }
 }
+
+/* ---- totals footer and value emphasis for the financial reports ---- */
+
+.total-row td {
+  background: #eef1f8;
+  border-top: 2px solid #1565c0;
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+.muted-cell {
+  color: #718096;
+}
+
+.ok-cell {
+  color: #2f855a;
+}
+
+.warn-cell {
+  color: #b7791f;
+}
+
+.danger-cell {
+  color: #c53030;
+}
+
+.age-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff3e0;
+  color: #b7791f;
+  white-space: nowrap;
+}
+
+.age-pill.age-ok {
+  background: #e8f5e9;
+  color: #2f855a;
+}
+
+.age-pill.age-bad {
+  background: #fdecea;
+  color: #c53030;
+}
+
+.table-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #718096;
+}
+
+.table-note mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #a0aec0;
+}

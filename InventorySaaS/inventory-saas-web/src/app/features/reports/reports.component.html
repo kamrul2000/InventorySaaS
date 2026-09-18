@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Reports</h1>
-      <p class="page-subtitle">View stock summaries, low stock alerts, expiry tracking and inventory valuation</p>
+      <p class="page-subtitle">Stock, expiry and valuation, plus receivables, payables and trading performance</p>
     </div>
     <button class="btn-primary" (click)="exportPdf()" [disabled]="exporting">
       <mat-icon>picture_as_pdf</mat-icon>
@@ -12,15 +12,35 @@
 
   <!-- Filters -->
   <div class="filter-row">
-    <div class="filter-group">
-      <label class="filter-label">Warehouse</label>
-      <select class="form-select" [(ngModel)]="warehouseFilter" (ngModelChange)="loadCurrentTab()">
-        <option value="">All Warehouses</option>
-        @for (wh of warehouses; track wh.id) {
-          <option [value]="wh.id">{{ wh.name }}</option>
-        }
-      </select>
-    </div>
+    @if (showsWarehouseFilter) {
+      <div class="filter-group">
+        <label class="filter-label">Warehouse</label>
+        <select class="form-select" [(ngModel)]="warehouseFilter" (ngModelChange)="loadCurrentTab()">
+          <option value="">All Warehouses</option>
+          @for (wh of warehouses; track wh.id) {
+            <option [value]="wh.id">{{ wh.name }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    @if (showsAsOf) {
+      <div class="filter-group">
+        <label class="filter-label">As of</label>
+        <input class="form-select" type="date" [(ngModel)]="asOfDate" (ngModelChange)="loadCurrentTab()">
+      </div>
+    }
+
+    @if (showsDateRange) {
+      <div class="filter-group">
+        <label class="filter-label">From</label>
+        <input class="form-select" type="date" [(ngModel)]="startDate" (ngModelChange)="loadCurrentTab()">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To</label>
+        <input class="form-select" type="date" [(ngModel)]="endDate" (ngModelChange)="loadCurrentTab()">
+      </div>
+    }
 
     @if (activeTab === 0) {
       <div class="filter-group">
@@ -41,6 +61,11 @@
     <button class="tab-btn" [class.active]="activeTab === 1" (click)="onTabChange(1)">Low Stock</button>
     <button class="tab-btn" [class.active]="activeTab === 2" (click)="onTabChange(2)">Expiry</button>
     <button class="tab-btn" [class.active]="activeTab === 3" (click)="onTabChange(3)">Inventory Valuation</button>
+    <button class="tab-btn" [class.active]="activeTab === 4" (click)="onTabChange(4)">AR Aging</button>
+    <button class="tab-btn" [class.active]="activeTab === 5" (click)="onTabChange(5)">AP Aging</button>
+    <button class="tab-btn" [class.active]="activeTab === 6" (click)="onTabChange(6)">Sales</button>
+    <button class="tab-btn" [class.active]="activeTab === 7" (click)="onTabChange(7)">Purchases</button>
+    <button class="tab-btn" [class.active]="activeTab === 8" (click)="onTabChange(8)">Profitability</button>
   </div>
 
   <!-- Stock Summary Tab -->
@@ -186,6 +211,234 @@
               <tr><td colspan="4" class="empty-row">No valuation data available</td></tr>
             }
           </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- AR / AP Aging Tabs (identical shape; only the party column differs) -->
+  @if (activeTab === Tab.ArAging || activeTab === Tab.ApAging) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>{{ activeTab === Tab.ArAging ? 'Customer' : 'Supplier' }}</th>
+              <th>Current</th>
+              <th>1-30</th>
+              <th>31-60</th>
+              <th>61-90</th>
+              <th>90+</th>
+              <th>Total</th>
+              <th>Oldest</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of agingRows; track r.partyName) {
+              <tr>
+                <td>{{ r.partyName }}</td>
+                <td>{{ r.current | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ r.days1To30 | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ r.days31To60 | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td class="warn-cell">{{ r.days61To90 | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td class="danger-cell">{{ r.days90Plus | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td><strong>{{ r.total | currency:'BDT':'৳':'1.2-2' }}</strong></td>
+                <td>
+                  @if (r.oldestDaysOverdue > 0) {
+                    <span class="age-pill" [class.age-bad]="r.oldestDaysOverdue > 60">
+                      {{ r.oldestDaysOverdue }}d
+                    </span>
+                  } @else {
+                    <span class="age-pill age-ok">current</span>
+                  }
+                </td>
+              </tr>
+            }
+            @if (agingRows.length === 0) {
+              <tr><td colspan="8" class="empty-row">Nothing outstanding — everything is settled</td></tr>
+            }
+          </tbody>
+          @if (agingRows.length > 0) {
+            <tfoot>
+              <tr class="total-row">
+                <td>TOTAL</td>
+                <td>{{ sum(agingRows, 'current') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(agingRows, 'days1To30') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(agingRows, 'days31To60') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(agingRows, 'days61To90') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(agingRows, 'days90Plus') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(agingRows, 'total') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Sales Summary Tab -->
+  @if (activeTab === Tab.Sales) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Orders</th>
+              <th>Units</th>
+              <th>Subtotal</th>
+              <th>Tax</th>
+              <th>Discount</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of sales; track r.customerName) {
+              <tr>
+                <td>{{ r.customerName }}</td>
+                <td>{{ r.orderCount }}</td>
+                <td>{{ r.unitsSold }}</td>
+                <td>{{ r.subTotal | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td class="muted-cell">{{ r.taxAmount | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td class="muted-cell">{{ r.discountAmount | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td><strong>{{ r.totalAmount | currency:'BDT':'৳':'1.2-2' }}</strong></td>
+              </tr>
+            }
+            @if (sales.length === 0) {
+              <tr><td colspan="7" class="empty-row">No sales in this period</td></tr>
+            }
+          </tbody>
+          @if (sales.length > 0) {
+            <tfoot>
+              <tr class="total-row">
+                <td>TOTAL</td>
+                <td>{{ sum(sales, 'orderCount') }}</td>
+                <td>{{ sum(sales, 'unitsSold') }}</td>
+                <td>{{ sum(sales, 'subTotal') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(sales, 'taxAmount') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(sales, 'discountAmount') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(sales, 'totalAmount') | currency:'BDT':'৳':'1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Purchase Summary Tab -->
+  @if (activeTab === Tab.Purchases) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>Orders</th>
+              <th>Ordered</th>
+              <th>Received</th>
+              <th>Outstanding</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of purchases; track r.supplierName) {
+              <tr>
+                <td>{{ r.supplierName }}</td>
+                <td>{{ r.orderCount }}</td>
+                <td>{{ r.unitsOrdered }}</td>
+                <td>{{ r.unitsReceived }}</td>
+                <td [class.warn-cell]="r.unitsOrdered - r.unitsReceived > 0">
+                  {{ r.unitsOrdered - r.unitsReceived }}
+                </td>
+                <td><strong>{{ r.totalAmount | currency:'BDT':'৳':'1.2-2' }}</strong></td>
+              </tr>
+            }
+            @if (purchases.length === 0) {
+              <tr><td colspan="6" class="empty-row">No purchases in this period</td></tr>
+            }
+          </tbody>
+          @if (purchases.length > 0) {
+            <tfoot>
+              <tr class="total-row">
+                <td>TOTAL</td>
+                <td>{{ sum(purchases, 'orderCount') }}</td>
+                <td>{{ sum(purchases, 'unitsOrdered') }}</td>
+                <td>{{ sum(purchases, 'unitsReceived') }}</td>
+                <td>{{ sum(purchases, 'unitsOrdered') - sum(purchases, 'unitsReceived') }}</td>
+                <td>{{ sum(purchases, 'totalAmount') | currency:'BDT':'৳':'1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Profitability Tab -->
+  @if (activeTab === Tab.Profitability) {
+    @if (loading) {
+      <div class="loading-center"><div class="spinner"></div></div>
+    } @else {
+      <div class="table-card">
+        <p class="table-note">
+          <mat-icon>info</mat-icon>
+          Cost is the stock actually shipped, taken from the inventory ledger — not the catalogue
+          cost price. Revenue is net of line discounts and excludes tax.
+        </p>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Category</th>
+              <th>Units</th>
+              <th>Revenue</th>
+              <th>Cost</th>
+              <th>Gross Profit</th>
+              <th>Margin</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of profitability; track r.sku) {
+              <tr>
+                <td>{{ r.productName }}</td>
+                <td class="muted-cell">{{ r.sku }}</td>
+                <td>{{ r.categoryName }}</td>
+                <td>{{ r.unitsSold }}</td>
+                <td>{{ r.revenue | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td class="muted-cell">{{ r.cost | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td [class.danger-cell]="r.grossProfit < 0" [class.ok-cell]="r.grossProfit >= 0">
+                  <strong>{{ r.grossProfit | currency:'BDT':'৳':'1.2-2' }}</strong>
+                </td>
+                <td [class.danger-cell]="r.grossProfit < 0" [class.ok-cell]="r.grossProfit >= 0">
+                  {{ r.marginPercent | number:'1.0-2' }}%
+                </td>
+              </tr>
+            }
+            @if (profitability.length === 0) {
+              <tr><td colspan="8" class="empty-row">No deliveries in this period</td></tr>
+            }
+          </tbody>
+          @if (profitability.length > 0) {
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="3">TOTAL</td>
+                <td>{{ sum(profitability, 'unitsSold') }}</td>
+                <td>{{ sum(profitability, 'revenue') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(profitability, 'cost') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ sum(profitability, 'grossProfit') | currency:'BDT':'৳':'1.2-2' }}</td>
+                <td>{{ overallMargin | number:'1.0-2' }}%</td>
+              </tr>
+            </tfoot>
+          }
         </table>
       </div>
     }
