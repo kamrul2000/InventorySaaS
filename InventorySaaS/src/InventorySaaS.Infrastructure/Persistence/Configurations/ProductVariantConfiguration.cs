@@ -18,6 +18,15 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
         builder.Property(v => v.Sku)
             .HasMaxLength(50);
 
+        builder.Property(v => v.Barcode)
+            .HasMaxLength(100);
+
+        // Variant barcodes share the product barcode namespace from the scanner's point of
+        // view, but uniqueness is enforced per table; ScanService checks across both.
+        builder.HasIndex(v => new { v.TenantId, v.Barcode })
+            .IsUnique()
+            .HasFilter("[Barcode] IS NOT NULL AND [IsDeleted] = 0");
+
         builder.HasOne(v => v.Product)
             .WithMany(p => p.Variants)
             .HasForeignKey(v => v.ProductId)

@@ -83,6 +83,11 @@ export const routes: Routes = [
       { path: 'warehouses/new', component: WarehouseFormComponent },
       { path: 'warehouses/:id/edit', component: WarehouseFormComponent },
       { path: 'warehouses/:id', component: WarehouseDetailComponent },
+      {
+        // Lazy-loaded so the camera scanner stays out of the initial bundle.
+        path: 'scan',
+        loadChildren: () => import('./features/scan/scan.routes').then((m) => m.SCAN_ROUTES),
+      },
       { path: 'inventory', component: InventoryListComponent },
       { path: 'inventory/stock-in', component: StockInComponent },
       { path: 'inventory/stock-out', component: StockOutComponent },

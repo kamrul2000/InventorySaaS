@@ -27,6 +27,7 @@ export class SidebarComponent {
     { label: 'Units', icon: 'straighten', route: '/units' },
     { label: 'Warehouses', icon: 'warehouse', route: '/warehouses' },
     { label: 'Inventory', icon: 'assessment', route: '/inventory' },
+    { label: 'Scanning', icon: 'qr_code_scanner', route: '/scan' },
     { label: 'Suppliers', icon: 'local_shipping', route: '/suppliers' },
     { label: 'Customers', icon: 'people', route: '/customers' },
     { label: 'Purchase Orders', icon: 'shopping_cart', route: '/purchase-orders' },

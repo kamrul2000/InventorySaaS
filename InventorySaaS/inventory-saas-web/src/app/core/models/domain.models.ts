@@ -50,6 +50,10 @@ export interface ProductDto {
   sellingPrice: number;
   reorderLevel: number;
   trackExpiry: boolean;
+  /** Stock movements must carry the batch number through for this product. */
+  trackBatch: boolean;
+  /** Every unit is tracked individually by serial number. */
+  trackSerial: boolean;
   isActive: boolean;
   createdAt: string;
 }
@@ -82,6 +86,10 @@ export interface WarehouseLocationDto {
   id: string;
   warehouseId: string;
   name: string;
+  /** Short human-readable bin code, unique per tenant. */
+  code?: string;
+  /** Value printed on the physical location label, unique per tenant. */
+  barcode?: string;
   aisle?: string;
   rack?: string;
   bin?: string;
