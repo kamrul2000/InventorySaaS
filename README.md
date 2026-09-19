@@ -22,6 +22,7 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 - [Architecture](#architecture)
 - [Multi-Tenancy Model](#multi-tenancy-model)
 - [Feature Catalogue](#feature-catalogue)
+  - [Barcode & QR Scanning](#barcode--qr-scanning)
   - [Billing — Accounts Receivable & Payable](#billing--accounts-receivable--payable)
   - [Reporting](#reporting)
 - [Advanced Capabilities](#advanced-capabilities)
@@ -203,6 +204,29 @@ the global exception middleware maps each to a uniform `ProblemResponse` JSON wi
   overwriting it, and transfers carry the source cost across
 - Stock reservation: confirming a sales order reserves stock, delivering releases and issues it
 - Inventory transaction ledger (every movement, with the unit cost at that moment)
+- Serial-number tracking per unit, and batch-tracking enforcement, both opt-in per product
+
+### Barcode & QR Scanning
+
+Scanner-first screens for warehouse floor work, under `/scan`. Input comes from a device camera
+(native `BarcodeDetector`), a USB/Bluetooth scanner presenting as a keyboard, or manual typing —
+the keyboard path distinguishes machine-speed bursts from human typing and holds focus so
+consecutive scans need no tap. Every screen gives audible, haptic and visual scan feedback, and
+every inventory-changing operation shows a confirmation step before posting.
+
+- **Resolution** — one scan identifies a product, variant, serial number, warehouse location,
+  warehouse, sales order or purchase order. Plain barcodes, JSON QR payloads and a GS1 subset
+  (AI 01 GTIN, 10 batch, 17 expiry, 21 serial, 30 quantity) are all decoded.
+- **Product lookup** — stock broken down by warehouse, bin, batch, expiry and serial.
+- **Stock in / out / transfer** — batch and serials captured as the product requires; available
+  stock shown before any outbound move; a bin must belong to its warehouse.
+- **Order picking** — scan the order, then each item. Off-order products and over-picking are
+  refused; completion is gated on every line, and can hand off to the existing delivery path.
+- **Physical stock count** — scan a warehouse or bin, compare counted against system quantities,
+  then a **Manager** approves the variances, which posts one adjustment transaction per line.
+  Counting itself changes nothing.
+- **Idempotency** — inventory-changing scans carry an `Idempotency-Key`; a replay returns the
+  original result rather than posting a second movement, so double-scans and retries are safe.
 
 ### Procurement
 
@@ -501,6 +525,43 @@ duplicate names case-insensitively and refuse deletion while products still refe
 | POST | `/Inventory/transfer`     | between warehouses              |
 | POST | `/Inventory/adjustment`   | manual correction               |
 
+`stock-in`, `stock-out` and `transfer` accept an optional `Idempotency-Key` header: a repeated
+key returns the original transaction instead of posting a second one. They also take optional
+`batchNumber` (required for batch-tracked products), `serialNumbers` (required, and matching
+`quantity`, for serial-tracked products) and — on stock-out — a `reason`.
+
+### Scanning
+
+| Verb | Path                    | Policy   | Notes                                                    |
+| ---- | ----------------------- | -------- | -------------------------------------------------------- |
+| POST | `/Scan/resolve`         | ViewerUp | identifies a scan; an unknown code is 200 + `kind: Unknown` |
+| GET  | `/Scan/product?code=`   | ViewerUp | product + stock by warehouse, bin, batch and serial      |
+| GET  | `/Scan/availability`    | ViewerUp | on-hand / reserved / available for one product+bin+batch |
+
+### Picking
+
+All under `/sales-orders/{id}/picking`. Reading is ViewerUp; the rest are StaffUp.
+
+| Verb | Path        | Notes                                                            |
+| ---- | ----------- | ---------------------------------------------------------------- |
+| GET  | `/`         | requested / picked / remaining per line; 204 when none is open   |
+| POST | `/start`    | resumes the open session rather than opening a second            |
+| POST | `/scan`     | names a `productId` or a `barcode`; honours `Idempotency-Key`    |
+| POST | `/complete` | refuses while any line is outstanding; `deliver: true` ships it  |
+| POST | `/cancel`   | clears the picked quantities it recorded                         |
+
+### Stock Counts
+
+| Verb | Path                       | Policy        | Notes                                        |
+| ---- | -------------------------- | ------------- | -------------------------------------------- |
+| GET  | `/stock-counts`            | ViewerUp      | filter by `warehouseId` and `status`         |
+| GET  | `/stock-counts/{id}`       | ViewerUp      | lines with system vs. counted and variance   |
+| POST | `/stock-counts`            | StaffUp       | opens a run over a warehouse or single bin   |
+| POST | `/stock-counts/{id}/scan`  | StaffUp       | repeat scans accumulate; honours idempotency |
+| POST | `/stock-counts/{id}/submit`| StaffUp       | hands the count to a manager; counting stops |
+| POST | `/stock-counts/{id}/approve` | **ManagerUp** | posts one adjustment per varying line      |
+| POST | `/stock-counts/{id}/cancel`| StaffUp       | refused once approved                        |
+
 ### Purchase Orders
 
 | Verb | Path                           |
@@ -671,10 +732,15 @@ The Hangfire database is created on the same SQL Server instance under a separat
 
 Known gaps, honestly stated — roughly in the order they'd be worth closing:
 
-- **Stocktake / physical count** — the adjustment screen handles single-item count correction with
-  variance, but there's no multi-item count session (freeze, count sheet, bulk variance posting).
-- **Barcode scanning and label printing** — the barcode field and search exist; there is no scanner
-  input on any screen and no label output.
+- **Barcode / QR label printing** — scanning is implemented end-to-end (see
+  [Barcode & QR Scanning](#barcode--qr-scanning)), but there is no label *output*: no
+  server-side barcode image generation and no printable label sheet.
+- **Offline scanning** — every scan needs the API. Warehouse Wi-Fi dead zones will stall a count
+  or a pick; a local queue with conflict resolution is not implemented.
+- **Camera scanning needs HTTPS and a Chromium browser** — it uses the native `BarcodeDetector`
+  API, which Firefox and Safari do not implement, and `getUserMedia` is refused on plain HTTP.
+  USB/Bluetooth scanners and manual entry work everywhere, and the UI says which is unavailable
+  and why.
 - **Product import is insert-only** — a row whose SKU already exists is reported and skipped rather
   than updating the existing product. Upsert is deliberately deferred; silently overwriting prices
   from a spreadsheet is a bigger risk than a skipped row.

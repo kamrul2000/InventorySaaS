@@ -77,7 +77,7 @@ export class ScanHubComponent {
       icon: 'fact_check',
       route: '/scan/count',
       roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'],
-      available: false,
+      available: true,
     },
   ];
 

@@ -28,6 +28,7 @@ export class SidebarComponent {
     { label: 'Warehouses', icon: 'warehouse', route: '/warehouses' },
     { label: 'Inventory', icon: 'assessment', route: '/inventory' },
     { label: 'Scanning', icon: 'qr_code_scanner', route: '/scan' },
+    { label: 'Stock Counts', icon: 'fact_check', route: '/stock-counts' },
     { label: 'Suppliers', icon: 'local_shipping', route: '/suppliers' },
     { label: 'Customers', icon: 'people', route: '/customers' },
     { label: 'Purchase Orders', icon: 'shopping_cart', route: '/purchase-orders' },

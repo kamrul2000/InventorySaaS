@@ -52,4 +52,17 @@ export const SCAN_ROUTES: Routes = [
     loadComponent: () => import('./scan-pick/scan-pick.component').then((m) => m.ScanPickComponent),
     ...STAFF_UP,
   },
+  {
+    path: 'count',
+    loadComponent: () =>
+      import('./scan-count/scan-count.component').then((m) => m.ScanCountComponent),
+    ...STAFF_UP,
+  },
+  {
+    // Same screen, entered on an existing count session.
+    path: 'count/:id',
+    loadComponent: () =>
+      import('./scan-count/scan-count.component').then((m) => m.ScanCountComponent),
+    ...STAFF_UP,
+  },
 ];

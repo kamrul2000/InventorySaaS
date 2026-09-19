@@ -1,0 +1,265 @@
+<div class="page-container">
+  <header class="scan-op-header">
+    <a class="scan-op-back" routerLink="/scan">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Scanning</span>
+    </a>
+    <h1>Physical Stock Count</h1>
+    <p>Scan what is physically on the shelf. Nothing changes until a manager approves the variances.</p>
+  </header>
+
+  <div class="scan-op-layout">
+    <aside class="scan-op-aside">
+      @if (session(); as current) {
+        @if (current.status === 'Counting') {
+          <app-scan-target
+            label="Scan a counted item"
+            placeholder="Product barcode or SKU…"
+            [busy]="busy()"
+            (scanned)="onScanned($event)"
+          />
+        }
+
+        <div class="scan-op-panel count-card">
+          <div class="count-headline">
+            <h2>{{ current.countNumber }}</h2>
+            <span class="status-chip" [class]="'status-' + current.status.toLowerCase()">
+              {{ current.status === 'PendingApproval' ? 'Awaiting approval' : current.status }}
+            </span>
+          </div>
+          <p class="count-meta">
+            {{ current.warehouseName }}{{ current.locationName ? ' · ' + current.locationName : ' · all bins' }}
+          </p>
+
+          <div class="variance-summary">
+            <div class="variance-tile">
+              <span class="value">{{ current.lineCount }}</span>
+              <span class="label">Lines counted</span>
+            </div>
+            <div class="variance-tile is-short">
+              <span class="value">{{ current.shortageLines }}</span>
+              <span class="label">Short</span>
+            </div>
+            <div class="variance-tile is-over">
+              <span class="value">{{ current.overageLines }}</span>
+              <span class="label">Over</span>
+            </div>
+            <div class="variance-tile">
+              <span class="value">{{ current.netVariance > 0 ? '+' : '' }}{{ current.netVariance }}</span>
+              <span class="label">Net units</span>
+            </div>
+          </div>
+
+          @if (current.status === 'Counting') {
+            <div class="scan-op-grid">
+              <div class="scan-op-field">
+                <label for="scanQty">Units per scan</label>
+                <input id="scanQty" class="scan-op-input" type="number" min="1" inputmode="numeric" [(ngModel)]="scanQuantity" />
+              </div>
+              <div class="scan-op-field">
+                <label for="scanBatch">Batch being counted</label>
+                <input id="scanBatch" class="scan-op-input" type="text" [(ngModel)]="scanBatch" placeholder="Optional" />
+              </div>
+            </div>
+
+            <button type="button" class="scan-op-btn" [disabled]="busy()" (click)="cancelCount()">
+              <mat-icon>cancel</mat-icon>
+              <span>Cancel count</span>
+            </button>
+          } @else if (current.status === 'PendingApproval') {
+            <p class="scan-op-hint">
+              Sent for approval{{ current.submittedAt ? ' on ' + (current.submittedAt | date: 'medium') : '' }}.
+              A manager reviews the variances before any stock changes.
+            </p>
+            <a class="scan-op-btn" routerLink="/stock-counts">
+              <mat-icon>approval</mat-icon>
+              <span>Go to approvals</span>
+            </a>
+          }
+        </div>
+      }
+    </aside>
+
+    <div>
+      @if (loading()) {
+        <div class="scan-op-empty">
+          <mat-icon>hourglass_top</mat-icon>
+          <h2>Loading…</h2>
+        </div>
+      } @else if (!session()) {
+        <div class="scan-op-panel">
+          <h2 class="scan-op-step-title"><mat-icon>play_circle</mat-icon> Start a count</h2>
+
+          <div class="scan-op-grid">
+            <div class="scan-op-field">
+              <label for="wh">Warehouse <span class="required-mark">*</span></label>
+              <select id="wh" class="scan-op-select" [(ngModel)]="warehouseId" (ngModelChange)="onWarehouseChange()">
+                <option value="">Select a warehouse…</option>
+                @for (w of warehouses(); track w.id) {
+                  <option [value]="w.id">{{ w.name }} ({{ w.code }})</option>
+                }
+              </select>
+            </div>
+            <div class="scan-op-field">
+              <label for="loc">Location / bin</label>
+              <select id="loc" class="scan-op-select" [(ngModel)]="locationId" [disabled]="!locations().length">
+                <option value="">Count the whole warehouse</option>
+                @for (l of locations(); track l.id) {
+                  <option [value]="l.id">{{ l.name }}{{ l.code ? ' · ' + l.code : '' }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="scan-op-field">
+            <label for="startNotes">Notes</label>
+            <input id="startNotes" class="scan-op-input" type="text" [(ngModel)]="startNotes" placeholder="e.g. Quarterly count" />
+          </div>
+
+          @if (error()) {
+            <p class="scan-op-hint is-error">{{ error() }}</p>
+          }
+
+          <div class="scan-op-actions">
+            <button type="button" class="scan-op-btn is-primary" [disabled]="!warehouseId || busy()" (click)="start()">
+              <mat-icon>play_arrow</mat-icon>
+              <span>Start counting</span>
+            </button>
+          </div>
+
+          @if (openCounts().length) {
+            <section class="scan-op-step">
+              <h2 class="scan-op-step-title"><mat-icon>history</mat-icon> Counts in progress</h2>
+              <ul class="count-list">
+                @for (c of openCounts(); track c.id) {
+                  <li>
+                    <button type="button" class="count-row" (click)="resume(c)">
+                      <span class="count-row-main">
+                        <span class="count-row-number">{{ c.countNumber }}</span>
+                        <span class="count-row-scope">
+                          {{ c.warehouseName }}{{ c.locationName ? ' · ' + c.locationName : '' }} · {{ c.lineCount }} lines
+                        </span>
+                      </span>
+                      <mat-icon>chevron_right</mat-icon>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </div>
+      } @else if (confirming()) {
+        <div class="scan-op-panel">
+          <div class="scan-op-confirm">
+            <h3><mat-icon>fact_check</mat-icon> Send for approval</h3>
+            <p class="confirm-note">
+              Counting stops here. A manager must approve before any stock is adjusted.
+            </p>
+            <dl class="scan-op-summary">
+              <div><dt>Count</dt><dd>{{ session()!.countNumber }}</dd></div>
+              <div><dt>Lines</dt><dd>{{ session()!.lineCount }}</dd></div>
+              <div><dt>Short</dt><dd>{{ session()!.shortageLines }}</dd></div>
+              <div><dt>Over</dt><dd>{{ session()!.overageLines }}</dd></div>
+            </dl>
+
+            <div class="scan-op-field">
+              <label for="submitNotes">Notes for the reviewer</label>
+              <textarea id="submitNotes" class="scan-op-input" [(ngModel)]="submitNotes" placeholder="Optional"></textarea>
+            </div>
+          </div>
+
+          <div class="scan-op-actions">
+            <button type="button" class="scan-op-btn is-primary" [disabled]="busy()" (click)="submit()">
+              <mat-icon>send</mat-icon>
+              <span>{{ busy() ? 'Sending…' : 'Confirm & submit' }}</span>
+            </button>
+            <button type="button" class="scan-op-btn" [disabled]="busy()" (click)="cancelReview()">
+              <mat-icon>edit</mat-icon>
+              <span>Keep counting</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="scan-op-panel">
+          <h2 class="scan-op-step-title"><mat-icon>fact_check</mat-icon> Counted lines</h2>
+
+          @if (session()!.lineCount === 0) {
+            <p class="scan-op-hint">Nothing counted yet. Scan an item to open its first line.</p>
+          } @else {
+            <ul class="count-lines">
+              @for (line of orderedLines; track line.id) {
+                <li
+                  class="count-line"
+                  [class.is-short]="line.variance < 0"
+                  [class.is-over]="line.variance > 0"
+                  [class.is-last]="line.id === lastLineId()"
+                >
+                  <div class="count-line-main">
+                    <span class="count-line-name">{{ line.productName }}</span>
+                    <span class="count-line-meta">
+                      <code>{{ line.productSku }}</code>
+                      @if (line.locationName) { · {{ line.locationName }} }
+                      @if (line.batchNumber) { · batch {{ line.batchNumber }} }
+                    </span>
+                    @if (line.serials.length) {
+                      <span class="count-line-meta">{{ line.serials.length }} serial(s) counted</span>
+                    }
+                  </div>
+
+                  <div class="count-line-numbers">
+                    <span class="num-block">
+                      <span class="num">{{ line.systemQuantity }}</span>
+                      <span class="num-label">System</span>
+                    </span>
+                    <span class="num-block">
+                      @if (session()!.status === 'Counting') {
+                        <input
+                          class="count-input"
+                          type="number"
+                          min="0"
+                          inputmode="numeric"
+                          [value]="line.countedQuantity"
+                          [disabled]="busy() || line.trackSerial"
+                          (change)="setExact(line, +$any($event.target).value)"
+                          [attr.aria-label]="'Counted quantity for ' + line.productName"
+                        />
+                      } @else {
+                        <span class="num">{{ line.countedQuantity }}</span>
+                      }
+                      <span class="num-label">Counted</span>
+                    </span>
+                    <span class="num-block variance">
+                      <span class="num">{{ line.variance > 0 ? '+' : '' }}{{ line.variance }}</span>
+                      <span class="num-label">Variance</span>
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (error()) {
+            <p class="scan-op-hint is-error">{{ error() }}</p>
+          }
+
+          @if (session()!.status === 'Counting') {
+            <div class="scan-op-actions">
+              <button
+                type="button"
+                class="scan-op-btn is-primary"
+                [disabled]="session()!.lineCount === 0 || busy()"
+                (click)="review()"
+              >
+                <mat-icon>send</mat-icon>
+                <span>Send for approval</span>
+              </button>
+            </div>
+            <p class="scan-op-hint">
+              Counting changes nothing on its own — a manager approves the variances to post adjustments.
+            </p>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

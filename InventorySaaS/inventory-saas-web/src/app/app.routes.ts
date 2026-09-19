@@ -89,6 +89,14 @@ export const routes: Routes = [
         loadChildren: () => import('./features/scan/scan.routes').then((m) => m.SCAN_ROUTES),
       },
       { path: 'inventory', component: InventoryListComponent },
+      {
+        // Manager review of counted variances. Lazy-loaded alongside the scanning screens.
+        path: 'stock-counts',
+        loadComponent: () =>
+          import('./features/stock-counts/stock-count-list/stock-count-list.component').then(
+            (m) => m.StockCountListComponent
+          ),
+      },
       { path: 'inventory/stock-in', component: StockInComponent },
       { path: 'inventory/stock-out', component: StockOutComponent },
       { path: 'inventory/transfer', component: StockTransferComponent },

@@ -1,0 +1,280 @@
+/* Layout and controls come from the shared .scan-op-* system in styles.scss. */
+
+.count-card {
+  gap: 14px;
+  padding: 20px;
+}
+
+.count-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.count-headline h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+}
+
+.count-meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status-chip {
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.status-chip.status-pendingapproval {
+  background: #fff8e1;
+  color: #8a5300;
+}
+
+.status-chip.status-approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-chip.status-cancelled {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.variance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.variance-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container);
+  text-align: center;
+}
+
+.variance-tile .value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.variance-tile .label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.variance-tile.is-short {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.variance-tile.is-over {
+  background: #fff8e1;
+  color: #8a5300;
+}
+
+/* --- resume list --- */
+
+.count-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.count-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.count-row:hover {
+  border-color: var(--mat-sys-primary);
+}
+
+.count-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.count-row-number {
+  font-weight: 700;
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+}
+
+.count-row-scope {
+  font-size: 0.78rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* --- counted lines --- */
+
+.count-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.count-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+  /* A left bar carries the shortage/overage signal without relying on colour alone
+     being noticed at a glance across a long list. */
+  border-left-width: 5px;
+}
+
+.count-line.is-short {
+  border-left-color: #b3261e;
+  background: #fdf6f5;
+}
+
+.count-line.is-over {
+  border-left-color: #f3a712;
+  background: #fffcf3;
+}
+
+.count-line.is-last {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+}
+
+.count-line-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.count-line-name {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.count-line-meta {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.count-line-meta code {
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+}
+
+.count-line-numbers {
+  display: flex;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.num-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 62px;
+}
+
+.num {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.num-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.count-input {
+  width: 72px;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.count-input:focus {
+  outline: none;
+  border-color: var(--mat-sys-primary);
+}
+
+.count-input:disabled {
+  opacity: 0.6;
+}
+
+.is-short .variance .num {
+  color: #b3261e;
+}
+
+.is-over .variance .num {
+  color: #8a5300;
+}
+
+.confirm-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #8a5300;
+}
+
+@media (max-width: 700px) {
+  .count-line {
+    flex-wrap: wrap;
+  }
+
+  .count-line-main {
+    flex-basis: 100%;
+  }
+
+  .count-line-numbers {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
