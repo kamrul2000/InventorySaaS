@@ -69,7 +69,7 @@ export class ScanHubComponent {
       icon: 'checklist',
       route: '/scan/pick',
       roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'],
-      available: false,
+      available: true,
     },
     {
       label: 'Stock Count',

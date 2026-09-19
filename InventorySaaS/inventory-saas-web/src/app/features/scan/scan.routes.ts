@@ -41,4 +41,15 @@ export const SCAN_ROUTES: Routes = [
       import('./scan-transfer/scan-transfer.component').then((m) => m.ScanTransferComponent),
     ...STAFF_UP,
   },
+  {
+    path: 'pick',
+    loadComponent: () => import('./scan-pick/scan-pick.component').then((m) => m.ScanPickComponent),
+    ...STAFF_UP,
+  },
+  {
+    // Same screen, entered with the order already chosen.
+    path: 'pick/:orderId',
+    loadComponent: () => import('./scan-pick/scan-pick.component').then((m) => m.ScanPickComponent),
+    ...STAFF_UP,
+  },
 ];
