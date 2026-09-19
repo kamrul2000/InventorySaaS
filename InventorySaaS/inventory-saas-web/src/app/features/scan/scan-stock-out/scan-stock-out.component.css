@@ -1,0 +1,49 @@
+/* Layout and controls come from the shared .scan-op-* system in styles.scss. */
+
+.product-card {
+  gap: 12px;
+  padding: 20px;
+}
+
+.product-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.product-headline h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.product-headline code {
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.product-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.flag {
+  padding: 3px 9px;
+  border-radius: 9px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.reserved-note {
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #fff8e1;
+  color: #8a5300;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

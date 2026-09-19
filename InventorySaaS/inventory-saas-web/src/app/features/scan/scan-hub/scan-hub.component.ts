@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -45,7 +45,7 @@ export class ScanHubComponent {
       icon: 'login',
       route: '/scan/stock-in',
       roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'],
-      available: false,
+      available: true,
     },
     {
       label: 'Stock Out',
@@ -53,7 +53,7 @@ export class ScanHubComponent {
       icon: 'logout',
       route: '/scan/stock-out',
       roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'],
-      available: false,
+      available: true,
     },
     {
       label: 'Transfer',
@@ -61,7 +61,7 @@ export class ScanHubComponent {
       icon: 'swap_horiz',
       route: '/scan/transfer',
       roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'],
-      available: false,
+      available: true,
     },
     {
       label: 'Order Picking',

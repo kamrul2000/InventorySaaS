@@ -16,6 +16,10 @@ public record InventoryBalanceDto(
     int QuantityAvailable,
     decimal UnitCost);
 
+/// <summary>
+/// Receives stock. <paramref name="SerialNumbers"/> is required, and must have exactly
+/// <paramref name="Quantity"/> entries, when the product is serial-tracked.
+/// </summary>
 public record StockInRequest(
     Guid ProductId,
     Guid WarehouseId,
@@ -25,14 +29,22 @@ public record StockInRequest(
     string? BatchNumber,
     string? LotNumber,
     DateTime? ExpiryDate,
-    string? Notes);
+    string? Notes,
+    IReadOnlyList<string>? SerialNumbers = null);
 
+/// <summary>
+/// Issues stock. <paramref name="BatchNumber"/> is required for batch-tracked products so the
+/// batch is preserved on the way out; for untracked products, omitting it draws earliest-expiry-first.
+/// </summary>
 public record StockOutRequest(
     Guid ProductId,
     Guid WarehouseId,
     Guid? LocationId,
     int Quantity,
-    string? Notes);
+    string? Notes,
+    string? Reason = null,
+    string? BatchNumber = null,
+    IReadOnlyList<string>? SerialNumbers = null);
 
 public record StockTransferRequest(
     Guid ProductId,
@@ -41,7 +53,9 @@ public record StockTransferRequest(
     Guid DestinationWarehouseId,
     Guid? DestinationLocationId,
     int Quantity,
-    string? Notes);
+    string? Notes,
+    string? BatchNumber = null,
+    IReadOnlyList<string>? SerialNumbers = null);
 
 public record StockAdjustmentRequest(
     Guid ProductId,
@@ -61,4 +75,6 @@ public record InventoryTransactionDto(
     decimal UnitCost,
     string? BatchNumber,
     DateTime TransactionDate,
-    string? Notes);
+    string? Notes,
+    string? Reason = null,
+    IReadOnlyList<string>? SerialNumbers = null);

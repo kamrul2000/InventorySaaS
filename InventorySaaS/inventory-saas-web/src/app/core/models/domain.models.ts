@@ -125,6 +125,10 @@ export interface InventoryTransactionDto {
   batchNumber?: string;
   transactionDate: string;
   notes?: string;
+  /** Why the stock moved, kept separate from the free-text note. */
+  reason?: string;
+  /** Populated for serial-tracked products: the units this movement covered. */
+  serialNumbers?: string[];
 }
 
 export interface SupplierDto {

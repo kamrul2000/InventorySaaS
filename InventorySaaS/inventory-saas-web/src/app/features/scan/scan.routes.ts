@@ -1,4 +1,11 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '../../core/guards/role.guard';
+
+/** Mirrors the API's StaffUp policy on the inventory write endpoints. */
+const STAFF_UP = {
+  canActivate: [roleGuard],
+  data: { roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'] },
+};
 
 /**
  * Scanning screens are lazy-loaded. Unlike the rest of the app, which imports every route
@@ -15,5 +22,23 @@ export const SCAN_ROUTES: Routes = [
     path: 'lookup',
     loadComponent: () =>
       import('./scan-lookup/scan-lookup.component').then((m) => m.ScanLookupComponent),
+  },
+  {
+    path: 'stock-in',
+    loadComponent: () =>
+      import('./scan-stock-in/scan-stock-in.component').then((m) => m.ScanStockInComponent),
+    ...STAFF_UP,
+  },
+  {
+    path: 'stock-out',
+    loadComponent: () =>
+      import('./scan-stock-out/scan-stock-out.component').then((m) => m.ScanStockOutComponent),
+    ...STAFF_UP,
+  },
+  {
+    path: 'transfer',
+    loadComponent: () =>
+      import('./scan-transfer/scan-transfer.component').then((m) => m.ScanTransferComponent),
+    ...STAFF_UP,
   },
 ];
