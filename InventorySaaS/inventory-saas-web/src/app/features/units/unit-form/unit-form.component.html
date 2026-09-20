@@ -1,0 +1,40 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 class="dialog-title">{{ isEditMode ? 'Edit Unit' : 'New Unit' }}</h2>
+    <button class="dialog-close" (click)="dialogRef.close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="dialog-body">
+    <form [formGroup]="form">
+      <div class="form-group">
+        <label class="form-label">Unit Name</label>
+        <input class="form-input" formControlName="name" placeholder="e.g. Piece, Kilogram, Box">
+        @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+          <span class="form-error">Name is required</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Abbreviation</label>
+        <input class="form-input" formControlName="abbreviation" placeholder="e.g. pcs, kg, box">
+        <span class="form-hint">Leave blank to derive it from the name.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isActive">
+          <span>Active</span>
+        </label>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog-actions">
+    <button class="btn-secondary" (click)="dialogRef.close()">Cancel</button>
+    <button class="btn-primary" (click)="save()" [disabled]="form.invalid || saving">
+      {{ isEditMode ? 'Update' : 'Create' }}
+    </button>
+  </div>
+</div>

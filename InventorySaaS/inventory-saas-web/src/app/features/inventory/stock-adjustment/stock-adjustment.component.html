@@ -1,0 +1,107 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Stock Adjustment</h1>
+      <p class="page-subtitle">Correct on-hand quantity to match a physical count</p>
+    </div>
+    <button class="btn-primary" routerLink="/inventory">
+      <mat-icon>list</mat-icon> Go to Inventory
+    </button>
+  </div>
+
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Product</label>
+          <select class="form-select" formControlName="productId" (change)="refreshSystemQuantity()">
+            <option value="" disabled>Select a product</option>
+            @for (p of products; track p.id) {
+              <option [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Warehouse</label>
+          <select class="form-select" formControlName="warehouseId" (change)="onWarehouseChange(form.value.warehouseId)">
+            <option value="" disabled>Select a warehouse</option>
+            @for (wh of warehouses; track wh.id) {
+              <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (locations.length > 0) {
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Location</label>
+            <select class="form-select" formControlName="locationId" (change)="refreshSystemQuantity()">
+              <option value="">-- None --</option>
+              @for (loc of locations; track loc.id) {
+                <option [value]="loc.id">{{ loc.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group"></div>
+        </div>
+      }
+
+      @if (systemQuantity !== null) {
+        <div class="count-panel">
+          <div class="count-cell">
+            <span class="count-label">System quantity</span>
+            <span class="count-value">{{ systemQuantity }}</span>
+          </div>
+          <mat-icon class="count-arrow">arrow_forward</mat-icon>
+          <div class="count-cell">
+            <span class="count-label">Counted quantity</span>
+            <span class="count-value">{{ form.value.newQuantity }}</span>
+          </div>
+          <div class="count-cell count-cell-variance">
+            <span class="count-label">Variance</span>
+            <span class="count-value"
+                  [class.variance-up]="(variance ?? 0) > 0"
+                  [class.variance-down]="(variance ?? 0) < 0">
+              {{ (variance ?? 0) > 0 ? '+' : '' }}{{ variance }}
+            </span>
+          </div>
+        </div>
+      }
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Counted Quantity</label>
+          <input class="form-input" formControlName="newQuantity" type="number" min="0"
+                 placeholder="Enter the physically counted quantity">
+          <span class="form-hint">This replaces the on-hand quantity — enter what you actually counted.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason</label>
+          <select class="form-select" formControlName="reason">
+            <option value="" disabled>Select a reason</option>
+            @for (r of reasons; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+          @if (form.get('reason')?.hasError('required') && form.get('reason')?.touched) {
+            <span class="form-error">A reason is required</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label">Additional Detail</label>
+        <textarea class="form-input form-textarea" formControlName="reasonDetail" rows="2"
+                  placeholder="Optional — count sheet reference, who counted, anything worth recording"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+          Post Adjustment
+        </button>
+        <button class="btn-secondary" type="button" routerLink="/inventory">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

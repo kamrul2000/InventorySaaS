@@ -1,0 +1,21 @@
+# Visual Studio local state. Machine-specific workspace files and a SQLite index that
+# should never have been committed.
+.vs/
+
+# Local tool/assistant settings. Per-developer, not part of the project.
+.claude/
+
+# Build output
+[Bb]in/
+[Oo]bj/
+dist/
+.angular/
+
+# Node
+node_modules/
+
+# Environment and secrets
+*.user
+appsettings.*.local.json
+.env
+.env.local

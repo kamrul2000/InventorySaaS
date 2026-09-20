@@ -1,4 +1,4 @@
-using InventorySaaS.Domain.Entities.Audit;
+﻿using InventorySaaS.Domain.Entities.Audit;
 using InventorySaaS.Domain.Entities.Billing;
 using InventorySaaS.Domain.Entities.Customer;
 using InventorySaaS.Domain.Entities.Identity;
@@ -43,6 +43,11 @@ public interface IApplicationDbContext
     // Inventory
     DbSet<InventoryBalance> InventoryBalances { get; }
     DbSet<InventoryTransaction> InventoryTransactions { get; }
+    DbSet<ProductSerial> ProductSerials { get; }
+    DbSet<StockCountSession> StockCountSessions { get; }
+    DbSet<StockCountLine> StockCountLines { get; }
+    DbSet<StockCountLineSerial> StockCountLineSerials { get; }
+    DbSet<ScanIdempotencyKey> ScanIdempotencyKeys { get; }
 
     // Supplier & Customer
     DbSet<SupplierInfo> Suppliers { get; }
@@ -59,6 +64,8 @@ public interface IApplicationDbContext
     // Sales
     DbSet<SalesOrder> SalesOrders { get; }
     DbSet<SalesOrderItem> SalesOrderItems { get; }
+    DbSet<SalesOrderPickSession> SalesOrderPickSessions { get; }
+    DbSet<SalesOrderPickEvent> SalesOrderPickEvents { get; }
 
     // Billing (Accounts Receivable)
     DbSet<Invoice> Invoices { get; }

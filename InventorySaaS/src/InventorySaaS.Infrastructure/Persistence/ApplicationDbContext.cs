@@ -1,4 +1,4 @@
-using InventorySaaS.Application.Interfaces;
+﻿using InventorySaaS.Application.Interfaces;
 using InventorySaaS.Domain.Common;
 using InventorySaaS.Domain.Common.Interfaces;
 using InventorySaaS.Domain.Entities.Audit;
@@ -60,6 +60,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     // Inventory
     public DbSet<InventoryBalance> InventoryBalances => Set<InventoryBalance>();
     public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+    public DbSet<ProductSerial> ProductSerials => Set<ProductSerial>();
+    public DbSet<StockCountSession> StockCountSessions => Set<StockCountSession>();
+    public DbSet<StockCountLine> StockCountLines => Set<StockCountLine>();
+    public DbSet<StockCountLineSerial> StockCountLineSerials => Set<StockCountLineSerial>();
+    public DbSet<ScanIdempotencyKey> ScanIdempotencyKeys => Set<ScanIdempotencyKey>();
 
     // Supplier & Customer
     public DbSet<SupplierInfo> Suppliers => Set<SupplierInfo>();
@@ -76,6 +81,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     // Sales
     public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
     public DbSet<SalesOrderItem> SalesOrderItems => Set<SalesOrderItem>();
+    public DbSet<SalesOrderPickSession> SalesOrderPickSessions => Set<SalesOrderPickSession>();
+    public DbSet<SalesOrderPickEvent> SalesOrderPickEvents => Set<SalesOrderPickEvent>();
 
     // Billing (Accounts Receivable)
     public DbSet<Invoice> Invoices => Set<Invoice>();

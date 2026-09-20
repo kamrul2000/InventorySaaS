@@ -473,10 +473,30 @@ Query the `AuditLogs` table — it records action, entity type + id, old/new val
 ## Part 12 — Testing
 
 ### Q: What tests exist today?
-- `tests/InventorySaaS.UnitTests/` — entity tests + `PasswordHasher`
-- `tests/InventorySaaS.IntegrationTests/` — domain entity tests + `WebApplicationFactory` setup (`Program` is `public partial` for in-process testing)
+**85 tests, all green** — 81 unit and 4 integration.
 
-Coverage is light. Highest-value additions: tenant-isolation integration tests, and the multi-step state machines — PO Approve→Receive→Return, SO Confirm→Deliver→Return, and the billing flows (invoice from SO, payment allocation reaching Paid).
+- `tests/InventorySaaS.UnitTests/` — tenant isolation, weighted-average costing, inventory
+  balances, sales reservation, purchase returns, AR/AP billing, `PasswordHasher`, product
+  entities, CSV parsing, product import, aging, profitability
+- `tests/InventorySaaS.IntegrationTests/` — domain entity tests + `WebApplicationFactory` setup
+  (`Program` is `public partial` for in-process testing)
+
+They deliberately target the logic that is expensive to get wrong rather than chasing a coverage
+number. Good examples to talk through:
+
+- **Tenant isolation** — a regression guard for a real bug where the global filter was effectively
+  disabled (`WHERE TenantId == Empty OR true`), leaking data across tenants
+- **Aging boundaries** — every bucket edge is a `[Theory]` case (0, 30/31, 60/61, 90/91 days),
+  because off-by-one here silently misstates a debt, plus the negative-age case where an invoice
+  that isn't due yet would otherwise report as overdue
+- **Profitability** — one test seeds a product with `CostPrice = 999` and a ledger cost of 12, and
+  asserts the report says 12; that's the whole design decision pinned in a single assertion
+- **CSV parsing** — the cases spreadsheets actually emit: quoted commas, doubled quotes, embedded
+  newlines, CRLF, Excel's BOM, a missing trailing newline
+- **Import** — duplicate SKUs within one file *and* SKUs still held by soft-deleted products
+
+Still thin: the multi-step state machines end-to-end through HTTP (PO Approve→Receive→Return,
+SO Confirm→Deliver→Return), which are unit-tested but not integration-tested.
 
 ### Q: How do I run tests?
 ```bash
@@ -601,10 +621,14 @@ Yes. The litmus test for CQRS is "do my reads scale differently from my writes?"
 ## Part 16 — Things I'd improve next (honest)
 
 ### High priority
-1. **Enforce subscription-plan limits** at the API (users/warehouses/products/feature gates) — entities and limits are seeded but unchecked
-2. **Expose payment reversal** — `Invoice.ReversePayment` / `SupplierBill.ReversePayment` exist on the entities but no endpoint calls them; needed to undo a misapplied payment
-3. **Auto-flag Overdue** — a scheduled job (or report) that marks Issued/Open documents past their due date
-4. **Grow tenant-isolation + state-machine tests** — the filter and order/billing flows are the riskiest paths
+1. **Stocktake / physical count** — the adjustment screen covers single-item correction with
+   variance, but there's no multi-item count session (freeze, count sheet, bulk variance posting)
+2. **Enforce subscription-plan limits** at the API (users/warehouses/products/feature gates) — entities and limits are seeded but unchecked
+3. **Expose payment reversal** — `Invoice.ReversePayment` / `SupplierBill.ReversePayment` exist on the entities but no endpoint calls them; needed to undo a misapplied payment
+4. **Auto-flag Overdue** — a scheduled job that marks Issued/Open documents past their due date
+   (the aging report already computes this, but the stored `Status` never changes)
+5. **Integration tests for the state machines** — PO and SO flows are unit-tested but not
+   exercised end-to-end through HTTP
 
 ### Medium priority
 5. **Data annotations on all Request DTOs** — restore automatic 400-on-validation lost with FluentValidation
@@ -615,7 +639,20 @@ Yes. The litmus test for CQRS is "do my reads scale differently from my writes?"
 ### Lower priority
 9. **Localization** — English-only today
 10. **PWA / offline support for stock movements** — high value for warehouse workers on spotty connectivity
-11. **Aging reports** for AR/AP (30/60/90-day buckets) now that the billing data exists
+11. **Barcode scanning and label printing** — the field and search exist; no scanner input, no labels
+12. **CSV upsert** — import is insert-only today; a row whose SKU exists is skipped rather than
+    updating the product. Deferred deliberately: silently overwriting prices from a spreadsheet is
+    a worse failure than a skipped row.
+13. **Remove or implement the dead entities** — `PurchaseRequisition`, `ProductVariant` and
+    `ProductImage` have tables and EF configuration but no service or controller
+
+### Done since this list was written
+- ~~Aging reports for AR/AP (30/60/90-day buckets)~~ — shipped, plus sales, purchase and
+  profitability reports
+- ~~Brands and units as managed master lists~~ — shipped; they were free-text on the product form
+- ~~Search and sort on the list screens~~ — every frontend service was sending `searchTerm` where
+  the API binds `search`, so the box silently returned unfiltered results on 12 screens; sort was
+  discarded outright on all but one
 
 ---
 

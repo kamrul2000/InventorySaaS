@@ -21,6 +21,20 @@ public class InventoryTransaction : TenantEntity
     public string? ReferenceType { get; set; }
     public Guid? ReferenceId { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// Why the stock moved — kept separate from <see cref="Notes"/> so movements can be
+    /// grouped and reported on by reason rather than by free text.
+    /// </summary>
+    public string? Reason { get; set; }
+
+    /// <summary>
+    /// The serial numbers this movement covered, comma-separated, for serial-tracked products.
+    /// The authoritative per-unit state lives on <see cref="ProductSerial"/>; this is the
+    /// immutable record of what moved in this transaction.
+    /// </summary>
+    public string? SerialNumbers { get; set; }
+
     public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 
     public Product.ProductInfo Product { get; set; } = default!;

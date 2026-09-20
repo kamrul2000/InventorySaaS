@@ -1,4 +1,4 @@
-using InventorySaaS.Domain.Common;
+﻿using InventorySaaS.Domain.Common;
 
 namespace InventorySaaS.Domain.Entities.Product;
 
@@ -16,6 +16,18 @@ public class ProductInfo : TenantEntity
     public int ReorderLevel { get; set; }
     public int MinimumOrderQuantity { get; set; } = 1;
     public bool TrackExpiry { get; set; }
+
+    /// <summary>
+    /// When set, stock movements must carry the batch number through, and a balance is only
+    /// matched on an exact batch. Off by default so existing products behave exactly as before.
+    /// </summary>
+    public bool TrackBatch { get; set; }
+
+    /// <summary>
+    /// When set, every unit is recorded individually as a <see cref="Inventory.ProductSerial"/>
+    /// and movements must name the serial numbers involved.
+    /// </summary>
+    public bool TrackSerial { get; set; }
     public bool HasVariants { get; set; }
     public bool IsActive { get; set; } = true;
     public decimal? Weight { get; set; }
@@ -29,4 +41,5 @@ public class ProductInfo : TenantEntity
     public ICollection<ProductVariant> Variants { get; set; } = [];
     public ICollection<ProductImage> Images { get; set; } = [];
     public ICollection<Inventory.InventoryBalance> InventoryBalances { get; set; } = [];
+    public ICollection<Inventory.ProductSerial> Serials { get; set; } = [];
 }

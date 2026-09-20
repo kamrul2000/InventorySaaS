@@ -17,11 +17,11 @@ import { SupplierPaymentDto } from '../../../core/models/domain.models';
 })
 export class SupplierPaymentListComponent implements OnInit {
   columns: TableColumn[] = [
-    { key: 'paymentNumber', label: 'Payment #' },
-    { key: 'supplierName', label: 'Supplier' },
+    { key: 'paymentNumber', label: 'Payment #', sortable: true, sortKey: 'paymentnumber' },
+    { key: 'supplierName', label: 'Supplier', sortable: true, sortKey: 'supplier' },
     { key: 'paymentDate', label: 'Date', type: 'date' },
     { key: 'method', label: 'Method' },
-    { key: 'amount', label: 'Amount', type: 'currency' },
+    { key: 'amount', label: 'Amount', type: 'currency', sortable: true },
   ];
 
   payments: SupplierPaymentDto[] = [];
@@ -30,6 +30,8 @@ export class SupplierPaymentListComponent implements OnInit {
   pageNumber = 1;
   loading = false;
   searchTerm = '';
+  sortBy = '';
+  sortDescending = false;
 
   constructor(private paymentService: SupplierPaymentService, private router: Router) {}
 
@@ -38,7 +40,7 @@ export class SupplierPaymentListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.paymentService.getAll({
-      pageNumber: this.pageNumber, pageSize: this.pageSize, searchTerm: this.searchTerm,
+      pageNumber: this.pageNumber, pageSize: this.pageSize, search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending,
     }).subscribe({
       next: (r) => { this.payments = r.items; this.totalCount = r.totalCount; this.loading = false; },
       error: () => { this.loading = false; },
@@ -47,7 +49,12 @@ export class SupplierPaymentListComponent implements OnInit {
 
   create(): void { this.router.navigate(['/supplier-payments/new']); }
   onPageChange(e: PageEvent): void { this.pageNumber = e.pageIndex + 1; this.pageSize = e.pageSize; this.load(); }
-  onSortChange(_s: Sort): void { this.load(); }
+  onSortChange(sort: Sort): void {
+    // Material reports 'asc' | 'desc' | ''; the API takes a boolean, and '' means default order.
+    this.sortBy = sort.direction ? sort.active : '';
+    this.sortDescending = sort.direction === 'desc';
+    this.load();
+  }
   onSearch(t: string): void { this.searchTerm = t; this.pageNumber = 1; this.load(); }
   onRowAction(_event: { action: string; row: unknown }): void { /* read-only list */ }
 }

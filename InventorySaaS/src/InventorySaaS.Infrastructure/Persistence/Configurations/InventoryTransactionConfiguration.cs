@@ -18,6 +18,12 @@ public class InventoryTransactionConfiguration : IEntityTypeConfiguration<Invent
 
         builder.HasIndex(it => it.TransactionNumber);
 
+        builder.Property(it => it.Reason)
+            .HasMaxLength(200);
+
+        // Unbounded: a single receipt can carry a long list of serials.
+        builder.Property(it => it.SerialNumbers);
+
         builder.Property(it => it.UnitCost)
             .HasPrecision(18, 2);
 

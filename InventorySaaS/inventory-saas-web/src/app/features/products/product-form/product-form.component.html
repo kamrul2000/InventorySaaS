@@ -78,15 +78,35 @@
         </div>
         <div class="form-group">
           <label class="form-label">Brand</label>
-          <input class="form-input" formControlName="brandName" placeholder="Brand name">
+          <div class="select-with-add">
+            <select class="form-select" formControlName="brandId">
+              <option [ngValue]="null">-- None --</option>
+              @for (brand of brands; track brand.id) {
+                <option [ngValue]="brand.id">{{ brand.name }}</option>
+              }
+            </select>
+            <button class="btn-inline-add" type="button" (click)="addBrand()" title="Add a new brand">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Unit of Measure</label>
-          <input class="form-input" formControlName="unitName" placeholder="e.g., Piece, Kg">
-          @if (form.get('unitName')?.hasError('required') && form.get('unitName')?.touched) {
+          <div class="select-with-add">
+            <select class="form-select" formControlName="unitOfMeasureId">
+              <option value="" disabled>Select unit</option>
+              @for (unit of units; track unit.id) {
+                <option [value]="unit.id">{{ unit.name }} ({{ unit.abbreviation }})</option>
+              }
+            </select>
+            <button class="btn-inline-add" type="button" (click)="addUnit()" title="Add a new unit">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+          @if (form.get('unitOfMeasureId')?.hasError('required') && form.get('unitOfMeasureId')?.touched) {
             <span class="form-error">Unit is required</span>
           }
         </div>
@@ -108,6 +128,14 @@
               <input type="checkbox" formControlName="trackExpiry">
               <span>Track Expiry</span>
             </label>
+            <label class="checkbox-label" title="Stock movements must carry the batch number through">
+              <input type="checkbox" formControlName="trackBatch">
+              <span>Track Batch</span>
+            </label>
+            <label class="checkbox-label" title="Every unit is recorded individually by serial number">
+              <input type="checkbox" formControlName="trackSerial">
+              <span>Track Serial</span>
+            </label>
             <label class="checkbox-label">
               <input type="checkbox" formControlName="isActive">
               <span>Active</span>
@@ -125,7 +153,7 @@
             {{ isEditMode ? 'Update Product' : 'Add Product' }}
           }
         </button>
-        <button class="btn-secondary" type="button" (click)="form.reset(); form.patchValue({costPrice: 0, sellingPrice: 0, reorderLevel: 0, trackExpiry: false, isActive: true})">
+        <button class="btn-secondary" type="button" (click)="form.reset(); form.patchValue({costPrice: 0, sellingPrice: 0, reorderLevel: 0, trackExpiry: false, trackBatch: false, trackSerial: false, isActive: true})">
           Clear
         </button>
       </div>

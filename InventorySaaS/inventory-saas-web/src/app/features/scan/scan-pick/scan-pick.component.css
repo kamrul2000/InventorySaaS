@@ -1,0 +1,278 @@
+/* Layout and controls come from the shared .scan-op-* system in styles.scss. */
+
+.order-card {
+  gap: 14px;
+  padding: 20px;
+}
+
+.order-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-headline h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.order-meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status-chip {
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--mat-sys-surface-container-high);
+  overflow: hidden;
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  background: var(--mat-sys-primary);
+  transition: width 0.2s ease;
+}
+
+.progress-bar.is-complete span {
+  background: #2e7d32;
+}
+
+.progress-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.progress-text strong {
+  font-size: 1.1rem;
+  color: var(--mat-sys-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- order chooser --- */
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.order-row:hover {
+  border-color: var(--mat-sys-primary);
+}
+
+.order-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.order-row-number {
+  font-weight: 700;
+}
+
+.order-row-customer {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* --- pick list --- */
+
+.pick-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pick-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+}
+
+/* A completed line recedes; the eye should land on what is still outstanding. */
+.pick-line.is-done {
+  background: #f1f8f2;
+  border-color: #c8e6c9;
+  opacity: 0.75;
+}
+
+/* Marks the line the last scan touched, so the operator can confirm it registered. */
+.pick-line.is-last {
+  border-color: var(--mat-sys-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+}
+
+.pick-line-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pick-line-name {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pick-line-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pick-line-meta code {
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+}
+
+.mini-flag {
+  padding: 1px 7px;
+  border-radius: 7px;
+  background: var(--mat-sys-surface-container-high);
+  font-weight: 700;
+}
+
+.pick-line-counts {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.count-picked {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.count-sep,
+.count-total {
+  font-size: 1rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pick-line-action {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-btn:hover:not(:disabled) {
+  border-color: var(--mat-sys-primary);
+  color: var(--mat-sys-primary);
+}
+
+.add-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.done-icon {
+  color: #2e7d32;
+}
+
+.deliver-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.deliver-toggle input {
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+}
+
+.deliver-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.deliver-toggle small {
+  color: #8a5300;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 600px) {
+  .pick-line {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pick-line-main {
+    flex-basis: 100%;
+  }
+}

@@ -1,0 +1,128 @@
+.scan-target {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.scan-target-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scan-target-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface);
+}
+
+.scan-target-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chip-btn mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.chip-btn:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.chip-btn.is-on {
+  background: color-mix(in srgb, var(--mat-sys-primary) 14%, transparent);
+  border-color: var(--mat-sys-primary);
+  color: var(--mat-sys-primary);
+}
+
+/* The outcome banner is deliberately loud — it is read from arm's length. */
+.scan-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.scan-status-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.scan-status-code {
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  /* Long QR payloads must not push the message out of the banner. */
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scan-status.is-success {
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+  color: #1b5e20;
+}
+
+.scan-status.is-error {
+  background: #fdecea;
+  border-color: #f5c2c0;
+  color: #b3261e;
+}
+
+.scan-status.is-warning {
+  background: #fff8e1;
+  border-color: #ffe082;
+  color: #8a5300;
+}
+
+.scan-status.is-busy {
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 600px) {
+  .scan-target {
+    padding: 16px;
+  }
+
+  .scan-status-code {
+    display: none;
+  }
+}

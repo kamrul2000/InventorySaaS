@@ -234,3 +234,40 @@
     gap: 12px;
   }
 }
+
+.select-with-add {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.select-with-add .form-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-inline-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  border: 1px dashed #cbd5e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #718096;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.btn-inline-add:hover {
+  border-color: #e8602c;
+  color: #e8602c;
+  background: #fff7f4;
+}
+
+.btn-inline-add mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}

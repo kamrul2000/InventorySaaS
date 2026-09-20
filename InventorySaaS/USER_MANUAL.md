@@ -1,5 +1,15 @@
 # InventorySaaS - Complete User Manual
 
+> **In one minute:** sign in, set up your **warehouses**, **categories**, **brands** and **units**,
+> then load your **products** (one at a time, by photo scan, or in bulk from a CSV). Book stock in
+> as it arrives. Buy through **Purchase Orders**, sell through **Sales Orders** — confirming an
+> order reserves stock and delivering it takes the stock out. Bill customers with **Invoices**,
+> record what they pay with **Payments**; the mirror of that for suppliers is **Supplier Bills**
+> and **Supplier Payments**. **Reports** tells you what you hold, who owes you, what you owe, and
+> what you're actually making.
+>
+> Jump to: [Module walkthrough](#9-module-by-module-walkthrough) · [Roles](#3-system-architecture--roles) · [Quick Start Checklist](#quick-start-checklist)
+
 ## Table of Contents
 
 1. [Getting Started](#1-getting-started)
@@ -333,8 +343,9 @@ Shows products that are below their reorder level, including current stock and r
    - **SKU**: Leave empty for auto-generation (format: `XXXX-001`)
    - **Barcode**: Optional barcode number
    - **Category** (required): Select from dropdown
-   - **Brand**: Optional
-   - **Unit of Measure** (required): pcs, kg, box, etc.
+   - **Brand**: Optional, chosen from your brand list. Click the **`+`** beside it to create a new
+     brand without leaving the page — it is added and selected for you.
+   - **Unit of Measure** (required): chosen from your unit list, with the same **`+`** shortcut
    - **Cost Price** (required): Your purchase price
    - **Selling Price** (required): Your selling price
    - **Reorder Level**: Minimum stock threshold for alerts
@@ -349,6 +360,50 @@ Shows products that are below their reorder level, including current stock and r
 #### Deleting a Product
 - Click the **delete icon** on any product row
 - Confirm in the dialog (soft delete - data is preserved)
+
+#### Exporting Products to CSV
+- Click **"Export"** on the product list
+- Downloads every product in exactly the format the importer accepts, so you can edit in Excel
+  and bring the file back in
+
+#### Importing Products from CSV
+
+**Path:** `/products/import` (Staff and above)
+
+Adding hundreds of products by hand is the slowest part of going live. The importer is a
+three-step flow, and **nothing is saved until you say so**.
+
+1. **Choose your file.** Click **"Download template"** first if you're starting fresh — it gives
+   you the header row and one example. Maximum 5 MB or 2,000 rows per file.
+2. **Review.** The moment you pick a file it is checked against your real data and you get a
+   verdict for every row: how many are ready, how many have errors, and exactly what is wrong
+   with each one — quoted by line number so you can find it in your spreadsheet.
+3. **Import.** Click the button. Valid rows are created; rows with errors are skipped and still
+   listed, so you can fix them and re-import just those.
+
+**Columns** — order does not matter, and the header names are not case-sensitive:
+
+| Column | Required | Notes |
+| --- | --- | --- |
+| `Name` | Yes | |
+| `Category` | Yes | Must match a category name exactly |
+| `Unit` | Yes | Must match a unit name |
+| `CostPrice` | Yes | Number, not negative |
+| `SellingPrice` | Yes | Number, not negative |
+| `Sku` | No | Generated for you when blank |
+| `Barcode` | No | |
+| `Brand` | No | |
+| `ReorderLevel` | No | Whole number, defaults to 0 |
+| `TrackExpiry` | No | `true`/`false`, `yes`/`no`, `1`/`0` |
+| `Description` | No | |
+
+**The "create missing" checkbox.** Off by default, and deliberately so. With it off, a row naming
+a category, brand or unit you don't have is reported as an error rather than silently creating
+one — which is how a single typo turns into a junk category. Turn it on when you genuinely are
+onboarding new master data, and check the "Will create" list in the preview before committing.
+
+> **Note:** import only *adds* products. A row whose SKU already exists is reported and skipped,
+> never used to overwrite the existing product. To change existing products, edit them directly.
 
 ---
 
@@ -369,6 +424,55 @@ Shows products that are below their reorder level, including current stock and r
 
 #### Editing a Category
 - Click the edit icon → dialog opens with existing data
+
+#### Deleting a Category
+- Blocked while products still use it. Reassign those products first.
+
+---
+
+### 9.3a Brands
+
+**Path:** `/brands`
+
+The list of brands your products can be assigned to. Keeping it curated is what stops
+"Nestle", "nestlé" and "NESTLE" becoming three different brands in your reports.
+
+#### Viewing Brands
+- Table shows: Name, Description, Product Count, Active status
+- Search by name; sort by name
+
+#### Creating a Brand
+1. Click **"Add Brand"**
+2. Fill in **Name** (required), Description, Logo URL
+3. Click **Create**
+
+> **Duplicate names are rejected**, and the check ignores case — if "Acme Foods" exists, trying to
+> add "acme foods" gives you a clear error instead of a second record.
+
+#### Deleting a Brand
+- Blocked while products still use it; the confirmation dialog tells you how many.
+- To retire a brand without deleting it, switch **Active** off instead. It stays on existing
+  products but disappears from the product form's dropdown.
+
+---
+
+### 9.3b Units of Measure
+
+**Path:** `/units`
+
+How your products are counted — Piece, Kilogram, Box, Litre.
+
+#### Creating a Unit
+1. Click **"Add Unit"**
+2. Fill in **Name** (required) and optionally **Abbreviation**
+3. Leave the abbreviation blank and it is derived from the name (Litre → `lit`)
+4. Click **Create**
+
+> Both the name **and** the abbreviation must be unique. Two units both showing "pcs" in a
+> dropdown are impossible to tell apart, so the second one is rejected.
+
+#### Deleting a Unit
+- Blocked while products still use it.
 
 ---
 
@@ -453,12 +557,41 @@ Shows all inventory movements:
    - **Notes**: Optional
 3. Click **Submit**
 
-#### Stock Out
-Use the API: `POST /api/v1/inventory/stock-out`
+#### Stock Out (Issuing or Writing Off Stock)
+Use this for anything leaving the warehouse that isn't a customer delivery — damage, internal
+use, samples, wastage. (Customer deliveries come out automatically when you deliver a sales
+order; don't do both or you'll deduct twice.)
 
-#### Stock Adjustment (Manager+ only)
-Use the API: `POST /api/v1/inventory/adjustment`
-This manually sets a new quantity (for corrections after physical counts).
+1. Click **"Stock Out"**
+2. Fill in:
+   - **Product**, **Warehouse**, and optionally **Location**
+   - **Quantity**
+   - **Notes**: say *why* — this is what you'll read in the ledger months later
+3. Click **Stock Out**
+
+> As soon as you've picked a product and warehouse, the screen shows **"Available to issue"** for
+> that exact location. Type more than that and the button disables with a message telling you what
+> you actually have — you find out before you submit, not after.
+
+#### Stock Adjustment (Manager and above)
+Use this to make the system agree with a physical count.
+
+1. Click **"Adjustment"**
+2. Pick **Product**, **Warehouse**, and optionally **Location**
+3. The panel fills in with what the system currently believes:
+
+   | System quantity | → | Counted quantity | Variance |
+   |---|---|---|---|
+   | 177 | | 50 | **−127** |
+
+4. Type what you **actually counted** — the variance updates live, green for a gain, red for a loss
+5. Pick a **Reason** (required): Physical count correction, Damaged goods, Expired stock written
+   off, Lost or stolen, Data entry error, Opening balance correction
+6. Add optional detail — count sheet reference, who counted
+7. Click **Post Adjustment**
+
+> The counted quantity **replaces** the on-hand figure; it is not added to it. The ledger records
+> the difference and your reason, so any change is traceable afterwards.
 
 ---
 
@@ -613,7 +746,15 @@ When an SO is Delivered or Partially Delivered, a **"Generate Invoice"** button 
 
 **Path:** `/reports`
 
-Four report tabs available:
+Nine report tabs, in two groups — **inventory** (what you hold) and **money** (what you're owed,
+what you owe, and what you're making). Every tab has an **"Export PDF"** button that produces the
+same figures as a formatted document with totals.
+
+**Inventory:** Stock Summary · Low Stock · Expiry · Inventory Valuation
+**Money:** AR Aging · AP Aging · Sales · Purchases · Profitability
+
+The filter bar changes with the tab: warehouse and category for the inventory tabs, an **As of**
+date for the aging tabs, and a **From / To** range for the trading tabs.
 
 #### Stock Summary Report
 - Shows current stock across all products and warehouses
@@ -635,6 +776,43 @@ Four report tabs available:
 - Financial summary by category
 - Columns: Category, Product Count, Total Cost Value, Total Selling Value
 - **Filter:** Warehouse
+
+#### AR Aging Report (who owes you)
+- One row per customer, their unpaid invoices split by how overdue each one is
+- Columns: Customer, **Current** (not due yet), **1-30**, **31-60**, **61-90**, **90+**, Total, Oldest
+- 61-90 is amber and 90+ is red, so the problem accounts stand out immediately
+- **Oldest** is the age of that customer's longest-unpaid invoice
+- **Filter:** *As of* — leave blank for today, or back-date it to see how things looked then
+- Draft, cancelled and fully-paid invoices are excluded; a partly-paid invoice shows only its
+  remaining balance
+
+#### AP Aging Report (what you owe)
+- Identical, for supplier bills — use it to decide what to pay first and to avoid late fees
+
+#### Sales Report
+- Sales activity by customer over a date range
+- Columns: Customer, Orders, Units, Subtotal, Tax, Discount, Total
+- Draft and cancelled orders are excluded
+
+#### Purchases Report
+- Purchasing by supplier over a date range
+- Columns: Supplier, Orders, Ordered, Received, **Outstanding**, Total
+- Outstanding (ordered minus received) is amber where a supplier still owes you goods
+- Draft and cancelled POs are excluded
+
+#### Profitability Report
+- What each product actually earns you, over a date range
+- Columns: Product, SKU, Category, Units, Revenue, Cost, **Gross Profit**, **Margin %**
+- Losses show in red
+
+> **Where the numbers come from** — worth understanding before you rely on them:
+> - **Cost** is what the stock you shipped genuinely cost, recorded at the moment of delivery,
+>   *not* the Cost Price typed on the product. If you bought at different prices over time, this
+>   reflects that; the catalogue figure wouldn't.
+> - **Revenue** is net of any line discount and **excludes tax** — tax you collect isn't profit.
+> - **Returns are subtracted**, so a returned sale reduces units, revenue and cost together.
+> - Only **delivered** goods appear. An order that's confirmed but not yet shipped shows in the
+>   Sales report but not here, because nothing has left the building yet.
 
 ---
 
@@ -1133,3 +1311,16 @@ docker-compose up -d --build
 5. [ ] Login as `admin@demo-company.com` / `Demo@123456`
 6. [ ] Explore Dashboard, Products, Inventory, Purchase Orders, Sales Orders
 7. [ ] Try creating a product, stocking in, and creating a sales order
+
+### Then walk the full loop — it takes about ten minutes
+
+1. [ ] Add a **brand** and a **unit** (`/brands`, `/units`)
+2. [ ] Add a product using them — or click **Import** and load a CSV from the downloaded template
+3. [ ] **Stock In** some quantity with a unit cost
+4. [ ] Raise a **Purchase Order** → approve → receive, and watch stock rise
+5. [ ] Raise a **Sales Order** → confirm (stock becomes *reserved*) → deliver (stock leaves)
+6. [ ] Generate an **Invoice** from that sales order, then record a **Payment** against it
+7. [ ] Open **Reports → Profitability** and see the margin on what you just sold
+8. [ ] Open **Reports → AR Aging** to see anything still unpaid
+9. [ ] Try **Stock Out** and a **Stock Adjustment**, then check the Inventory → Transactions tab —
+       every movement you made is listed with its reason

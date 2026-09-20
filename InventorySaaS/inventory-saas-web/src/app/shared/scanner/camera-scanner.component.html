@@ -1,0 +1,74 @@
+<div class="camera-scanner">
+  @if (!supported) {
+    <div class="camera-unavailable">
+      <mat-icon>no_photography</mat-icon>
+      <p>{{ unsupportedReason }}</p>
+    </div>
+  } @else {
+    <div class="camera-stage" [class.is-live]="running()">
+      <!-- Kept in the DOM even when idle: attaching the stream needs the element to exist. -->
+      <video #video class="camera-video" playsinline muted></video>
+
+      @if (running()) {
+        <div class="camera-reticle" aria-hidden="true">
+          <span class="corner top-left"></span>
+          <span class="corner top-right"></span>
+          <span class="corner bottom-left"></span>
+          <span class="corner bottom-right"></span>
+          <span class="scan-line"></span>
+        </div>
+      } @else {
+        <div class="camera-idle">
+          <mat-icon>photo_camera</mat-icon>
+          <p>Camera is off</p>
+        </div>
+      }
+
+      @if (starting()) {
+        <div class="camera-idle camera-busy">
+          <mat-icon>hourglass_top</mat-icon>
+          <p>Starting camera…</p>
+        </div>
+      }
+    </div>
+
+    @if (error()) {
+      <p class="camera-error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </p>
+    }
+
+    <div class="camera-controls">
+      <button
+        type="button"
+        class="scan-btn scan-btn-primary"
+        (click)="toggle()"
+        [disabled]="starting()"
+      >
+        <mat-icon>{{ running() ? 'stop_circle' : 'photo_camera' }}</mat-icon>
+        <span>{{ running() ? 'Stop camera' : 'Start camera' }}</span>
+      </button>
+
+      @if (running() && hasMultipleCameras()) {
+        <button type="button" class="scan-btn" (click)="switchCamera()" title="Switch camera">
+          <mat-icon>flip_camera_ios</mat-icon>
+          <span>Flip</span>
+        </button>
+      }
+
+      @if (running() && torchAvailable()) {
+        <button
+          type="button"
+          class="scan-btn"
+          [class.is-on]="torchOn()"
+          (click)="toggleTorch()"
+          title="Toggle torch"
+        >
+          <mat-icon>{{ torchOn() ? 'flashlight_on' : 'flashlight_off' }}</mat-icon>
+          <span>Torch</span>
+        </button>
+      }
+    </div>
+  }
+</div>

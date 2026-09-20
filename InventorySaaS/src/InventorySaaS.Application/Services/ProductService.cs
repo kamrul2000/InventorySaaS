@@ -1,4 +1,4 @@
-using InventorySaaS.Application.Common.Models;
+﻿using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.Products.DTOs;
 using InventorySaaS.Application.Interfaces;
 using InventorySaaS.Domain.Common.Interfaces;
@@ -56,8 +56,8 @@ public class ProductService : IProductService
 
         var projected = query.Select(p => new ProductDto(
             p.Id, p.Name, p.Sku, p.Barcode,
-            p.Category.Name, p.Brand != null ? p.Brand.Name : null, p.UnitOfMeasure.Name,
-            p.CostPrice, p.SellingPrice, p.ReorderLevel, p.TrackExpiry, p.IsActive, p.CreatedAt));
+            p.CategoryId, p.Category.Name, p.BrandId, p.Brand != null ? p.Brand.Name : null, p.UnitOfMeasureId, p.UnitOfMeasure.Name,
+            p.CostPrice, p.SellingPrice, p.ReorderLevel, p.TrackExpiry, p.TrackBatch, p.TrackSerial, p.IsActive, p.CreatedAt));
 
         return await PaginatedList<ProductDto>.CreateAsync(
             projected, pagination.PageNumber, pagination.PageSize, cancellationToken);
@@ -75,9 +75,9 @@ public class ProductService : IProductService
 
         return new ProductDto(
             product.Id, product.Name, product.Sku, product.Barcode,
-            product.Category.Name, product.Brand?.Name, product.UnitOfMeasure.Name,
+            product.CategoryId, product.Category.Name, product.BrandId, product.Brand?.Name, product.UnitOfMeasureId, product.UnitOfMeasure.Name,
             product.CostPrice, product.SellingPrice, product.ReorderLevel,
-            product.TrackExpiry, product.IsActive, product.CreatedAt);
+            product.TrackExpiry, product.TrackBatch, product.TrackSerial, product.IsActive, product.CreatedAt);
     }
 
     public async Task<ProductDto> CreateAsync(
@@ -162,6 +162,8 @@ public class ProductService : IProductService
             SellingPrice = request.SellingPrice,
             ReorderLevel = request.ReorderLevel ?? 0,
             TrackExpiry = request.TrackExpiry,
+            TrackBatch = request.TrackBatch,
+            TrackSerial = request.TrackSerial,
             MinimumOrderQuantity = request.MinimumOrderQuantity ?? 1,
             IsActive = true
         };
@@ -177,9 +179,9 @@ public class ProductService : IProductService
 
         return new ProductDto(
             saved.Id, saved.Name, saved.Sku, saved.Barcode,
-            saved.Category.Name, saved.Brand?.Name, saved.UnitOfMeasure.Name,
+            saved.CategoryId, saved.Category.Name, saved.BrandId, saved.Brand?.Name, saved.UnitOfMeasureId, saved.UnitOfMeasure.Name,
             saved.CostPrice, saved.SellingPrice, saved.ReorderLevel,
-            saved.TrackExpiry, saved.IsActive, saved.CreatedAt);
+            saved.TrackExpiry, saved.TrackBatch, saved.TrackSerial, saved.IsActive, saved.CreatedAt);
     }
 
     public async Task<ProductDto> UpdateAsync(
@@ -197,18 +199,21 @@ public class ProductService : IProductService
         if (request.Name is not null) product.Name = request.Name;
         if (request.Description is not null) product.Description = request.Description;
         if (request.CategoryId.HasValue) product.CategoryId = request.CategoryId.Value;
-        if (request.BrandId.HasValue) product.BrandId = request.BrandId.Value;
+        if (request.ClearBrand) product.BrandId = null;
+        else if (request.BrandId.HasValue) product.BrandId = request.BrandId.Value;
         if (request.UnitOfMeasureId.HasValue) product.UnitOfMeasureId = request.UnitOfMeasureId.Value;
         if (request.CostPrice.HasValue) product.CostPrice = request.CostPrice.Value;
         if (request.SellingPrice.HasValue) product.SellingPrice = request.SellingPrice.Value;
         if (request.ReorderLevel.HasValue) product.ReorderLevel = request.ReorderLevel.Value;
         if (request.Barcode is not null) product.Barcode = request.Barcode;
         if (request.TrackExpiry.HasValue) product.TrackExpiry = request.TrackExpiry.Value;
+        if (request.TrackBatch.HasValue) product.TrackBatch = request.TrackBatch.Value;
+        if (request.TrackSerial.HasValue) product.TrackSerial = request.TrackSerial.Value;
         if (request.IsActive.HasValue) product.IsActive = request.IsActive.Value;
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        if (request.CategoryId.HasValue || request.BrandId.HasValue || request.UnitOfMeasureId.HasValue)
+        if (request.CategoryId.HasValue || request.BrandId.HasValue || request.ClearBrand || request.UnitOfMeasureId.HasValue)
         {
             product = await _context.Products
                 .Include(p => p.Category)
@@ -219,9 +224,9 @@ public class ProductService : IProductService
 
         return new ProductDto(
             product.Id, product.Name, product.Sku, product.Barcode,
-            product.Category.Name, product.Brand?.Name, product.UnitOfMeasure.Name,
+            product.CategoryId, product.Category.Name, product.BrandId, product.Brand?.Name, product.UnitOfMeasureId, product.UnitOfMeasure.Name,
             product.CostPrice, product.SellingPrice, product.ReorderLevel,
-            product.TrackExpiry, product.IsActive, product.CreatedAt);
+            product.TrackExpiry, product.TrackBatch, product.TrackSerial, product.IsActive, product.CreatedAt);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)

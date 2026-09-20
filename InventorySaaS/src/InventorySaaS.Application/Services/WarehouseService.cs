@@ -176,7 +176,7 @@ public class WarehouseService : IWarehouseService
             .Where(loc => loc.WarehouseId == warehouseId)
             .OrderBy(loc => loc.Name)
             .Select(loc => new WarehouseLocationDto(
-                loc.Id, loc.WarehouseId, loc.Name,
+                loc.Id, loc.WarehouseId, loc.Name, loc.Code, loc.Barcode,
                 loc.Aisle, loc.Rack, loc.Bin, loc.IsActive))
             .ToListAsync(cancellationToken);
     }
@@ -197,6 +197,9 @@ public class WarehouseService : IWarehouseService
             TenantId = _currentUserService.TenantId!.Value,
             WarehouseId = warehouseId,
             Name = request.Name,
+            // Empty strings would collide under the filtered unique index, so normalise to null.
+            Code = string.IsNullOrWhiteSpace(request.Code) ? null : request.Code.Trim(),
+            Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim(),
             Aisle = request.Aisle,
             Rack = request.Rack,
             Bin = request.Bin,
@@ -208,7 +211,7 @@ public class WarehouseService : IWarehouseService
         await _context.SaveChangesAsync(cancellationToken);
 
         return new WarehouseLocationDto(
-            location.Id, location.WarehouseId, location.Name,
+            location.Id, location.WarehouseId, location.Name, location.Code, location.Barcode,
             location.Aisle, location.Rack, location.Bin, location.IsActive);
     }
 }

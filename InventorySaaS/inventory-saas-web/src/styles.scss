@@ -187,3 +187,371 @@ mat-divider {
 .confirm-dialog-panel .mat-mdc-dialog-container .mat-mdc-dialog-surface {
   padding: 0;
 }
+
+// ---------------------------------------------------------------------------
+// Scanning screens
+//
+// Shared by the scan-driven stock in/out/transfer/pick/count pages. These live
+// globally rather than in each component because the five screens are one visual
+// system, and duplicating the rules per component drifts them apart over time.
+// Sized for gloved hands on a tablet: 56px minimum targets, generous spacing.
+// ---------------------------------------------------------------------------
+
+.scan-op-layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 420px) 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.scan-op-aside {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.scan-op-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.scan-op-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scan-op-step-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.scan-op-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.scan-op-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.scan-op-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scan-op-field > label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.scan-op-field .required-mark {
+  color: #b3261e;
+}
+
+.scan-op-input,
+.scan-op-select {
+  min-height: 56px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  // 16px minimum stops iOS Safari zooming the page on focus.
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.scan-op-input:focus,
+.scan-op-select:focus {
+  outline: none;
+  border-color: var(--mat-sys-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
+}
+
+.scan-op-input.is-invalid {
+  border-color: #b3261e;
+}
+
+.scan-op-input:disabled,
+.scan-op-select:disabled {
+  opacity: 0.55;
+}
+
+textarea.scan-op-input {
+  min-height: 84px;
+  padding: 12px 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.scan-op-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.scan-op-hint.is-error {
+  color: #b3261e;
+  font-weight: 600;
+}
+
+.scan-op-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.scan-op-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 24px;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline);
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scan-op-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.scan-op-btn.is-primary {
+  flex: 1 1 200px;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  border-color: transparent;
+}
+
+.scan-op-btn.is-danger {
+  flex: 1 1 200px;
+  background: #b3261e;
+  color: #fff;
+  border-color: transparent;
+}
+
+// Read-back before posting: the operator confirms what is about to happen.
+.scan-op-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 14px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+}
+
+.scan-op-confirm h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #8a5300;
+}
+
+.scan-op-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.scan-op-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scan-op-summary dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.scan-op-summary dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.scan-op-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 300px;
+  padding: 32px;
+  text-align: center;
+  border-radius: 16px;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.scan-op-empty mat-icon {
+  width: 48px;
+  height: 48px;
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.scan-op-empty h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface);
+}
+
+.scan-op-empty p {
+  margin: 0;
+  max-width: 44ch;
+}
+
+// Availability read-out, shown before an outbound movement is allowed.
+.scan-op-availability {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+  font-size: 0.9rem;
+}
+
+.scan-op-availability .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-op-availability.is-short {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.scan-op-serials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scan-op-serial {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 0.85rem;
+}
+
+.scan-op-serial button {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: pointer;
+  padding: 0;
+}
+
+.scan-op-serial button:hover {
+  color: #b3261e;
+}
+
+.scan-op-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+  color: var(--mat-sys-on-surface-variant);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.scan-op-back:hover {
+  color: var(--mat-sys-primary);
+}
+
+.scan-op-back mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.scan-op-header h1 {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.scan-op-header p {
+  margin: 0 0 20px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 1024px) {
+  .scan-op-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .scan-op-aside {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .scan-op-panel {
+    padding: 16px;
+  }
+
+  .scan-op-btn.is-primary,
+  .scan-op-btn.is-danger {
+    flex-basis: 100%;
+  }
+}

@@ -20,7 +20,7 @@ import { CustomerDto } from '../../../core/models/domain.models';
 })
 export class CustomerListComponent implements OnInit {
   columns: TableColumn[] = [
-    { key: 'name', label: 'Name' },
+    { key: 'name', label: 'Name', sortable: true },
     { key: 'code', label: 'Code' },
     { key: 'customerType', label: 'Type' },
     { key: 'contactPerson', label: 'Contact' },
@@ -36,6 +36,8 @@ export class CustomerListComponent implements OnInit {
   pageNumber = 1;
   loading = false;
   searchTerm = '';
+  sortBy = '';
+  sortDescending = false;
 
   constructor(
     private customerService: CustomerService, private router: Router,
@@ -46,7 +48,7 @@ export class CustomerListComponent implements OnInit {
 
   loadCustomers(): void {
     this.loading = true;
-    this.customerService.getAll({ pageNumber: this.pageNumber, pageSize: this.pageSize, searchTerm: this.searchTerm }).subscribe({
+    this.customerService.getAll({ pageNumber: this.pageNumber, pageSize: this.pageSize, search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending }).subscribe({
       next: (r) => { this.customers = r.items; this.totalCount = r.totalCount; this.loading = false; },
       error: () => { this.loading = false; },
     });
@@ -54,7 +56,12 @@ export class CustomerListComponent implements OnInit {
 
   addCustomer(): void { this.router.navigate(['/customers/new']); }
   onPageChange(e: PageEvent): void { this.pageNumber = e.pageIndex + 1; this.pageSize = e.pageSize; this.loadCustomers(); }
-  onSortChange(_s: Sort): void { this.loadCustomers(); }
+  onSortChange(sort: Sort): void {
+    // Material reports 'asc' | 'desc' | ''; the API takes a boolean, and '' means default order.
+    this.sortBy = sort.direction ? sort.active : '';
+    this.sortDescending = sort.direction === 'desc';
+    this.loadCustomers();
+  }
   onSearch(t: string): void { this.searchTerm = t; this.pageNumber = 1; this.loadCustomers(); }
 
   onRowAction(event: { action: string; row: unknown }): void {

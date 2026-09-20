@@ -22,7 +22,9 @@ export interface BrandDto {
   id: string;
   name: string;
   description?: string;
+  logoUrl?: string;
   isActive: boolean;
+  productCount: number;
 }
 
 export interface UnitOfMeasureDto {
@@ -30,6 +32,7 @@ export interface UnitOfMeasureDto {
   name: string;
   abbreviation: string;
   isActive: boolean;
+  productCount: number;
 }
 
 export interface ProductDto {
@@ -37,13 +40,20 @@ export interface ProductDto {
   name: string;
   sku: string;
   barcode?: string;
+  categoryId: string;
   categoryName: string;
+  brandId?: string | null;
   brandName?: string;
+  unitOfMeasureId: string;
   unitName: string;
   costPrice: number;
   sellingPrice: number;
   reorderLevel: number;
   trackExpiry: boolean;
+  /** Stock movements must carry the batch number through for this product. */
+  trackBatch: boolean;
+  /** Every unit is tracked individually by serial number. */
+  trackSerial: boolean;
   isActive: boolean;
   createdAt: string;
 }
@@ -76,6 +86,10 @@ export interface WarehouseLocationDto {
   id: string;
   warehouseId: string;
   name: string;
+  /** Short human-readable bin code, unique per tenant. */
+  code?: string;
+  /** Value printed on the physical location label, unique per tenant. */
+  barcode?: string;
   aisle?: string;
   rack?: string;
   bin?: string;
@@ -89,6 +103,7 @@ export interface InventoryBalanceDto {
   productSku: string;
   warehouseId: string;
   warehouseName: string;
+  locationId?: string;
   locationName?: string;
   batchNumber?: string;
   expiryDate?: string;
@@ -110,6 +125,10 @@ export interface InventoryTransactionDto {
   batchNumber?: string;
   transactionDate: string;
   notes?: string;
+  /** Why the stock moved, kept separate from the free-text note. */
+  reason?: string;
+  /** Populated for serial-tracked products: the units this movement covered. */
+  serialNumbers?: string[];
 }
 
 export interface SupplierDto {
@@ -404,4 +423,71 @@ export interface InventoryValuationDto {
   productCount: number;
   totalCostValue: number;
   totalSellingValue: number;
+}
+
+export interface ProductImportRow {
+  /** 1-based line number in the uploaded file, matching what a spreadsheet shows. */
+  lineNumber: number;
+  name?: string;
+  sku?: string;
+  categoryName?: string;
+  brandName?: string;
+  unitName?: string;
+  status: 'Valid' | 'Invalid' | 'Imported';
+  errors: string[];
+}
+
+export interface ProductImportResult {
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  importedRows: number;
+  /** True when nothing was written — the preview pass. */
+  isPreview: boolean;
+  newCategories: string[];
+  newBrands: string[];
+  newUnits: string[];
+  rows: ProductImportRow[];
+}
+
+export interface AgingReportDto {
+  partyName: string;
+  /** Not yet due. */
+  current: number;
+  days1To30: number;
+  days31To60: number;
+  days61To90: number;
+  days90Plus: number;
+  total: number;
+  documentCount: number;
+  oldestDaysOverdue: number;
+}
+
+export interface SalesSummaryDto {
+  customerName: string;
+  orderCount: number;
+  unitsSold: number;
+  subTotal: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+}
+
+export interface PurchaseSummaryDto {
+  supplierName: string;
+  orderCount: number;
+  unitsOrdered: number;
+  unitsReceived: number;
+  totalAmount: number;
+}
+
+export interface ProfitabilityDto {
+  productName: string;
+  sku: string;
+  categoryName: string;
+  unitsSold: number;
+  revenue: number;
+  cost: number;
+  grossProfit: number;
+  marginPercent: number;
 }

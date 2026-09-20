@@ -4,10 +4,15 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog } from '@angular/material/dialog';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
+import { BrandService } from '../../../core/services/brand.service';
+import { UnitOfMeasureService } from '../../../core/services/unit-of-measure.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { CategoryDto, ProductExtractionResult } from '../../../core/models/domain.models';
+import { BrandFormComponent } from '../../brands/brand-form/brand-form.component';
+import { UnitFormComponent } from '../../units/unit-form/unit-form.component';
+import { BrandDto, CategoryDto, ProductExtractionResult, UnitOfMeasureDto } from '../../../core/models/domain.models';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
@@ -33,11 +38,16 @@ export class ProductFormComponent implements OnInit {
   scanning = false;
   productId: string | null = null;
   categories: CategoryDto[] = [];
+  brands: BrandDto[] = [];
+  units: UnitOfMeasureDto[] = [];
 
   constructor(
     private fb: FormBuilder,
     private productService: ProductService,
     private categoryService: CategoryService,
+    private brandService: BrandService,
+    private unitService: UnitOfMeasureService,
+    private dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
     private notification: NotificationService
@@ -47,18 +57,23 @@ export class ProductFormComponent implements OnInit {
       sku: [''],
       barcode: [''],
       categoryId: ['', [Validators.required]],
-      brandName: [''],
-      unitName: ['', [Validators.required]],
+      brandId: [null],
+      unitOfMeasureId: ['', [Validators.required]],
       costPrice: [0, [Validators.required, Validators.min(0)]],
       sellingPrice: [0, [Validators.required, Validators.min(0)]],
       reorderLevel: [0],
       trackExpiry: [false],
+      // Drive how strictly stock movements and scanning handle this product.
+      trackBatch: [false],
+      trackSerial: [false],
       isActive: [true],
     });
   }
 
   ngOnInit(): void {
     this.loadCategories();
+    this.loadBrands();
+    this.loadUnits();
 
     this.productId = this.route.snapshot.paramMap.get('id');
     if (this.productId) {
@@ -76,6 +91,44 @@ export class ProductFormComponent implements OnInit {
       next: (result) => {
         this.categories = result.items;
       },
+    });
+  }
+
+  loadBrands(): void {
+    this.brandService.getAll({ pageSize: 200 }).subscribe({
+      next: (result) => {
+        this.brands = result.items.filter((b) => b.isActive);
+      },
+    });
+  }
+
+  loadUnits(): void {
+    this.unitService.getAll({ pageSize: 200 }).subscribe({
+      next: (result) => {
+        this.units = result.items.filter((u) => u.isActive);
+      },
+    });
+  }
+
+  /** Adds a brand without leaving the product form, then selects it. */
+  addBrand(): void {
+    const dialogRef = this.dialog.open(BrandFormComponent, { width: '500px', data: {} });
+    dialogRef.afterClosed().subscribe((brand?: BrandDto) => {
+      if (!brand) return;
+      this.brands = [...this.brands, brand].sort((a, b) => a.name.localeCompare(b.name));
+      this.form.patchValue({ brandId: brand.id });
+      this.form.markAsDirty();
+    });
+  }
+
+  /** Adds a unit without leaving the product form, then selects it. */
+  addUnit(): void {
+    const dialogRef = this.dialog.open(UnitFormComponent, { width: '500px', data: {} });
+    dialogRef.afterClosed().subscribe((unit?: UnitOfMeasureDto) => {
+      if (!unit) return;
+      this.units = [...this.units, unit].sort((a, b) => a.name.localeCompare(b.name));
+      this.form.patchValue({ unitOfMeasureId: unit.id });
+      this.form.markAsDirty();
     });
   }
 
@@ -124,28 +177,38 @@ export class ProductFormComponent implements OnInit {
 
     if (result.name) patch['name'] = result.name;
     if (result.barcode) patch['barcode'] = result.barcode;
-    if (result.brandName) patch['brandName'] = result.brandName;
-    if (result.unitName) patch['unitName'] = result.unitName;
     if (result.suggestedSellingPrice != null) patch['sellingPrice'] = result.suggestedSellingPrice;
     if (result.suggestedCostPrice != null) patch['costPrice'] = result.suggestedCostPrice;
     patch['trackExpiry'] = result.trackExpiry;
 
-    let categoryMatched = true;
+    // The model returns names; the form holds ids. Anything that doesn't match an existing
+    // record is reported rather than auto-created, so the master lists stay curated.
+    const unmatched: string[] = [];
+
     if (result.suggestedCategory) {
-      const matchedId = this.findCategoryId(result.suggestedCategory);
-      if (matchedId) {
-        patch['categoryId'] = matchedId;
-      } else {
-        categoryMatched = false;
-      }
+      const categoryId = this.findIdByName(this.categories, result.suggestedCategory);
+      if (categoryId) patch['categoryId'] = categoryId;
+      else unmatched.push(`category "${result.suggestedCategory}"`);
+    }
+
+    if (result.brandName) {
+      const brandId = this.findIdByName(this.brands, result.brandName);
+      if (brandId) patch['brandId'] = brandId;
+      else unmatched.push(`brand "${result.brandName}"`);
+    }
+
+    if (result.unitName) {
+      const unitId = this.findIdByName(this.units, result.unitName);
+      if (unitId) patch['unitOfMeasureId'] = unitId;
+      else unmatched.push(`unit "${result.unitName}"`);
     }
 
     this.form.patchValue(patch);
     this.form.markAsDirty();
 
     const summary = [`Extracted "${result.name ?? 'product'}".`];
-    if (!categoryMatched) {
-      summary.push(`No exact match for category "${result.suggestedCategory}" — please pick one.`);
+    if (unmatched.length > 0) {
+      summary.push(`No match for ${unmatched.join(', ')} — pick one or add it.`);
     }
     if (result.notes) {
       summary.push(result.notes);
@@ -153,12 +216,12 @@ export class ProductFormComponent implements OnInit {
     this.notification.success(summary.join(' '));
   }
 
-  private findCategoryId(suggested: string): string | null {
+  private findIdByName(options: { id: string; name: string }[], suggested: string): string | null {
     const normalized = suggested.trim().toLowerCase();
-    const exact = this.categories.find((c) => c.name.toLowerCase() === normalized);
+    const exact = options.find((o) => o.name.toLowerCase() === normalized);
     if (exact) return exact.id;
-    const partial = this.categories.find(
-      (c) => c.name.toLowerCase().includes(normalized) || normalized.includes(c.name.toLowerCase())
+    const partial = options.find(
+      (o) => o.name.toLowerCase().includes(normalized) || normalized.includes(o.name.toLowerCase())
     );
     return partial?.id ?? null;
   }
@@ -170,7 +233,8 @@ export class ProductFormComponent implements OnInit {
     const data = this.form.value;
 
     const request = this.isEditMode
-      ? this.productService.update(this.productId!, data)
+      // A null brandId reads as "unchanged" on update, so removing one has to be said explicitly.
+      ? this.productService.update(this.productId!, { ...data, clearBrand: !data.brandId })
       : this.productService.create(data);
 
     request.subscribe({

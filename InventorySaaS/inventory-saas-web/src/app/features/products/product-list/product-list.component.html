@@ -5,10 +5,20 @@
       <h1 class="page-title">Products</h1>
       <p class="page-subtitle">Manage your product inventory</p>
     </div>
-    <button class="btn-primary" (click)="addProduct()">
-      <mat-icon>add</mat-icon>
-      Add Product
-    </button>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="addProduct()">
+        <mat-icon>add</mat-icon>
+        Add Product
+      </button>
+      <button class="btn-secondary" (click)="importProducts()">
+        <mat-icon>upload_file</mat-icon>
+        Import
+      </button>
+      <button class="btn-secondary" (click)="exportProducts()" [disabled]="exporting">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+    </div>
   </div>
 
   <!-- Data Table -->

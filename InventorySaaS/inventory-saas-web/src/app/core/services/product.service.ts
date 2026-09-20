@@ -15,12 +15,14 @@ export class ProductService {
   getAll(params?: {
     pageNumber?: number;
     pageSize?: number;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
     categoryId?: string;
     brandId?: string;
     isActive?: boolean;
     sortBy?: string;
-    sortDirection?: string;
+    /** The API binds a boolean `sortDescending`, not a direction string. */
+    sortDescending?: boolean;
   }): Observable<PaginatedList<ProductDto>> {
     return this.api.getList<ProductDto>(this.endpoint, params as Record<string, string | number | boolean>);
   }
@@ -33,7 +35,11 @@ export class ProductService {
     return this.api.post<ProductDto>(this.endpoint, product);
   }
 
-  update(id: string, product: Partial<ProductDto>): Observable<ProductDto> {
+  update(
+    id: string,
+    /** `clearBrand` removes the brand — a null `brandId` alone reads as "unchanged" on the API. */
+    product: Partial<ProductDto> & { clearBrand?: boolean }
+  ): Observable<ProductDto> {
     return this.api.put<ProductDto>(`${this.endpoint}/${id}`, product);
   }
 

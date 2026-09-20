@@ -1,0 +1,51 @@
+<div class="scan-input" [class.is-focused]="focused()">
+  <label class="scan-input-label" [for]="'scan-field'">
+    <mat-icon>barcode_reader</mat-icon>
+    <span>{{ label() }}</span>
+    @if (focused()) {
+      <span class="ready-pill">Ready</span>
+    }
+  </label>
+
+  <div class="scan-input-row">
+    <input
+      #field
+      id="scan-field"
+      class="scan-field"
+      type="text"
+      inputmode="text"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      [attr.aria-label]="label()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [ngModel]="value()"
+      (ngModelChange)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      (focus)="focused.set(true)"
+      (blur)="onBlur()"
+    />
+
+    @if (value()) {
+      <button type="button" class="icon-btn" (click)="clear()" aria-label="Clear">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+
+    <button
+      type="button"
+      class="submit-btn"
+      [disabled]="!canSubmit()"
+      (click)="submit()"
+    >
+      <mat-icon>search</mat-icon>
+      <span>Go</span>
+    </button>
+  </div>
+
+  <p class="scan-input-hint">
+    Scan with a USB or Bluetooth scanner, or type the code and press Enter.
+  </p>
+</div>

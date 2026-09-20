@@ -1,0 +1,181 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Import Products</h1>
+      <p class="page-subtitle">Upload a CSV, review what will happen, then import</p>
+    </div>
+    <button class="btn-secondary" (click)="goToProducts()">
+      <mat-icon>list</mat-icon> Back to Products
+    </button>
+  </div>
+
+  <!-- Step 1: choose a file -->
+  <div class="form-card">
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <div>
+        <h2 class="step-title">Choose your file</h2>
+        <p class="step-hint">
+          Required columns: <code>Name</code>, <code>Category</code>, <code>Unit</code>,
+          <code>CostPrice</code>, <code>SellingPrice</code>. Optional:
+          <code>Sku</code> (generated when blank), <code>Barcode</code>, <code>Brand</code>,
+          <code>ReorderLevel</code>, <code>TrackExpiry</code>, <code>Description</code>.
+          Column order doesn't matter. Up to 2,000 rows.
+        </p>
+      </div>
+    </div>
+
+    <input #fileInput type="file" accept=".csv,text/csv" hidden (change)="onFileSelected($event)">
+
+    <div class="file-row">
+      <button class="btn-primary" type="button" (click)="openFilePicker()" [disabled]="busy">
+        <mat-icon>upload_file</mat-icon> Choose CSV
+      </button>
+      <button class="btn-secondary" type="button" (click)="downloadTemplate()" [disabled]="downloading">
+        <mat-icon>download</mat-icon> Download template
+      </button>
+
+      @if (file) {
+        <span class="file-chip">
+          <mat-icon>description</mat-icon>
+          {{ file.name }}
+          <button class="chip-clear" type="button" (click)="clear()" title="Remove">
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
+      }
+    </div>
+
+    <label class="checkbox-label">
+      <input type="checkbox" [(ngModel)]="createMissingMasters" (ngModelChange)="preview()" [disabled]="busy">
+      <span>
+        Create categories, brands and units that don't exist yet
+        <em>— leave off to catch typos before they become new records</em>
+      </span>
+    </label>
+  </div>
+
+  @if (previewing) {
+    <div class="form-card center-card">
+      <mat-spinner diameter="32"></mat-spinner>
+      <span>Checking your file…</span>
+    </div>
+  }
+
+  <!-- Step 2: review -->
+  @if (result && !previewing) {
+    <div class="form-card">
+      <div class="step-head">
+        <span class="step-num">2</span>
+        <div>
+          <h2 class="step-title">{{ committed ? 'Import complete' : 'Review' }}</h2>
+          <p class="step-hint">
+            {{ committed
+              ? 'Rows that failed validation were skipped — fix them and import again.'
+              : 'Nothing has been saved yet.' }}
+          </p>
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-cell">
+          <span class="summary-label">Rows</span>
+          <span class="summary-value">{{ result.totalRows }}</span>
+        </div>
+        <div class="summary-cell">
+          <span class="summary-label">{{ committed ? 'Imported' : 'Ready' }}</span>
+          <span class="summary-value ok">{{ committed ? result.importedRows : result.validRows }}</span>
+        </div>
+        <div class="summary-cell">
+          <span class="summary-label">{{ committed ? 'Skipped' : 'With errors' }}</span>
+          <span class="summary-value" [class.bad]="result.invalidRows > 0">{{ result.invalidRows }}</span>
+        </div>
+      </div>
+
+      @if (createsMasters) {
+        <div class="masters-callout">
+          <mat-icon>new_releases</mat-icon>
+          <div>
+            <strong>{{ committed ? 'Created' : 'Will create' }}:</strong>
+            @if (result.newCategories.length) {
+              <div>Categories — {{ result.newCategories.join(', ') }}</div>
+            }
+            @if (result.newBrands.length) {
+              <div>Brands — {{ result.newBrands.join(', ') }}</div>
+            }
+            @if (result.newUnits.length) {
+              <div>Units — {{ result.newUnits.join(', ') }}</div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="table-wrap">
+        <table class="rows-table">
+          <thead>
+            <tr>
+              <th class="col-line">Line</th>
+              <th>Name</th>
+              <th>Sku</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Errors</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of sortedRows; track row.lineNumber) {
+              <tr [class.row-bad]="row.status === 'Invalid'">
+                <td class="col-line">{{ row.lineNumber }}</td>
+                <td>{{ row.name || '—' }}</td>
+                <td>{{ row.sku || '(auto)' }}</td>
+                <td>{{ row.categoryName || '—' }}</td>
+                <td>
+                  <span class="status-pill" [class]="'pill-' + row.status.toLowerCase()">
+                    {{ row.status }}
+                  </span>
+                </td>
+                <td class="col-errors">
+                  @if (row.errors.length) {
+                    <ul class="error-list">
+                      @for (err of row.errors; track err) {
+                        <li>{{ err }}</li>
+                      }
+                    </ul>
+                  } @else {
+                    —
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="form-actions">
+        @if (canImport) {
+          <button class="btn-primary" type="button" (click)="runImport()" [disabled]="importing">
+            @if (importing) {
+              Importing…
+            } @else {
+              Import {{ result.validRows }} product{{ result.validRows === 1 ? '' : 's' }}
+            }
+          </button>
+        }
+        @if (committed) {
+          <button class="btn-primary" type="button" (click)="goToProducts()">
+            <mat-icon>list</mat-icon> View Products
+          </button>
+        }
+        @if (!committed && result.validRows === 0) {
+          <span class="blocked-note">
+            <mat-icon>block</mat-icon>
+            No row passed validation — fix the errors above and choose the file again.
+          </span>
+        }
+        <button class="btn-secondary" type="button" (click)="clear()" [disabled]="busy">
+          Start over
+        </button>
+      </div>
+    </div>
+  }
+</div>

@@ -15,6 +15,18 @@ export interface TableColumn {
   key: string;
   label: string;
   type?: 'text' | 'date' | 'currency' | 'boolean';
+
+  /**
+   * Whether the API can order by this column. Defaults to false: the server only supports a
+   * fixed set of sort keys per list, and a header that sorts nothing is worse than a plain one.
+   */
+  sortable?: boolean;
+
+  /**
+   * Sort key the API expects, when it differs from `key` (e.g. the `customerName` column sorts
+   * by `customer`). Only meaningful with `sortable: true`.
+   */
+  sortKey?: string;
 }
 
 @Component({

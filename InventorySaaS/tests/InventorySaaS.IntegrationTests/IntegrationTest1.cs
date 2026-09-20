@@ -18,7 +18,7 @@ public class DomainEntityTests
 
         tenant.Id.Should().NotBeEmpty();
         tenant.Status.Should().Be(TenantStatus.Active);
-        tenant.Currency.Should().Be("USD");
+        tenant.Currency.Should().Be("BDT");
         tenant.Timezone.Should().Be("UTC");
     }
 

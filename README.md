@@ -22,6 +22,9 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 - [Architecture](#architecture)
 - [Multi-Tenancy Model](#multi-tenancy-model)
 - [Feature Catalogue](#feature-catalogue)
+  - [Barcode & QR Scanning](#barcode--qr-scanning)
+  - [Billing — Accounts Receivable & Payable](#billing--accounts-receivable--payable)
+  - [Reporting](#reporting)
 - [Advanced Capabilities](#advanced-capabilities)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
@@ -91,8 +94,11 @@ A production-grade, multi-tenant SaaS Inventory Management System built with **A
 - **AI Inventory Copilot** — a context-aware chat assistant (Gemini, server-sent events) that has live access to the tenant's inventory, low-stock state, recent transactions, sales and purchase activity. Ask "what's running low?" and it answers with real numbers.
 - **Strict multi-tenancy** — every tenant-scoped table carries a `TenantId`; EF Core global query filters and an automatic `SaveChangesAsync` interceptor stamp tenant context. SuperAdmin can cross tenants; everyone else is bounded.
 - **Clean Architecture + Controller→Service** — Domain / Application / Infrastructure / API split. Thin controllers delegate to focused service classes; failures flow through typed domain exceptions handled by a single global middleware.
-- **Operational depth** — multi-warehouse with locations, batch and expiry tracking, stock in/out/transfer/adjustment, purchase requisitions and goods receipts, sales-order lifecycle (draft → confirm → deliver → return), reorder-level alerts.
-- **PDF reporting** — stock summary, low stock, expiry, inventory valuation — each rendered server-side via QuestPDF.
+- **Operational depth** — multi-warehouse with locations, batch and expiry tracking, stock in/out/transfer/adjustment, goods receipts and purchase returns, sales-order lifecycle (draft → confirm → deliver → return), stock reservation, moving weighted-average costing, reorder-level alerts.
+- **Full AR/AP billing** — customer invoices and supplier bills, payments allocated across multiple documents, and aging reports that answer "who owes me, and how late are they?"
+- **Real margin, not guessed margin** — delivery records the actual cost of the units it ships onto the inventory ledger, so the profitability report reflects what stock genuinely cost rather than a catalogue price that drifts.
+- **CSV import with a dry run** — upload products, see a per-row verdict against the real database, then commit. Invalid rows are reported and skipped, never half-applied.
+- **PDF reporting** — nine reports (stock, low stock, expiry, valuation, AR/AP aging, sales, purchases, profitability), each rendered server-side via QuestPDF.
 - **Proactive alerts** — Hangfire recurring jobs scan for low stock hourly and expiring stock daily, posting to an in-app notification feed.
 - **Hardening built in** — JWT with refresh-token rotation, PBKDF2-SHA512 password hashing, IP-based rate limiting, correlation IDs across logs and responses, soft delete, optimistic concurrency, global exception normalisation.
 
@@ -173,13 +179,18 @@ the global exception middleware maps each to a uniform `ProblemResponse` JSON wi
 
 ### Product & Catalogue
 
-- Products with auto-generated SKU (collision-safe via prefix-max algorithm)
-- Categories, brands, units of measure
-- Product variants and product images
-- Barcode field (manual or AI-extracted)
+- Products with auto-generated SKU (collision-safe via prefix-max algorithm), or bring your own
+- Categories, brands and units of measure as managed master lists — full CRUD, case-insensitive
+  duplicate guards, and delete protection while products still reference them
+- Brand and unit picked from dropdowns on the product form, with an inline `+` to add one without
+  leaving the page
+- **CSV import** with a row-by-row preview before anything is written
+- **CSV export** in the same shape the importer accepts, for round-trip editing
+- Barcode field (manual or AI-extracted); product search matches on it
 - Track-expiry flag for perishables
 - Reorder level for low-stock alerting
 - Soft delete
+- Product variants and product images (entities only — no endpoints yet)
 
 ### Warehouse & Inventory
 
@@ -187,30 +198,89 @@ the global exception middleware maps each to a uniform `ProblemResponse` JSON wi
 - Warehouse locations (aisle / rack / bin)
 - Inventory balances per (product, warehouse, batch)
 - Batch number and expiry date tracking
-- Stock movements: stock in, stock out, transfer between warehouses, adjustment
-- Inventory transaction ledger (full audit trail of every movement)
+- Stock movements: stock in, stock out, transfer between warehouses, adjustment — each with its
+  own screen; stock-out shows live availability, adjustment shows system vs. counted variance
+- Moving weighted-average costing — inbound stock blends into the existing unit cost instead of
+  overwriting it, and transfers carry the source cost across
+- Stock reservation: confirming a sales order reserves stock, delivering releases and issues it
+- Inventory transaction ledger (every movement, with the unit cost at that moment)
+- Serial-number tracking per unit, and batch-tracking enforcement, both opt-in per product
+
+### Barcode & QR Scanning
+
+Scanner-first screens for warehouse floor work, under `/scan`. Input comes from a device camera
+(native `BarcodeDetector`), a USB/Bluetooth scanner presenting as a keyboard, or manual typing —
+the keyboard path distinguishes machine-speed bursts from human typing and holds focus so
+consecutive scans need no tap. Every screen gives audible, haptic and visual scan feedback, and
+every inventory-changing operation shows a confirmation step before posting.
+
+- **Resolution** — one scan identifies a product, variant, serial number, warehouse location,
+  warehouse, sales order or purchase order. Plain barcodes, JSON QR payloads and a GS1 subset
+  (AI 01 GTIN, 10 batch, 17 expiry, 21 serial, 30 quantity) are all decoded.
+- **Product lookup** — stock broken down by warehouse, bin, batch, expiry and serial.
+- **Stock in / out / transfer** — batch and serials captured as the product requires; available
+  stock shown before any outbound move; a bin must belong to its warehouse.
+- **Order picking** — scan the order, then each item. Off-order products and over-picking are
+  refused; completion is gated on every line, and can hand off to the existing delivery path.
+- **Physical stock count** — scan a warehouse or bin, compare counted against system quantities,
+  then a **Manager** approves the variances, which posts one adjustment transaction per line.
+  Counting itself changes nothing.
+- **Idempotency** — inventory-changing scans carry an `Idempotency-Key`; a replay returns the
+  original result rather than posting a second movement, so double-scans and retries are safe.
 
 ### Procurement
 
-- Purchase requisitions
 - Purchase orders with line items
 - PO approval workflow
 - Goods receipt against PO (partial receives supported)
+- Purchase returns against a received PO
+- Purchase requisitions (entities only — no endpoints yet)
 
 ### Sales
 
 - Sales orders with line items
-- Order lifecycle: Draft → Confirmed → Delivered → Returned
+- Order lifecycle: Draft → Confirmed → Delivered → Returned → Cancelled
+- Delivery draws stock down FEFO (earliest expiry first) and records the real cost of the units
+  shipped on the ledger — this is what makes the margin report trustworthy
 - Customer master with type and contact details
+
+### Billing — Accounts Receivable & Payable
+
+Two mirrored sides, each with its own documents, payments and allocations:
+
+| | Receivable (customers) | Payable (suppliers) |
+| --- | --- | --- |
+| Document | Invoice + items | Supplier bill + items |
+| Money | Payment + allocations | Supplier payment + allocations |
+| Raised from | `POST /Invoices/from-sales-order` | `POST /SupplierBills/from-purchase-order` |
+| Lifecycle | Draft → Issued → PartiallyPaid → Paid / Cancelled | Draft → Open → PartiallyPaid → Paid / Cancelled |
+| Outstanding | `GET /Invoices/outstanding/{customerId}` | `GET /SupplierBills/outstanding/{supplierId}` |
+
+- One payment can be **allocated across several documents**
+- Status transitions live on the entities themselves (`ApplyPayment` / `ReversePayment`), so voiding
+  a receipt walks the status back correctly instead of stranding it on "Paid"
 
 ### Reporting
 
-Each report has a JSON endpoint and a `*/pdf` companion that returns a styled PDF:
+Each report has a JSON endpoint and a `*/pdf` companion that returns a styled PDF.
+
+**Inventory**
 
 - Stock summary (current stock by product/warehouse with valuation)
 - Low stock (items at or below reorder level)
 - Expiry (items expiring within N days)
 - Inventory valuation (cost vs. selling value, by category)
+
+**Money & performance**
+
+- **AR aging** — outstanding customer invoices by customer, bucketed Current / 1–30 / 31–60 /
+  61–90 / 90+, with the age of the oldest unpaid document. Takes an `asOf` date.
+- **AP aging** — the same for supplier bills, by supplier
+- **Sales summary** — orders, units and value by customer over a date range
+- **Purchase summary** — orders, units ordered vs. received, and value by supplier
+- **Profitability** — units, revenue, COGS, gross profit and margin % per product. Cost comes from
+  the inventory ledger (what the shipped stock actually cost), **not** the catalogue cost price;
+  revenue is net of line discounts and excludes tax; returns are netted out.
 
 ### Dashboard
 
@@ -427,10 +497,22 @@ All endpoints are versioned `/api/v1/`. Authentication is `Authorization: Bearer
 | PUT    | `/Products/{id}`               | StaffUp     |                                            |
 | DELETE | `/Products/{id}`               | ManagerUp   | soft delete                                |
 | POST   | `/Products/extract-from-image` | StaffUp     | **AI vision** — multipart, JPEG/PNG ≤ 5 MB |
+| GET    | `/Products/import/template`    | ViewerUp    | CSV header row + one example               |
+| GET    | `/Products/export`             | ViewerUp    | CSV of all products                        |
+| POST   | `/Products/import/preview`     | StaffUp     | **dry run** — per-row verdict, writes nothing |
+| POST   | `/Products/import`             | StaffUp     | imports valid rows, reports the rest       |
 
-### Categories / Suppliers / Customers / Warehouses
+Both import endpoints take a multipart CSV (≤ 5 MB, ≤ 2000 rows) and an optional
+`?createMissingMasters=true` to create categories, brands and units the file references but the
+tenant doesn't have yet. Required columns: `Name`, `Category`, `Unit`, `CostPrice`, `SellingPrice`.
+Optional: `Sku` (generated when blank), `Barcode`, `Brand`, `ReorderLevel`, `TrackExpiry`,
+`Description`. Column order doesn't matter.
 
-Standard CRUD: `GET` (list/by-id), `POST`, `PUT`, plus `POST /Warehouses/{id}/locations` for warehouse locations.
+### Categories / Brands / Units / Suppliers / Customers / Warehouses
+
+Standard CRUD: `GET` (list/by-id), `POST`, `PUT`, `DELETE`, plus `POST /Warehouses/{id}/locations`
+for warehouse locations. Brands live at `/Brands` and units at `/UnitsOfMeasure`; both reject
+duplicate names case-insensitively and refuse deletion while products still reference them.
 
 ### Inventory
 
@@ -443,6 +525,43 @@ Standard CRUD: `GET` (list/by-id), `POST`, `PUT`, plus `POST /Warehouses/{id}/lo
 | POST | `/Inventory/transfer`     | between warehouses              |
 | POST | `/Inventory/adjustment`   | manual correction               |
 
+`stock-in`, `stock-out` and `transfer` accept an optional `Idempotency-Key` header: a repeated
+key returns the original transaction instead of posting a second one. They also take optional
+`batchNumber` (required for batch-tracked products), `serialNumbers` (required, and matching
+`quantity`, for serial-tracked products) and — on stock-out — a `reason`.
+
+### Scanning
+
+| Verb | Path                    | Policy   | Notes                                                    |
+| ---- | ----------------------- | -------- | -------------------------------------------------------- |
+| POST | `/Scan/resolve`         | ViewerUp | identifies a scan; an unknown code is 200 + `kind: Unknown` |
+| GET  | `/Scan/product?code=`   | ViewerUp | product + stock by warehouse, bin, batch and serial      |
+| GET  | `/Scan/availability`    | ViewerUp | on-hand / reserved / available for one product+bin+batch |
+
+### Picking
+
+All under `/sales-orders/{id}/picking`. Reading is ViewerUp; the rest are StaffUp.
+
+| Verb | Path        | Notes                                                            |
+| ---- | ----------- | ---------------------------------------------------------------- |
+| GET  | `/`         | requested / picked / remaining per line; 204 when none is open   |
+| POST | `/start`    | resumes the open session rather than opening a second            |
+| POST | `/scan`     | names a `productId` or a `barcode`; honours `Idempotency-Key`    |
+| POST | `/complete` | refuses while any line is outstanding; `deliver: true` ships it  |
+| POST | `/cancel`   | clears the picked quantities it recorded                         |
+
+### Stock Counts
+
+| Verb | Path                       | Policy        | Notes                                        |
+| ---- | -------------------------- | ------------- | -------------------------------------------- |
+| GET  | `/stock-counts`            | ViewerUp      | filter by `warehouseId` and `status`         |
+| GET  | `/stock-counts/{id}`       | ViewerUp      | lines with system vs. counted and variance   |
+| POST | `/stock-counts`            | StaffUp       | opens a run over a warehouse or single bin   |
+| POST | `/stock-counts/{id}/scan`  | StaffUp       | repeat scans accumulate; honours idempotency |
+| POST | `/stock-counts/{id}/submit`| StaffUp       | hands the count to a manager; counting stops |
+| POST | `/stock-counts/{id}/approve` | **ManagerUp** | posts one adjustment per varying line      |
+| POST | `/stock-counts/{id}/cancel`| StaffUp       | refused once approved                        |
+
 ### Purchase Orders
 
 | Verb | Path                           |
@@ -452,6 +571,7 @@ Standard CRUD: `GET` (list/by-id), `POST`, `PUT`, plus `POST /Warehouses/{id}/lo
 | POST | `/PurchaseOrders`              |
 | POST | `/PurchaseOrders/{id}/approve` |
 | POST | `/PurchaseOrders/{id}/receive` |
+| POST | `/PurchaseOrders/{id}/return`  |
 
 ### Sales Orders
 
@@ -462,19 +582,43 @@ Standard CRUD: `GET` (list/by-id), `POST`, `PUT`, plus `POST /Warehouses/{id}/lo
 | POST | `/SalesOrders`              |
 | POST | `/SalesOrders/{id}/confirm` |
 | POST | `/SalesOrders/{id}/deliver` |
+| POST | `/SalesOrders/{id}/return`  |
+| POST | `/SalesOrders/{id}/cancel`  |
+
+### Billing
+
+| Verb | Path                                      | Notes                              |
+| ---- | ----------------------------------------- | ---------------------------------- |
+| GET  | `/Invoices`, `/Invoices/{id}`             |                                    |
+| GET  | `/Invoices/outstanding/{customerId}`      | unpaid invoices for allocation     |
+| POST | `/Invoices`                               |                                    |
+| POST | `/Invoices/from-sales-order`              | raises an invoice from an SO       |
+| POST | `/Invoices/{id}/issue`, `/{id}/cancel`    |                                    |
+| GET  | `/Payments`, `/Payments/{id}`             |                                    |
+| POST | `/Payments`                               | allocate across multiple invoices  |
+| GET  | `/SupplierBills`, `/SupplierBills/{id}`   |                                    |
+| GET  | `/SupplierBills/outstanding/{supplierId}` |                                    |
+| POST | `/SupplierBills`                          |                                    |
+| POST | `/SupplierBills/from-purchase-order`      | raises a bill from a PO            |
+| POST | `/SupplierBills/{id}/approve`, `/{id}/cancel` |                                |
+| GET  | `/SupplierPayments`, `/SupplierPayments/{id}` |                                |
+| POST | `/SupplierPayments`                       | allocate across multiple bills     |
 
 ### Reports
 
-| Verb | Path                               | Notes            |
-| ---- | ---------------------------------- | ---------------- |
-| GET  | `/Reports/stock-summary`           | JSON             |
-| GET  | `/Reports/stock-summary/pdf`       | **PDF download** |
-| GET  | `/Reports/low-stock`               | JSON             |
-| GET  | `/Reports/low-stock/pdf`           | PDF              |
-| GET  | `/Reports/expiry`                  | JSON             |
-| GET  | `/Reports/expiry/pdf`              | PDF              |
-| GET  | `/Reports/inventory-valuation`     | JSON             |
-| GET  | `/Reports/inventory-valuation/pdf` | PDF              |
+Every report below has a `/pdf` companion that returns the same data as a styled PDF.
+
+| Verb | Path                           | Query                   | Notes                                  |
+| ---- | ------------------------------ | ----------------------- | -------------------------------------- |
+| GET  | `/Reports/stock-summary`       | `warehouseId`, `categoryId` |                                    |
+| GET  | `/Reports/low-stock`           | `warehouseId`           |                                        |
+| GET  | `/Reports/expiry`              | `warehouseId`, `daysAhead` |                                     |
+| GET  | `/Reports/inventory-valuation` |                         | by category                            |
+| GET  | `/Reports/ar-aging`            | `asOf`                  | by customer, 30-day buckets            |
+| GET  | `/Reports/ap-aging`            | `asOf`                  | by supplier, 30-day buckets            |
+| GET  | `/Reports/sales-summary`       | `startDate`, `endDate`  | by customer                            |
+| GET  | `/Reports/purchase-summary`    | `startDate`, `endDate`  | by supplier, ordered vs. received      |
+| GET  | `/Reports/profitability`       | `startDate`, `endDate`  | by product, COGS from the ledger       |
 
 ### Dashboard / Notifications / Users / Tenants
 
@@ -549,6 +693,20 @@ dotnet test tests/InventorySaaS.UnitTests
 dotnet test tests/InventorySaaS.IntegrationTests
 ```
 
+**85 tests, all passing** — 81 unit and 4 integration. They concentrate on the logic that is
+expensive to get wrong rather than on coverage percentage:
+
+| Area | What is pinned |
+| --- | --- |
+| Tenant isolation | the global query filter really does scope reads, and SuperAdmin bypass |
+| Weighted-average cost | inbound blends rather than overwrites |
+| Sales reservation & purchase returns | quantities move between reserved / on-hand correctly |
+| AR & AP billing | payment application and reversal walk the status back |
+| CSV parsing | quoted commas, doubled quotes, embedded newlines, CRLF, Excel BOM |
+| Product import | duplicate SKUs (including ones held by soft-deleted rows), unknown masters, batch SKU generation, per-row error reporting |
+| Aging | every bucket boundary (0, 30/31, 60/61, 90/91 days), partial payment, excluded documents |
+| Profitability | ledger cost beats catalogue cost, discount without tax, returns netted out |
+
 The `Program` class is exposed as `partial public class Program` so `WebApplicationFactory<Program>` can spin up the API in-process for integration tests.
 
 ---
@@ -570,6 +728,28 @@ The Hangfire database is created on the same SQL Server instance under a separat
 
 ---
 
+## Roadmap
+
+Known gaps, honestly stated — roughly in the order they'd be worth closing:
+
+- **Barcode / QR label printing** — scanning is implemented end-to-end (see
+  [Barcode & QR Scanning](#barcode--qr-scanning)), but there is no label *output*: no
+  server-side barcode image generation and no printable label sheet.
+- **Offline scanning** — every scan needs the API. Warehouse Wi-Fi dead zones will stall a count
+  or a pick; a local queue with conflict resolution is not implemented.
+- **Camera scanning needs HTTPS and a Chromium browser** — it uses the native `BarcodeDetector`
+  API, which Firefox and Safari do not implement, and `getUserMedia` is refused on plain HTTP.
+  USB/Bluetooth scanners and manual entry work everywhere, and the UI says which is unavailable
+  and why.
+- **Product import is insert-only** — a row whose SKU already exists is reported and skipped rather
+  than updating the existing product. Upsert is deliberately deferred; silently overwriting prices
+  from a spreadsheet is a bigger risk than a skipped row.
+- **Dead entities** — `PurchaseRequisition`, `ProductVariant` and `ProductImage` have tables and EF
+  configuration but no service or controller.
+- **Subscription plans are modelled, not enforced** — tier limits exist as data with no billing
+  provider wired in.
+
+---
 
 ## License
 

@@ -34,8 +34,12 @@ export class ApiService {
     return this.http.get<PaginatedList<T>>(`${this.baseUrl}${url}`, { params: httpParams });
   }
 
-  post<T>(url: string, body: unknown): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}${url}`, body);
+  /**
+   * `headers` carries per-request metadata such as `Idempotency-Key`, which scan-driven
+   * writes send so a double-scan or a retry cannot post the same movement twice.
+   */
+  post<T>(url: string, body: unknown, headers?: Record<string, string>): Observable<T> {
+    return this.http.post<T>(`${this.baseUrl}${url}`, body, headers ? { headers } : {});
   }
 
   put<T>(url: string, body: unknown): Observable<T> {

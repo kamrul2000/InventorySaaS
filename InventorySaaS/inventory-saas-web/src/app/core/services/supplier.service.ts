@@ -13,7 +13,10 @@ export class SupplierService {
   getAll(params?: {
     pageNumber?: number;
     pageSize?: number;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
+    sortBy?: string;
+    sortDescending?: boolean;
     isActive?: boolean;
   }): Observable<PaginatedList<SupplierDto>> {
     return this.api.getList<SupplierDto>(this.endpoint, params as Record<string, string | number | boolean>);

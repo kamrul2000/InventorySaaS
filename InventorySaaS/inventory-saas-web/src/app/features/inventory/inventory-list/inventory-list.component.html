@@ -8,9 +8,17 @@
       <button class="btn-primary" (click)="openStockIn()">
         <mat-icon>add_circle</mat-icon> Stock In
       </button>
+      <button class="btn-secondary" (click)="openStockOut()">
+        <mat-icon>remove_circle</mat-icon> Stock Out
+      </button>
       <button class="btn-secondary" (click)="openTransfer()">
         <mat-icon>swap_horiz</mat-icon> Transfer
       </button>
+      @if (canAdjust) {
+        <button class="btn-secondary" (click)="openAdjustment()">
+          <mat-icon>tune</mat-icon> Adjustment
+        </button>
+      }
     </div>
   </div>
 

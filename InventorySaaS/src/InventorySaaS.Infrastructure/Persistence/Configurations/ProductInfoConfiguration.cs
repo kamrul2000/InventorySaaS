@@ -32,6 +32,13 @@ public class ProductInfoConfiguration : IEntityTypeConfiguration<ProductInfo>
         builder.HasIndex(p => new { p.TenantId, p.Sku })
             .IsUnique();
 
+        // A scan has to resolve to exactly one product, so barcodes are unique per tenant.
+        // Filtered on NULL because most products never get one, and on IsDeleted so a removed
+        // product releases its barcode for reuse.
+        builder.HasIndex(p => new { p.TenantId, p.Barcode })
+            .IsUnique()
+            .HasFilter("[Barcode] IS NOT NULL AND [IsDeleted] = 0");
+
         builder.HasOne(p => p.Category)
             .WithMany(c => c.Products)
             .HasForeignKey(p => p.CategoryId)

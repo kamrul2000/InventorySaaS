@@ -13,11 +13,13 @@ export class PurchaseOrderService {
   getAll(params?: {
     pageNumber?: number;
     pageSize?: number;
-    searchTerm?: string;
+    /** Bound by the API as `search` — the name has to match the controller's query parameter. */
+    search?: string;
     status?: string;
     supplierId?: string;
     sortBy?: string;
-    sortDirection?: string;
+    /** The API binds a boolean `sortDescending`, not a direction string. */
+    sortDescending?: boolean;
   }): Observable<PaginatedList<PurchaseOrderDto>> {
     return this.api.getList<PurchaseOrderDto>(this.endpoint, params as Record<string, string | number | boolean>);
   }

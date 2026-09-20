@@ -1,0 +1,200 @@
+<div class="page-container">
+  <header class="scan-op-header">
+    <a class="scan-op-back" routerLink="/scan">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Scanning</span>
+    </a>
+    <h1>Order Picking</h1>
+    <p>Scan the order, then scan each item as it is collected. Over-picking is blocked.</p>
+  </header>
+
+  <div class="scan-op-layout">
+    <aside class="scan-op-aside">
+      <app-scan-target
+        [label]="session() ? 'Scan an item to pick' : 'Scan a sales order'"
+        [placeholder]="session() ? 'Product barcode or SKU…' : 'Order number…'"
+        [busy]="busy()"
+        (scanned)="onScanned($event)"
+      />
+
+      @if (session(); as current) {
+        <div class="scan-op-panel order-card">
+          <div class="order-headline">
+            <h2>{{ current.orderNumber }}</h2>
+            <span class="status-chip">{{ current.orderStatus }}</span>
+          </div>
+          <p class="order-meta">{{ current.customerName }} · {{ current.warehouseName }}</p>
+
+          <div class="progress">
+            <div class="progress-bar" [class.is-complete]="current.isFullyPicked">
+              <span [style.width.%]="progressPercent(current)"></span>
+            </div>
+            <p class="progress-text">
+              <strong>{{ current.totalPicked }}</strong> of {{ current.totalRequested }} picked
+              @if (current.totalRemaining > 0) {
+                · {{ current.totalRemaining }} to go
+              }
+            </p>
+          </div>
+
+          <div class="scan-op-field">
+            <label for="scanQty">Units per scan</label>
+            <input id="scanQty" class="scan-op-input" type="number" min="1" inputmode="numeric" [(ngModel)]="scanQuantity" />
+            <p class="scan-op-hint">Leave at 1 to count each scan as one unit.</p>
+          </div>
+
+          <button type="button" class="scan-op-btn" [disabled]="busy()" (click)="cancelPicking()">
+            <mat-icon>cancel</mat-icon>
+            <span>Cancel picking</span>
+          </button>
+        </div>
+      }
+    </aside>
+
+    <div>
+      @if (loading()) {
+        <div class="scan-op-empty">
+          <mat-icon>hourglass_top</mat-icon>
+          <h2>Loading…</h2>
+        </div>
+      } @else if (!session()) {
+        <!-- No order yet: scan the order sheet, or choose from what is ready to pick. -->
+        <div class="scan-op-panel">
+          <h2 class="scan-op-step-title"><mat-icon>list_alt</mat-icon> Orders ready to pick</h2>
+
+          @if (error()) {
+            <p class="scan-op-hint is-error">{{ error() }}</p>
+          }
+
+          @if (pickableOrders().length === 0) {
+            <p class="scan-op-hint">
+              No confirmed orders are waiting. Confirm a sales order to make it pickable.
+            </p>
+          } @else {
+            <ul class="order-list">
+              @for (order of pickableOrders(); track order.id) {
+                <li>
+                  <button type="button" class="order-row" (click)="openOrder(order.id)">
+                    <span class="order-row-main">
+                      <span class="order-row-number">{{ order.orderNumber }}</span>
+                      <span class="order-row-customer">{{ order.customerName }}</span>
+                    </span>
+                    <span class="status-chip">{{ order.status }}</span>
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      } @else if (confirming()) {
+        <div class="scan-op-panel">
+          <div class="scan-op-confirm">
+            <h3><mat-icon>fact_check</mat-icon> Complete picking</h3>
+            <dl class="scan-op-summary">
+              <div><dt>Order</dt><dd>{{ session()!.orderNumber }}</dd></div>
+              <div><dt>Customer</dt><dd>{{ session()!.customerName }}</dd></div>
+              <div><dt>Items picked</dt><dd>{{ session()!.totalPicked }}</dd></div>
+              <div><dt>Warehouse</dt><dd>{{ session()!.warehouseName }}</dd></div>
+            </dl>
+
+            <label class="deliver-toggle">
+              <input type="checkbox" [(ngModel)]="deliverOnComplete" />
+              <span>
+                <strong>Deliver now</strong>
+                <small>Draws the stock and advances the order. Leave off to close picking only.</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="scan-op-actions">
+            <button type="button" class="scan-op-btn is-primary" [disabled]="busy()" (click)="complete()">
+              <mat-icon>check</mat-icon>
+              <span>{{ busy() ? 'Working…' : 'Confirm & complete' }}</span>
+            </button>
+            <button type="button" class="scan-op-btn" [disabled]="busy()" (click)="cancelReview()">
+              <mat-icon>edit</mat-icon>
+              <span>Back</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="scan-op-panel">
+          <h2 class="scan-op-step-title"><mat-icon>checklist</mat-icon> Pick list</h2>
+
+          <ul class="pick-lines">
+            @for (line of orderedLines; track line.salesOrderItemId) {
+              <li
+                class="pick-line"
+                [class.is-done]="line.remainingQuantity === 0"
+                [class.is-last]="line.salesOrderItemId === lastLineId()"
+              >
+                <div class="pick-line-main">
+                  <span class="pick-line-name">{{ line.productName }}</span>
+                  <span class="pick-line-meta">
+                    <code>{{ line.productSku }}</code>
+                    @if (line.trackBatch) { <span class="mini-flag">Batch</span> }
+                    @if (line.trackSerial) { <span class="mini-flag">Serial</span> }
+                  </span>
+                </div>
+
+                <div class="pick-line-counts">
+                  <span class="count-picked">{{ line.pickedQuantity }}</span>
+                  <span class="count-sep">/</span>
+                  <span class="count-total">{{ line.requestedQuantity }}</span>
+                </div>
+
+                <div class="pick-line-action">
+                  @if (line.remainingQuantity === 0) {
+                    <mat-icon class="done-icon">check_circle</mat-icon>
+                  } @else {
+                    <button
+                      type="button"
+                      class="add-btn"
+                      [disabled]="busy()"
+                      (click)="pickByProduct(line, 1)"
+                      [attr.aria-label]="'Pick one ' + line.productName"
+                      title="Pick one without scanning"
+                    >
+                      <mat-icon>add</mat-icon>
+                    </button>
+                    <button
+                      type="button"
+                      class="add-btn is-all"
+                      [disabled]="busy()"
+                      (click)="pickByProduct(line, line.remainingQuantity)"
+                      [attr.aria-label]="'Pick all remaining ' + line.productName"
+                      title="Pick all remaining"
+                    >
+                      <span>All</span>
+                    </button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+
+          @if (error()) {
+            <p class="scan-op-hint is-error">{{ error() }}</p>
+          }
+
+          <div class="scan-op-actions">
+            <button
+              type="button"
+              class="scan-op-btn is-primary"
+              [disabled]="!session()!.isFullyPicked || busy()"
+              (click)="review()"
+            >
+              <mat-icon>done_all</mat-icon>
+              <span>Complete picking</span>
+            </button>
+          </div>
+
+          @if (!session()!.isFullyPicked) {
+            <p class="scan-op-hint">{{ session()!.totalRemaining }} item(s) still to pick.</p>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

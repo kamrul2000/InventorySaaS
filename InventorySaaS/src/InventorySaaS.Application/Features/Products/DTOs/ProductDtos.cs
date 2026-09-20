@@ -1,17 +1,22 @@
-namespace InventorySaaS.Application.Features.Products.DTOs;
+﻿namespace InventorySaaS.Application.Features.Products.DTOs;
 
 public record ProductDto(
     Guid Id,
     string Name,
     string Sku,
     string? Barcode,
+    Guid CategoryId,
     string CategoryName,
+    Guid? BrandId,
     string? BrandName,
+    Guid UnitOfMeasureId,
     string UnitName,
     decimal CostPrice,
     decimal SellingPrice,
     int ReorderLevel,
     bool TrackExpiry,
+    bool TrackBatch,
+    bool TrackSerial,
     bool IsActive,
     DateTime CreatedAt);
 
@@ -26,6 +31,8 @@ public record CreateProductRequest(
     int? ReorderLevel,
     string? Barcode,
     bool TrackExpiry,
+    bool TrackBatch,
+    bool TrackSerial,
     int? MinimumOrderQuantity,
     string? BrandName,
     string? UnitName);
@@ -41,8 +48,10 @@ public record UpdateProductRequest(
     int? ReorderLevel,
     string? Barcode,
     bool? TrackExpiry,
-    bool? IsActive);
-
-public record BrandDto(Guid Id, string Name, string? Description, bool IsActive);
-
-public record UnitOfMeasureDto(Guid Id, string Name, string Abbreviation, bool IsActive);
+    bool? TrackBatch,
+    bool? TrackSerial,
+    bool? IsActive,
+    /// <summary>
+    /// A null <c>BrandId</c> means "leave the brand alone", so clearing one has to be explicit.
+    /// </summary>
+    bool ClearBrand = false);

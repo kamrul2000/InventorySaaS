@@ -1,0 +1,212 @@
+<div class="page-container">
+  <header class="scan-op-header">
+    <a class="scan-op-back" routerLink="/scan">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Scanning</span>
+    </a>
+    <h1>Stock In</h1>
+    <p>Scan the product, then the destination bin. Quantity, cost, batch and serials are captured before posting.</p>
+  </header>
+
+  <div class="scan-op-layout">
+    <aside class="scan-op-aside">
+      <app-scan-target
+        label="Scan product, bin or warehouse"
+        placeholder="Barcode, SKU or bin label…"
+        [busy]="busy()"
+        (scanned)="onScanned($event)"
+      />
+
+      @if (product(); as found) {
+        <div class="scan-op-panel product-card">
+          <div class="product-headline">
+            <h2>{{ found.name }}</h2>
+            <code>{{ found.sku }}</code>
+          </div>
+          <div class="product-flags">
+            @if (found.trackBatch) { <span class="flag">Batch tracked</span> }
+            @if (found.trackExpiry) { <span class="flag">Expiry tracked</span> }
+            @if (found.trackSerial) { <span class="flag">Serial tracked</span> }
+            @if (!found.isActive) { <span class="flag is-warn">Inactive</span> }
+          </div>
+          <p class="scan-op-hint">Currently {{ found.totalAvailable }} available across all warehouses.</p>
+        </div>
+      }
+    </aside>
+
+    <div>
+      @if (!product()) {
+        <div class="scan-op-empty">
+          <mat-icon>login</mat-icon>
+          <h2>Scan a product to receive</h2>
+          <p>Scan the item's barcode. Scanning a bin label sets the destination.</p>
+        </div>
+      } @else if (confirming()) {
+        <!-- Confirmation step: nothing is posted until this is accepted. -->
+        <div class="scan-op-panel">
+          <div class="scan-op-confirm">
+            <h3><mat-icon>fact_check</mat-icon> Confirm this receipt</h3>
+            <dl class="scan-op-summary">
+              <div><dt>Product</dt><dd>{{ product()!.name }}</dd></div>
+              <div><dt>Quantity</dt><dd>{{ quantity }} {{ product()!.unitName }}</dd></div>
+              <div><dt>Unit cost</dt><dd>{{ unitCost | number: '1.2-2' }}</dd></div>
+              <div><dt>Warehouse</dt><dd>{{ warehouseName }}</dd></div>
+              <div><dt>Location</dt><dd>{{ locationName || 'Not specified' }}</dd></div>
+              @if (batchNumber) { <div><dt>Batch</dt><dd>{{ batchNumber }}</dd></div> }
+              @if (expiryDate) { <div><dt>Expiry</dt><dd>{{ expiryDate | date: 'mediumDate' }}</dd></div> }
+              @if (serials().length) { <div><dt>Serials</dt><dd>{{ serials().length }} units</dd></div> }
+            </dl>
+          </div>
+
+          <div class="scan-op-actions">
+            <button type="button" class="scan-op-btn is-primary" [disabled]="busy()" (click)="confirm()">
+              <mat-icon>check</mat-icon>
+              <span>{{ busy() ? 'Posting…' : 'Confirm & post' }}</span>
+            </button>
+            <button type="button" class="scan-op-btn" [disabled]="busy()" (click)="cancelReview()">
+              <mat-icon>edit</mat-icon>
+              <span>Back to edit</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="scan-op-panel">
+          <section class="scan-op-step">
+            <h2 class="scan-op-step-title">
+              <span class="scan-op-step-number">1</span> Destination
+            </h2>
+            <div class="scan-op-grid">
+              <div class="scan-op-field">
+                <label for="wh">Warehouse <span class="required-mark">*</span></label>
+                <select id="wh" class="scan-op-select" [(ngModel)]="warehouseId" (ngModelChange)="onWarehouseChange()">
+                  <option value="">Select a warehouse…</option>
+                  @for (w of warehouses(); track w.id) {
+                    <option [value]="w.id">{{ w.name }} ({{ w.code }})</option>
+                  }
+                </select>
+              </div>
+              <div class="scan-op-field">
+                <label for="loc">Location / bin</label>
+                <select id="loc" class="scan-op-select" [(ngModel)]="locationId" [disabled]="!locations().length">
+                  <option value="">No specific bin</option>
+                  @for (l of locations(); track l.id) {
+                    <option [value]="l.id">{{ l.name }}{{ l.code ? ' · ' + l.code : '' }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="scan-op-step">
+            <h2 class="scan-op-step-title">
+              <span class="scan-op-step-number">2</span> Quantity and cost
+            </h2>
+            <div class="scan-op-grid">
+              <div class="scan-op-field">
+                <label for="qty">Quantity <span class="required-mark">*</span></label>
+                <input
+                  id="qty"
+                  class="scan-op-input"
+                  type="number"
+                  min="1"
+                  inputmode="numeric"
+                  [(ngModel)]="quantity"
+                  [disabled]="product()!.trackSerial"
+                />
+                @if (product()!.trackSerial) {
+                  <p class="scan-op-hint">Set automatically from the serial numbers scanned below.</p>
+                }
+              </div>
+              <div class="scan-op-field">
+                <label for="cost">Unit cost <span class="required-mark">*</span></label>
+                <input id="cost" class="scan-op-input" type="number" min="0" step="0.01" inputmode="decimal" [(ngModel)]="unitCost" />
+              </div>
+            </div>
+          </section>
+
+          <section class="scan-op-step">
+            <h2 class="scan-op-step-title">
+              <span class="scan-op-step-number">3</span> Batch and expiry
+            </h2>
+            <div class="scan-op-grid">
+              <div class="scan-op-field">
+                <label for="batch">
+                  Batch number
+                  @if (product()!.trackBatch) { <span class="required-mark">*</span> }
+                </label>
+                <input id="batch" class="scan-op-input" type="text" [(ngModel)]="batchNumber" placeholder="e.g. B-2026-04" />
+              </div>
+              <div class="scan-op-field">
+                <label for="lot">Lot number</label>
+                <input id="lot" class="scan-op-input" type="text" [(ngModel)]="lotNumber" />
+              </div>
+              <div class="scan-op-field">
+                <label for="exp">Expiry date</label>
+                <input id="exp" class="scan-op-input" type="date" [(ngModel)]="expiryDate" />
+              </div>
+            </div>
+          </section>
+
+          @if (product()!.trackSerial) {
+            <section class="scan-op-step">
+              <h2 class="scan-op-step-title">
+                <span class="scan-op-step-number">4</span> Serial numbers ({{ serials().length }})
+              </h2>
+              <div class="scan-op-field">
+                <label for="serial">Scan or type each unit</label>
+                <input
+                  id="serial"
+                  class="scan-op-input"
+                  type="text"
+                  placeholder="Scan a serial, then press Enter"
+                  #serialField
+                  (keydown.enter)="addSerial(serialField.value); serialField.value = ''"
+                />
+                <p class="scan-op-hint">Each unit of a serial-tracked product is recorded individually.</p>
+              </div>
+
+              @if (serials().length) {
+                <ul class="scan-op-serials">
+                  @for (serial of serials(); track serial) {
+                    <li class="scan-op-serial">
+                      <span>{{ serial }}</span>
+                      <button type="button" (click)="removeSerial(serial)" [attr.aria-label]="'Remove ' + serial">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          }
+
+          <section class="scan-op-step">
+            <div class="scan-op-field">
+              <label for="notes">Notes</label>
+              <textarea id="notes" class="scan-op-input" [(ngModel)]="notes" placeholder="Optional"></textarea>
+            </div>
+          </section>
+
+          @if (error()) {
+            <p class="scan-op-hint is-error">{{ error() }}</p>
+          }
+
+          @if (blockingReason) {
+            <p class="scan-op-hint">{{ blockingReason }}</p>
+          }
+
+          <div class="scan-op-actions">
+            <button type="button" class="scan-op-btn is-primary" [disabled]="!!blockingReason || busy()" (click)="review()">
+              <mat-icon>arrow_forward</mat-icon>
+              <span>Review</span>
+            </button>
+            <button type="button" class="scan-op-btn" (click)="done()">
+              <mat-icon>done_all</mat-icon>
+              <span>Finish</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

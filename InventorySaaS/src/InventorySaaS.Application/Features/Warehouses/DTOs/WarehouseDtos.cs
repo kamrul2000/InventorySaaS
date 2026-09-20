@@ -14,6 +14,8 @@ public record WarehouseLocationDto(
     Guid Id,
     Guid WarehouseId,
     string Name,
+    string? Code,
+    string? Barcode,
     string? Aisle,
     string? Rack,
     string? Bin,
@@ -42,6 +44,8 @@ public record UpdateWarehouseRequest(
 
 public record CreateLocationRequest(
     string Name,
+    string? Code,
+    string? Barcode,
     string? Aisle,
     string? Rack,
     string? Bin,

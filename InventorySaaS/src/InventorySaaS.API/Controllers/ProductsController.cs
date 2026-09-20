@@ -1,3 +1,4 @@
+using System.Text;
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.Products.DTOs;
 using InventorySaaS.Application.Interfaces;
@@ -13,20 +14,24 @@ namespace InventorySaaS.API.Controllers;
 public class ProductsController : ControllerBase
 {
     private const long MaxImageBytes = 5 * 1024 * 1024;
+    private const long MaxCsvBytes = 5 * 1024 * 1024;
     private static readonly HashSet<string> AllowedImageMimeTypes =
         new(StringComparer.OrdinalIgnoreCase) { "image/jpeg", "image/png" };
 
     private readonly IProductService _productService;
     private readonly IProductExtractionService _extractionService;
+    private readonly IProductImportService _importService;
     private readonly ILogger<ProductsController> _logger;
 
     public ProductsController(
         IProductService productService,
         IProductExtractionService extractionService,
+        IProductImportService importService,
         ILogger<ProductsController> logger)
     {
         _productService = productService;
         _extractionService = extractionService;
+        _importService = importService;
         _logger = logger;
     }
 
@@ -117,5 +122,69 @@ public class ProductsController : ControllerBase
             _logger.LogWarning(ex, "Product extraction failed.");
             return StatusCode(StatusCodes.Status502BadGateway, new { error = ex.Message });
         }
+    }
+
+    /// <summary>Downloads an empty CSV carrying the exact header row the importer expects.</summary>
+    [HttpGet("import/template")]
+    public IActionResult DownloadImportTemplate() =>
+        File(_importService.BuildTemplate(), "text/csv", "product-import-template.csv");
+
+    /// <summary>Exports every product in the same shape the importer accepts, for round-trip editing.</summary>
+    [HttpGet("export")]
+    public async Task<IActionResult> Export(CancellationToken cancellationToken)
+    {
+        var csv = await _importService.ExportAsync(cancellationToken);
+        return File(csv, "text/csv", $"products-{DateTime.UtcNow:yyyy-MM-dd}.csv");
+    }
+
+    /// <summary>
+    /// Validates a CSV and reports what would happen, row by row. Nothing is persisted —
+    /// the user reviews this before calling <c>POST /api/v1/Products/import</c>.
+    /// </summary>
+    [HttpPost("import/preview")]
+    [Authorize(Policy = "StaffUp")]
+    [RequestSizeLimit(MaxCsvBytes + 32 * 1024)]
+    public async Task<IActionResult> PreviewImport(
+        IFormFile file,
+        [FromQuery] bool createMissingMasters = false,
+        CancellationToken cancellationToken = default)
+    {
+        var csv = await ReadCsvAsync(file, cancellationToken);
+        if (csv is null) return BadRequest(new { error = CsvError });
+
+        var result = await _importService.PreviewAsync(csv, createMissingMasters, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Imports every valid row and reports the rest; invalid rows are skipped.</summary>
+    [HttpPost("import")]
+    [Authorize(Policy = "StaffUp")]
+    [RequestSizeLimit(MaxCsvBytes + 32 * 1024)]
+    public async Task<IActionResult> Import(
+        IFormFile file,
+        [FromQuery] bool createMissingMasters = false,
+        CancellationToken cancellationToken = default)
+    {
+        var csv = await ReadCsvAsync(file, cancellationToken);
+        if (csv is null) return BadRequest(new { error = CsvError });
+
+        var result = await _importService.ImportAsync(csv, createMissingMasters, cancellationToken);
+
+        _logger.LogInformation(
+            "Product import completed (fileName={FileName}, total={Total}, imported={Imported}, invalid={Invalid})",
+            file.FileName, result.TotalRows, result.ImportedRows, result.InvalidRows);
+
+        return Ok(result);
+    }
+
+    private const string CsvError = "A CSV file of up to 5 MB is required.";
+
+    private static async Task<string?> ReadCsvAsync(IFormFile file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0 || file.Length > MaxCsvBytes)
+            return null;
+
+        using var reader = new StreamReader(file.OpenReadStream(), Encoding.UTF8);
+        return await reader.ReadToEndAsync(cancellationToken);
     }
 }

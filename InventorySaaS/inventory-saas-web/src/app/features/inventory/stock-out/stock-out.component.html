@@ -1,0 +1,88 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Stock Out</h1>
+      <p class="page-subtitle">Record outgoing stock — issues, damage, or wastage</p>
+    </div>
+    <button class="btn-primary" routerLink="/inventory">
+      <mat-icon>list</mat-icon> Go to Inventory
+    </button>
+  </div>
+
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Product</label>
+          <select class="form-select" formControlName="productId" (change)="refreshAvailability()">
+            <option value="" disabled>Select a product</option>
+            @for (p of products; track p.id) {
+              <option [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Warehouse</label>
+          <select class="form-select" formControlName="warehouseId" (change)="onWarehouseChange(form.value.warehouseId)">
+            <option value="" disabled>Select a warehouse</option>
+            @for (wh of warehouses; track wh.id) {
+              <option [value]="wh.id">{{ wh.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (locations.length > 0) {
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Location</label>
+            <select class="form-select" formControlName="locationId" (change)="refreshAvailability()">
+              <option value="">-- None --</option>
+              @for (loc of locations; track loc.id) {
+                <option [value]="loc.id">{{ loc.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group"></div>
+        </div>
+      }
+
+      @if (availableQuantity !== null) {
+        <div class="stock-callout" [class.stock-callout-empty]="availableQuantity === 0">
+          <mat-icon>{{ availableQuantity === 0 ? 'error_outline' : 'inventory' }}</mat-icon>
+          <span>
+            Available to issue:
+            <strong>{{ availableQuantity }}</strong>
+            @if (availableQuantity === 0) {
+              <span> — nothing on hand at this location</span>
+            }
+          </span>
+        </div>
+      }
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input class="form-input" formControlName="quantity" type="number" min="1" placeholder="Enter quantity">
+          @if (exceedsAvailable) {
+            <span class="form-error">Only {{ availableQuantity }} available — reduce the quantity</span>
+          }
+        </div>
+        <div class="form-group"></div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input form-textarea" formControlName="notes" rows="2"
+                  placeholder="Reason for issuing stock (e.g. damaged in handling, internal use)"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || exceedsAvailable || saving">
+          Stock Out
+        </button>
+        <button class="btn-secondary" type="button" routerLink="/inventory">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

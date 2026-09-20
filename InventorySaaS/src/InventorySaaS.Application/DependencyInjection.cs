@@ -9,6 +9,8 @@ public static class DependencyInjection
     {
         // Services (Controller → Service pattern)
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IBrandService, BrandService>();
+        services.AddScoped<IUnitOfMeasureService, UnitOfMeasureService>();
         services.AddScoped<ISupplierService, SupplierService>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<ITenantService, TenantService>();
@@ -17,7 +19,11 @@ public static class DependencyInjection
         services.AddScoped<IWarehouseService, WarehouseService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductImportService, ProductImportService>();
         services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IScanService, ScanService>();
+        services.AddScoped<IPickingService, PickingService>();
+        services.AddScoped<IStockCountService, StockCountService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();

@@ -512,7 +512,30 @@ That's the full path. Most steps are invisible — the framework handles them. Y
 
 **SKU auto-generation**: take the first 3 letters of the category name uppercased ("Food & Beverage" → "FOO"), find the highest existing number with that prefix, new SKU = `{prefix}-{max+1:D5}` → "FOO-00007".
 
-**AI scan flow**: upload image → `POST /api/v1/Products/extract-from-image` (JPEG/PNG, ≤ 5 MB) → Gemini vision with strict-JSON prompt → parsed `ProductExtractionResult` → frontend pre-fills the form → user reviews → normal `POST /api/v1/Products`. The extract endpoint **never saves** — it's a draft generator.
+**AI scan flow**: upload image → `POST /api/v1/Products/extract-from-image` (JPEG/PNG, ≤ 5 MB) → Gemini vision with strict-JSON prompt → parsed `ProductExtractionResult` → frontend pre-fills the form → user reviews → normal `POST /api/v1/Products`. The extract endpoint **never saves** — it's a draft generator. The model returns *names*, not ids, so the form fuzzy-matches them against the category/brand/unit lists and reports anything unmatched rather than silently creating master records.
+
+**Master data**: `Category`, `Brand` and `UnitOfMeasure` each have their own service and controller
+(`/Categories`, `/Brands`, `/UnitsOfMeasure`) with case-insensitive duplicate guards and a delete
+that refuses while products still reference the record. Units enforce uniqueness on the
+abbreviation as well as the name — two units both displaying "pcs" in a dropdown are
+indistinguishable to whoever is picking one.
+
+**CSV import** (`IProductImportService`): the CSV reader is hand-rolled in
+`Application/Common/Csv/CsvFile.cs` rather than taking a dependency — the surface is small
+(quoted fields, embedded commas/newlines, doubled quotes, Excel's BOM) and it's all pinned by
+tests. Two endpoints share one code path via a `commit` flag: `import/preview` validates and
+returns a per-row verdict without writing, `import` does the same then persists the valid rows in
+a single `SaveChangesAsync`. Invalid rows are reported and skipped, never half-applied.
+
+Two details that only show up at batch scale:
+
+- **SKU allocation.** `ProductService`'s per-product "query the max, add one" returns the *same*
+  number for every row in a batch, because nothing is saved between rows. The importer has its own
+  `SkuAllocator` that holds the counter in memory across the whole file.
+- **Soft-deleted SKUs.** The unique index on `(TenantId, Sku)` isn't filtered, so a deleted
+  product still owns its SKU while the global query filter hides it. The importer reads existing
+  SKUs with `IgnoreQueryFilters()` scoped to the tenant, so a clash is reported as a row error
+  instead of blowing up at `SaveChanges`.
 
 ### 6.3 Inventory module
 
@@ -580,9 +603,35 @@ Bill number = `BILL-yyyyMMdd-####`. Status: Draft → Open → PartiallyPaid →
 
 ### 6.7 Reports & PDF
 
-**What it does**: generates reports as JSON or PDF (stock summary, low stock, expiry, inventory valuation).
+**What it does**: generates nine reports as JSON or PDF, in two families.
+
+*Inventory*: stock summary, low stock, expiry, inventory valuation.
+*Financial*: AR aging, AP aging, sales summary, purchase summary, profitability.
 
 **How PDF works**: `ReportsController` → `IReportService` builds the data, `IPdfReportService` (QuestPDF) renders it declaratively to a byte array, returned as `application/pdf`.
+
+**Aging** buckets each unpaid document by `(asOf - DueDate).Days` into Current / 1-30 / 31-60 /
+61-90 / 90+. Receivables and payables share a single `BuildAging` pass — they age identically;
+only the source table and the party label differ. Note `BalanceDue` is a *computed* property and
+cannot be translated to SQL, so the query filters on `TotalAmount - AmountPaid > 0` instead.
+
+**Profitability is the part worth being able to defend.** `SalesOrderItem` stores a selling price
+but no cost, so the obvious implementation multiplies quantity by the product's `CostPrice` — and
+that's wrong, because `CostPrice` is a manually-maintained catalogue figure that drifts from what
+the stock actually cost.
+
+The honest source was already there. `SalesOrderService.DeliverAsync` draws stock down FEFO and
+computes `cogsUnitCost` — the weighted cost of the exact units shipped — then writes it onto an
+`InventoryTransaction` of type `SalesIssue`, tagged `ReferenceType = "SalesOrder"` and
+`ReferenceId = so.Id`. So the report takes **cost from the ledger** and **revenue from the order
+line** that transaction points back at. `Return` movements against the same reference are
+subtracted, and revenue is net of `DiscountRate` but excludes `TaxRate` — tax collected for the
+state was never margin.
+
+> **Likely question:** *"Why not just store the cost on the sales order line?"*
+> It would work, and it would be simpler to query. But it duplicates a number the ledger already
+> holds, and the two can then disagree. The ledger is the source of truth for stock movement, so
+> deriving COGS from it leaves one answer instead of two.
 
 ### 6.8 Dashboard
 

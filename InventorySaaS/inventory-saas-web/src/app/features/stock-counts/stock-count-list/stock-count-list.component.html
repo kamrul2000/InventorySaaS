@@ -1,0 +1,192 @@
+<div class="page-container">
+  <header class="page-header">
+    <div>
+      <h1>Stock Counts</h1>
+      <p>Review counted variances and approve the adjustments they would post.</p>
+    </div>
+    <a class="ghost-btn" routerLink="/scan/count">
+      <mat-icon>add</mat-icon>
+      <span>New count</span>
+    </a>
+  </header>
+
+  <div class="filter-bar">
+    <label for="status">Show</label>
+    <select id="status" class="filter-select" [(ngModel)]="statusFilter" (ngModelChange)="load()">
+      <option value="PendingApproval">Awaiting approval</option>
+      <option value="Counting">In progress</option>
+      <option value="Approved">Approved</option>
+      <option value="Cancelled">Cancelled</option>
+      <option value="">All</option>
+    </select>
+    <button type="button" class="ghost-btn" (click)="load()">
+      <mat-icon>refresh</mat-icon>
+      <span>Refresh</span>
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="error-banner" role="alert">{{ error() }}</p>
+  }
+
+  <div class="counts-layout">
+    <section class="counts-list">
+      @if (loading()) {
+        <p class="muted">Loading…</p>
+      } @else if (counts().length === 0) {
+        <div class="empty">
+          <mat-icon>fact_check</mat-icon>
+          <p>Nothing here. Counts sent for approval will appear in this list.</p>
+        </div>
+      } @else {
+        <ul>
+          @for (count of counts(); track count.id) {
+            <li>
+              <button
+                type="button"
+                class="count-row"
+                [class.is-selected]="count.id === selected()?.id"
+                (click)="select(count)"
+              >
+                <span class="row-main">
+                  <span class="row-number">{{ count.countNumber }}</span>
+                  <span class="row-scope">
+                    {{ count.warehouseName }}{{ count.locationName ? ' · ' + count.locationName : '' }}
+                  </span>
+                  <span class="row-date">{{ count.startedAt | date: 'medium' }}</span>
+                </span>
+
+                <span class="row-variances">
+                  @if (count.shortageLines > 0) {
+                    <span class="pill is-short">{{ count.shortageLines }} short</span>
+                  }
+                  @if (count.overageLines > 0) {
+                    <span class="pill is-over">{{ count.overageLines }} over</span>
+                  }
+                  @if (count.shortageLines === 0 && count.overageLines === 0) {
+                    <span class="pill is-clean">No variance</span>
+                  }
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="count-detail">
+      @if (selected(); as current) {
+        <article class="detail-card">
+          <header class="detail-header">
+            <div>
+              <h2>{{ current.countNumber }}</h2>
+              <p class="muted">
+                {{ current.warehouseName }}{{ current.locationName ? ' · ' + current.locationName : ' · all bins' }}
+                · started {{ current.startedAt | date: 'medium' }}
+              </p>
+              @if (current.notes) {
+                <p class="notes">“{{ current.notes }}”</p>
+              }
+            </div>
+            <span class="status-chip" [class]="'status-' + current.status.toLowerCase()">
+              {{ current.status === 'PendingApproval' ? 'Awaiting approval' : current.status }}
+            </span>
+          </header>
+
+          <div class="metric-row">
+            <div class="metric">
+              <span class="metric-value">{{ current.lineCount }}</span>
+              <span class="metric-label">Lines</span>
+            </div>
+            <div class="metric is-short">
+              <span class="metric-value">{{ current.shortageLines }}</span>
+              <span class="metric-label">Short</span>
+            </div>
+            <div class="metric is-over">
+              <span class="metric-value">{{ current.overageLines }}</span>
+              <span class="metric-label">Over</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">{{ current.netVariance > 0 ? '+' : '' }}{{ current.netVariance }}</span>
+              <span class="metric-label">Net units</span>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="variance-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Location</th>
+                  <th>Batch</th>
+                  <th class="num">System</th>
+                  <th class="num">Counted</th>
+                  <th class="num">Variance</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of orderedLines(current); track line.id) {
+                  <tr [class.is-short]="line.variance < 0" [class.is-over]="line.variance > 0">
+                    <td>
+                      <span class="cell-name">{{ line.productName }}</span>
+                      <code class="cell-sku">{{ line.productSku }}</code>
+                    </td>
+                    <td>{{ line.locationName || '—' }}</td>
+                    <td>{{ line.batchNumber || '—' }}</td>
+                    <td class="num">{{ line.systemQuantity }}</td>
+                    <td class="num">{{ line.countedQuantity }}</td>
+                    <td class="num strong">{{ line.variance > 0 ? '+' : '' }}{{ line.variance }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (current.status === 'PendingApproval') {
+            @if (canApprove) {
+              <div class="approval-panel">
+                <h3><mat-icon>warning</mat-icon> Approving posts stock adjustments</h3>
+                <p>
+                  {{ adjustedLineCount(current) }} line(s) differ from the system and will be adjusted to the
+                  counted quantities. Each writes an inventory transaction referencing this count.
+                </p>
+
+                <div class="field">
+                  <label for="approvalNotes">Approval notes</label>
+                  <textarea id="approvalNotes" [(ngModel)]="approvalNotes" placeholder="Optional"></textarea>
+                </div>
+
+                <div class="approval-actions">
+                  <button type="button" class="primary-btn" [disabled]="busy()" (click)="approve()">
+                    <mat-icon>check</mat-icon>
+                    <span>{{ busy() ? 'Posting…' : 'Approve & post adjustments' }}</span>
+                  </button>
+                  <button type="button" class="danger-btn" [disabled]="busy()" (click)="reject()">
+                    <mat-icon>close</mat-icon>
+                    <span>Reject count</span>
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <p class="muted permission-note">
+                <mat-icon>lock</mat-icon>
+                Approving count differences requires a Manager role.
+              </p>
+            }
+          } @else if (current.status === 'Approved') {
+            <p class="approved-note">
+              <mat-icon>check_circle</mat-icon>
+              Approved by {{ current.approvedBy || 'a manager' }} on {{ current.approvedAt | date: 'medium' }}.
+              Adjustments have been posted.
+            </p>
+          }
+        </article>
+      } @else {
+        <div class="empty">
+          <mat-icon>touch_app</mat-icon>
+          <p>Select a count to review its variances.</p>
+        </div>
+      }
+    </section>
+  </div>
+</div>

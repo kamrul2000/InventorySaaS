@@ -22,7 +22,7 @@ import { CategoryDto } from '../../../core/models/domain.models';
 })
 export class CategoryListComponent implements OnInit {
   columns: TableColumn[] = [
-    { key: 'name', label: 'Name' },
+    { key: 'name', label: 'Name', sortable: true },
     { key: 'description', label: 'Description' },
     { key: 'productCount', label: 'Products' },
     { key: 'isActive', label: 'Active', type: 'boolean' },
@@ -34,6 +34,8 @@ export class CategoryListComponent implements OnInit {
   pageNumber = 1;
   loading = false;
   searchTerm = '';
+  sortBy = '';
+  sortDescending = false;
 
   constructor(
     private categoryService: CategoryService,
@@ -51,7 +53,7 @@ export class CategoryListComponent implements OnInit {
     this.categoryService.getAll({
       pageNumber: this.pageNumber,
       pageSize: this.pageSize,
-      searchTerm: this.searchTerm,
+      search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending,
     }).subscribe({
       next: (result) => {
         this.categories = result.items;
@@ -78,7 +80,10 @@ export class CategoryListComponent implements OnInit {
     this.loadCategories();
   }
 
-  onSortChange(_sort: Sort): void {
+  onSortChange(sort: Sort): void {
+    // Material reports 'asc' | 'desc' | ''; the API takes a boolean, and '' means default order.
+    this.sortBy = sort.direction ? sort.active : '';
+    this.sortDescending = sort.direction === 'desc';
     this.loadCategories();
   }
 

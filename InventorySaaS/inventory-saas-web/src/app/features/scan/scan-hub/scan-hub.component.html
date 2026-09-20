@@ -1,0 +1,39 @@
+<div class="page-container">
+  <header class="scan-hub-header">
+    <div>
+      <h1>Scanning</h1>
+      <p>Barcode and QR operations for the warehouse floor.</p>
+    </div>
+  </header>
+
+  @if (cameraNotice) {
+    <p class="camera-notice">
+      <mat-icon>info</mat-icon>
+      <span>{{ cameraNotice }}</span>
+    </p>
+  }
+
+  <div class="scan-tiles">
+    @for (action of visibleActions; track action.route) {
+      @if (action.available) {
+        <a class="scan-tile" [routerLink]="action.route">
+          <span class="tile-icon"><mat-icon>{{ action.icon }}</mat-icon></span>
+          <span class="tile-body">
+            <span class="tile-label">{{ action.label }}</span>
+            <span class="tile-description">{{ action.description }}</span>
+          </span>
+          <mat-icon class="tile-chevron">chevron_right</mat-icon>
+        </a>
+      } @else {
+        <div class="scan-tile is-disabled" aria-disabled="true">
+          <span class="tile-icon"><mat-icon>{{ action.icon }}</mat-icon></span>
+          <span class="tile-body">
+            <span class="tile-label">{{ action.label }}</span>
+            <span class="tile-description">{{ action.description }}</span>
+          </span>
+          <span class="tile-badge">Coming next</span>
+        </div>
+      }
+    }
+  </div>
+</div>

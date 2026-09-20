@@ -20,7 +20,9 @@
 
       @for (col of columns; track col.key) {
         <ng-container [matColumnDef]="col.key">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ col.label }}</th>
+          <th mat-header-cell *matHeaderCellDef
+              [mat-sort-header]="col.sortKey || col.key"
+              [disabled]="!col.sortable">{{ col.label }}</th>
           <td mat-cell *matCellDef="let row">
             @switch (col.type) {
               @case ('date') {

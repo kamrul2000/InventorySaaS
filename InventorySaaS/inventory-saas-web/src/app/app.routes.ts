@@ -9,12 +9,17 @@ import { ResetPasswordComponent } from './features/auth/reset-password/reset-pas
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { ProductListComponent } from './features/products/product-list/product-list.component';
 import { ProductFormComponent } from './features/products/product-form/product-form.component';
+import { ProductImportComponent } from './features/products/product-import/product-import.component';
 import { CategoryListComponent } from './features/categories/category-list/category-list.component';
+import { BrandListComponent } from './features/brands/brand-list/brand-list.component';
+import { UnitListComponent } from './features/units/unit-list/unit-list.component';
 import { WarehouseListComponent } from './features/warehouses/warehouse-list/warehouse-list.component';
 import { WarehouseFormComponent } from './features/warehouses/warehouse-form/warehouse-form.component';
 import { InventoryListComponent } from './features/inventory/inventory-list/inventory-list.component';
 import { StockInComponent } from './features/inventory/stock-in/stock-in.component';
+import { StockOutComponent } from './features/inventory/stock-out/stock-out.component';
 import { StockTransferComponent } from './features/inventory/stock-transfer/stock-transfer.component';
+import { StockAdjustmentComponent } from './features/inventory/stock-adjustment/stock-adjustment.component';
 import { SupplierListComponent } from './features/suppliers/supplier-list/supplier-list.component';
 import { SupplierFormComponent } from './features/suppliers/supplier-form/supplier-form.component';
 import { CustomerListComponent } from './features/customers/customer-list/customer-list.component';
@@ -61,17 +66,47 @@ export const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'products', component: ProductListComponent },
       { path: 'products/new', component: ProductFormComponent },
+      {
+        // Mirrors the API's StaffUp policy on POST /Products/import.
+        path: 'products/import',
+        component: ProductImportComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'] },
+      },
       { path: 'products/:id/edit', component: ProductFormComponent },
       { path: 'products/:id', component: ProductDetailComponent },
       { path: 'categories', component: CategoryListComponent },
       { path: 'categories/:id', component: CategoryDetailComponent },
+      { path: 'brands', component: BrandListComponent },
+      { path: 'units', component: UnitListComponent },
       { path: 'warehouses', component: WarehouseListComponent },
       { path: 'warehouses/new', component: WarehouseFormComponent },
       { path: 'warehouses/:id/edit', component: WarehouseFormComponent },
       { path: 'warehouses/:id', component: WarehouseDetailComponent },
+      {
+        // Lazy-loaded so the camera scanner stays out of the initial bundle.
+        path: 'scan',
+        loadChildren: () => import('./features/scan/scan.routes').then((m) => m.SCAN_ROUTES),
+      },
       { path: 'inventory', component: InventoryListComponent },
+      {
+        // Manager review of counted variances. Lazy-loaded alongside the scanning screens.
+        path: 'stock-counts',
+        loadComponent: () =>
+          import('./features/stock-counts/stock-count-list/stock-count-list.component').then(
+            (m) => m.StockCountListComponent
+          ),
+      },
       { path: 'inventory/stock-in', component: StockInComponent },
+      { path: 'inventory/stock-out', component: StockOutComponent },
       { path: 'inventory/transfer', component: StockTransferComponent },
+      {
+        // Mirrors the API's ManagerUp policy on POST /Inventory/adjustment.
+        path: 'inventory/adjustment',
+        component: StockAdjustmentComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['TenantAdmin', 'Manager', 'SuperAdmin'] },
+      },
       { path: 'suppliers', component: SupplierListComponent },
       { path: 'suppliers/new', component: SupplierFormComponent },
       { path: 'suppliers/:id/edit', component: SupplierFormComponent },

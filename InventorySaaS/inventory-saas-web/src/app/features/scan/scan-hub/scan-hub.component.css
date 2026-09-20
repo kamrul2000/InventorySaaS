@@ -1,0 +1,117 @@
+.scan-hub-header {
+  margin-bottom: 20px;
+}
+
+.scan-hub-header h1 {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.scan-hub-header p {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.camera-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  color: #8a5300;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.scan-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+/* Tiles are full-width targets on a phone and never smaller than a comfortable tap. */
+.scan-tile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 96px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+  color: inherit;
+  text-decoration: none;
+}
+
+a.scan-tile:hover {
+  border-color: var(--mat-sys-primary);
+  background: var(--mat-sys-surface-container);
+}
+
+.scan-tile.is-disabled {
+  opacity: 0.55;
+}
+
+.tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--mat-sys-primary) 14%, transparent);
+  color: var(--mat-sys-primary);
+}
+
+.tile-icon mat-icon {
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+}
+
+.tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tile-label {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.tile-description {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.tile-chevron {
+  flex: 0 0 auto;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.tile-badge {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 600px) {
+  .scan-tiles {
+    grid-template-columns: 1fr;
+  }
+}

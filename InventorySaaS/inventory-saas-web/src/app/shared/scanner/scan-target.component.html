@@ -1,0 +1,66 @@
+<section class="scan-target">
+  <header class="scan-target-header">
+    <div class="scan-target-title">
+      <mat-icon>qr_code_scanner</mat-icon>
+      <span>Scanner</span>
+    </div>
+
+    <div class="scan-target-actions">
+      @if (cameraSupported) {
+        <button
+          type="button"
+          class="chip-btn"
+          [class.is-on]="cameraOpen()"
+          (click)="toggleCamera()"
+        >
+          <mat-icon>{{ cameraOpen() ? 'videocam_off' : 'photo_camera' }}</mat-icon>
+          <span>{{ cameraOpen() ? 'Hide camera' : 'Use camera' }}</span>
+        </button>
+      }
+
+      <button
+        type="button"
+        class="chip-btn"
+        [class.is-on]="soundOn()"
+        (click)="toggleSound()"
+        [attr.aria-pressed]="soundOn()"
+        [title]="soundOn() ? 'Sound on' : 'Sound off'"
+      >
+        <mat-icon>{{ soundOn() ? 'volume_up' : 'volume_off' }}</mat-icon>
+        <span>Sound</span>
+      </button>
+    </div>
+  </header>
+
+  @if (cameraOpen()) {
+    <app-camera-scanner
+      [active]="!busy()"
+      (scanned)="onScanned($event)"
+      (cameraError)="reportFailure($event)"
+    />
+  }
+
+  <app-scan-input
+    [label]="label()"
+    [placeholder]="placeholder()"
+    [disabled]="busy()"
+    (scanned)="onScanned($event)"
+  />
+
+  @if (busy()) {
+    <p class="scan-status is-busy" role="status">
+      <mat-icon>hourglass_top</mat-icon>
+      <span>Working…</span>
+    </p>
+  } @else if (status(); as current) {
+    <p class="scan-status" [class]="'is-' + current.tone" role="status" aria-live="polite">
+      <mat-icon>
+        {{ current.tone === 'success' ? 'check_circle' : current.tone === 'warning' ? 'warning' : 'error' }}
+      </mat-icon>
+      <span class="scan-status-text">{{ current.text }}</span>
+      @if (lastCode()) {
+        <code class="scan-status-code">{{ lastCode() }}</code>
+      }
+    </p>
+  }
+</section>

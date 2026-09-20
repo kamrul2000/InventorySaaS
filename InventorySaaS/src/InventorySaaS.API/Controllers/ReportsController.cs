@@ -113,4 +113,116 @@ public class ReportsController : ControllerBase
         var pdf = _pdfService.GenerateInventoryValuationPdf(result, "InventorySaaS");
         return File(pdf, "application/pdf", $"Inventory_Valuation_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
+
+    // ---- Receivables & payables ----
+
+    [HttpGet("ar-aging")]
+    public async Task<IActionResult> ArAging(
+        [FromQuery] DateTime? asOf = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetArAgingAsync(asOf ?? DateTime.UtcNow, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("ar-aging/pdf")]
+    public async Task<IActionResult> ArAgingPdf(
+        [FromQuery] DateTime? asOf = null,
+        CancellationToken cancellationToken = default)
+    {
+        var date = asOf ?? DateTime.UtcNow;
+        var result = await _reportService.GetArAgingAsync(date, cancellationToken);
+
+        var pdf = _pdfService.GenerateAgingPdf(result, "InventorySaaS", isReceivable: true, date);
+        return File(pdf, "application/pdf", $"AR_Aging_{date:yyyyMMdd}.pdf");
+    }
+
+    [HttpGet("ap-aging")]
+    public async Task<IActionResult> ApAging(
+        [FromQuery] DateTime? asOf = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetApAgingAsync(asOf ?? DateTime.UtcNow, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("ap-aging/pdf")]
+    public async Task<IActionResult> ApAgingPdf(
+        [FromQuery] DateTime? asOf = null,
+        CancellationToken cancellationToken = default)
+    {
+        var date = asOf ?? DateTime.UtcNow;
+        var result = await _reportService.GetApAgingAsync(date, cancellationToken);
+
+        var pdf = _pdfService.GenerateAgingPdf(result, "InventorySaaS", isReceivable: false, date);
+        return File(pdf, "application/pdf", $"AP_Aging_{date:yyyyMMdd}.pdf");
+    }
+
+    // ---- Trading activity ----
+
+    [HttpGet("sales-summary")]
+    public async Task<IActionResult> SalesSummary(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetSalesSummaryAsync(startDate, endDate, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("sales-summary/pdf")]
+    public async Task<IActionResult> SalesSummaryPdf(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetSalesSummaryAsync(startDate, endDate, cancellationToken);
+
+        var pdf = _pdfService.GenerateSalesSummaryPdf(result, "InventorySaaS");
+        return File(pdf, "application/pdf", $"Sales_Summary_{DateTime.UtcNow:yyyyMMdd}.pdf");
+    }
+
+    [HttpGet("purchase-summary")]
+    public async Task<IActionResult> PurchaseSummary(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetPurchaseSummaryAsync(startDate, endDate, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("purchase-summary/pdf")]
+    public async Task<IActionResult> PurchaseSummaryPdf(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetPurchaseSummaryAsync(startDate, endDate, cancellationToken);
+
+        var pdf = _pdfService.GeneratePurchaseSummaryPdf(result, "InventorySaaS");
+        return File(pdf, "application/pdf", $"Purchase_Summary_{DateTime.UtcNow:yyyyMMdd}.pdf");
+    }
+
+    [HttpGet("profitability")]
+    public async Task<IActionResult> Profitability(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetProfitabilityAsync(startDate, endDate, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("profitability/pdf")]
+    public async Task<IActionResult> ProfitabilityPdf(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _reportService.GetProfitabilityAsync(startDate, endDate, cancellationToken);
+
+        var pdf = _pdfService.GenerateProfitabilityPdf(result, "InventorySaaS");
+        return File(pdf, "application/pdf", $"Profitability_{DateTime.UtcNow:yyyyMMdd}.pdf");
+    }
 }
