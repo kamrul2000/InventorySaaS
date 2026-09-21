@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -10,6 +11,7 @@ import { NotificationService } from '../../../core/services/notification.service
   selector: 'app-customer-form',
   standalone: true,
   imports: [
+    SearchableSelectModule,
     CommonModule, ReactiveFormsModule, MatProgressSpinnerModule,
   ],
   templateUrl: './customer-form.component.html',

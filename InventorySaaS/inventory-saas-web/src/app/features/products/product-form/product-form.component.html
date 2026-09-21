@@ -66,12 +66,11 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Category</label>
-          <select class="form-select" formControlName="categoryId">
-            <option value="" disabled>Select category</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="categoryId" placeholder="Select category" panelClass="app-select-panel" searchPlaceholder="Search categories..." (selectSearch)="loadCategories($event)">
             @for (cat of categories; track cat.id) {
-              <option [value]="cat.id">{{ cat.name }}</option>
+              <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
             }
-          </select>
+          </mat-select>
           @if (form.get('categoryId')?.hasError('required') && form.get('categoryId')?.touched) {
             <span class="form-error">Category is required</span>
           }
@@ -79,12 +78,12 @@
         <div class="form-group">
           <label class="form-label">Brand</label>
           <div class="select-with-add">
-            <select class="form-select" formControlName="brandId">
-              <option [ngValue]="null">-- None --</option>
+            <mat-select appSearchableSelect class="form-select app-select" formControlName="brandId" panelClass="app-select-panel" searchPlaceholder="Search brands..." (selectSearch)="loadBrands($event)">
+              <mat-option [value]="null">-- None --</mat-option>
               @for (brand of brands; track brand.id) {
-                <option [ngValue]="brand.id">{{ brand.name }}</option>
+                <mat-option [value]="brand.id">{{ brand.name }}</mat-option>
               }
-            </select>
+            </mat-select>
             <button class="btn-inline-add" type="button" (click)="addBrand()" title="Add a new brand">
               <mat-icon>add</mat-icon>
             </button>
@@ -96,12 +95,12 @@
         <div class="form-group">
           <label class="form-label">Unit of Measure</label>
           <div class="select-with-add">
-            <select class="form-select" formControlName="unitOfMeasureId">
-              <option value="" disabled>Select unit</option>
+            <mat-select appSearchableSelect class="form-select app-select" formControlName="unitOfMeasureId" panelClass="app-select-panel" searchPlaceholder="Search units..." (selectSearch)="loadUnits($event)">
+              <mat-option value="" disabled>Select unit</mat-option>
               @for (unit of units; track unit.id) {
-                <option [value]="unit.id">{{ unit.name }} ({{ unit.abbreviation }})</option>
+                <mat-option [value]="unit.id">{{ unit.name }} ({{ unit.abbreviation }})</mat-option>
               }
-            </select>
+            </mat-select>
             <button class="btn-inline-add" type="button" (click)="addUnit()" title="Add a new unit">
               <mat-icon>add</mat-icon>
             </button>

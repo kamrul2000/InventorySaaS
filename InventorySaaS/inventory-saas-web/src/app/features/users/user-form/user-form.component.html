@@ -66,12 +66,12 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Roles</label>
-          <select class="form-select" formControlName="roles" multiple>
-            <option value="TenantAdmin">Tenant Admin</option>
-            <option value="WarehouseManager">Warehouse Manager</option>
-            <option value="InventoryStaff">Inventory Staff</option>
-            <option value="Viewer">Viewer</option>
-          </select>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="roles" multiple panelClass="app-select-panel">
+            <mat-option value="TenantAdmin">Tenant Admin</mat-option>
+            <mat-option value="WarehouseManager">Warehouse Manager</mat-option>
+            <mat-option value="InventoryStaff">Inventory Staff</mat-option>
+            <mat-option value="Viewer">Viewer</mat-option>
+          </mat-select>
           @if (form.get('roles')?.hasError('required') && form.get('roles')?.touched) {
             <span class="form-error">Select at least one role</span>
           }

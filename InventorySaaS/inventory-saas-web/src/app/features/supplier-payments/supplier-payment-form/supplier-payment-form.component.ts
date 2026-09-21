@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +18,7 @@ interface AllocationRow {
 @Component({
   selector: 'app-supplier-payment-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [SearchableSelectModule, CommonModule, FormsModule, MatIconModule],
   templateUrl: './supplier-payment-form.component.html',
   styleUrl: './supplier-payment-form.component.css',
 })
@@ -47,11 +48,15 @@ export class SupplierPaymentFormComponent implements OnInit {
     this.supplierId = this.route.snapshot.queryParamMap.get('supplierId') || '';
     this.preselectBillId = this.route.snapshot.queryParamMap.get('billId');
 
-    this.supplierService.getAll({ pageNumber: 1, pageSize: 200 }).subscribe({
-      next: (r) => { this.suppliers = r.items; },
-    });
+    this.searchSuppliers('');
 
     if (this.supplierId) this.loadOutstanding();
+  }
+
+  searchSuppliers(search: string): void {
+    this.supplierService.getAll({ pageNumber: 1, pageSize: 100, search }).subscribe({
+      next: (r) => { this.suppliers = r.items; },
+    });
   }
 
   onSupplierChange(): void {

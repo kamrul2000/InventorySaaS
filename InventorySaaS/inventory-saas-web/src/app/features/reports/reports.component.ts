@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../shared/searchable-select/searchable-select.module';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { Observable } from 'rxjs';
@@ -30,6 +31,7 @@ const Tab = {
   selector: 'app-reports',
   standalone: true,
   imports: [
+    SearchableSelectModule,
     CommonModule, FormsModule, MatIconModule,
   ],
   templateUrl: './reports.component.html',
@@ -76,9 +78,17 @@ export class ReportsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.warehouseService.getAll({ pageSize: 100 }).subscribe({ next: (r) => this.warehouses = r.items });
-    this.categoryService.getAll({ pageSize: 100 }).subscribe({ next: (r) => this.categories = r.items });
+    this.searchWarehouses('');
+    this.searchCategories('');
     this.loadCurrentTab();
+  }
+
+  searchWarehouses(search: string): void {
+    this.warehouseService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.warehouses = r.items });
+  }
+
+  searchCategories(search: string): void {
+    this.categoryService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.categories = r.items });
   }
 
   onTabChange(index: number): void {

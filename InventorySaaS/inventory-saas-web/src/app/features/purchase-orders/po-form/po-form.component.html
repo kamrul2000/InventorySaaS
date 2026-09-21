@@ -11,21 +11,21 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Supplier *</label>
-          <select class="form-select" formControlName="supplierId">
-            <option value="">Select supplier</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="supplierId" panelClass="app-select-panel" searchPlaceholder="Search suppliers..." (selectSearch)="searchSuppliers($event)">
+            <mat-option value="">Select supplier</mat-option>
             @for (s of suppliers; track s.id) {
-              <option [value]="s.id">{{ s.name }}</option>
+              <mat-option [value]="s.id">{{ s.name }}</mat-option>
             }
-          </select>
+          </mat-select>
         </div>
         <div class="form-group">
           <label class="form-label">Warehouse *</label>
-          <select class="form-select" formControlName="warehouseId">
-            <option value="">Select warehouse</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="warehouseId" panelClass="app-select-panel" searchPlaceholder="Search warehouses..." (selectSearch)="searchWarehouses($event)">
+            <mat-option value="">Select warehouse</mat-option>
             @for (wh of warehouses; track wh.id) {
-              <option [value]="wh.id">{{ wh.name }}</option>
+              <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
             }
-          </select>
+          </mat-select>
         </div>
       </div>
 
@@ -59,12 +59,12 @@
             @for (item of items.controls; track $index) {
               <tr [formGroupName]="$index">
                 <td>
-                  <select class="form-select table-select" formControlName="productId">
-                    <option value="">Select product</option>
+                  <mat-select appSearchableSelect class="form-select table-select app-select" formControlName="productId" panelClass="app-select-panel" searchPlaceholder="Search products..." (selectSearch)="searchProducts($event)">
+                    <mat-option value="">Select product</mat-option>
                     @for (p of products; track p.id) {
-                      <option [value]="p.id">{{ p.name }}</option>
+                      <mat-option [value]="p.id">{{ p.name }}</mat-option>
                     }
-                  </select>
+                  </mat-select>
                 </td>
                 <td>
                   <input type="number" class="form-input table-input" formControlName="quantity" (input)="calculateLineTotal($index)">

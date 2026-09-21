@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,6 +24,7 @@ const ADJUSTMENT_REASONS = [
   selector: 'app-stock-adjustment',
   standalone: true,
   imports: [
+    SearchableSelectModule,
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
@@ -62,10 +64,18 @@ export class StockAdjustmentComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.productService.getAll({ pageSize: 200 }).subscribe({
+    this.searchProducts('');
+    this.searchWarehouses('');
+  }
+
+  searchProducts(search: string): void {
+    this.productService.getAll({ pageSize: 100, search }).subscribe({
       next: (result) => this.products = result.items,
     });
-    this.warehouseService.getAll({ pageSize: 100 }).subscribe({
+  }
+
+  searchWarehouses(search: string): void {
+    this.warehouseService.getAll({ pageSize: 100, search }).subscribe({
       next: (result) => this.warehouses = result.items,
     });
   }

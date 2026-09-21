@@ -12,14 +12,14 @@
   <div class="filters">
     <div class="filter-group">
       <label class="filter-label">Status</label>
-      <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="loadOrders()">
-        <option value="">All Statuses</option>
-        <option value="Draft">Draft</option>
-        <option value="Submitted">Submitted</option>
-        <option value="Approved">Approved</option>
-        <option value="Received">Received</option>
-        <option value="Cancelled">Cancelled</option>
-      </select>
+      <mat-select appSearchableSelect class="form-select app-select" [(ngModel)]="statusFilter" (ngModelChange)="loadOrders()" panelClass="app-select-panel">
+        <mat-option value="">All Statuses</mat-option>
+        <mat-option value="Draft">Draft</mat-option>
+        <mat-option value="Submitted">Submitted</mat-option>
+        <mat-option value="Approved">Approved</mat-option>
+        <mat-option value="Received">Received</mat-option>
+        <mat-option value="Cancelled">Cancelled</mat-option>
+      </mat-select>
     </div>
   </div>
 

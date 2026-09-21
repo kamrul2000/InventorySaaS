@@ -5,7 +5,7 @@
       <h1 class="page-title">Brands</h1>
       <p class="page-subtitle">Manage the brand list your products are chosen from</p>
     </div>
-    <button class="btn-primary" (click)="openForm()">
+    <button class="btn-primary" routerLink="/brands/new">
       <mat-icon>add</mat-icon>
       Add Brand
     </button>
@@ -21,6 +21,7 @@
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"
-    (rowAction)="onRowAction($event)">
+    (rowAction)="onRowAction($event)"
+  >
   </app-data-table>
 </div>

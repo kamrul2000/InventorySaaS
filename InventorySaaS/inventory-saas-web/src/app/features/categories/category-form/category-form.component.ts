@@ -1,8 +1,10 @@
-import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { CategoryService } from '../../../core/services/category.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { CategoryDto } from '../../../core/models/domain.models';
@@ -13,8 +15,10 @@ import { CategoryDto } from '../../../core/models/domain.models';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
+    RouterLink,
     MatIconModule,
+    MatFormFieldModule,
+    SearchableSelectModule,
   ],
   templateUrl: './category-form.component.html',
   styleUrl: './category-form.component.css',
@@ -23,14 +27,15 @@ export class CategoryFormComponent implements OnInit {
   form: FormGroup;
   isEditMode = false;
   saving = false;
+  categoryId: string | null = null;
   parentCategories: CategoryDto[] = [];
 
   constructor(
     private fb: FormBuilder,
-    public dialogRef: MatDialogRef<CategoryFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { category?: CategoryDto; categories: CategoryDto[] },
     private categoryService: CategoryService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private router: Router,
+    private route: ActivatedRoute,
   ) {
     this.form = this.fb.group({
       name: ['', [Validators.required]],
@@ -41,28 +46,48 @@ export class CategoryFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.parentCategories = this.data.categories || [];
-    if (this.data.category) {
-      this.isEditMode = true;
-      this.form.patchValue(this.data.category);
-      this.parentCategories = this.parentCategories.filter((c) => c.id !== this.data.category!.id);
+    this.categoryId = this.route.snapshot.paramMap.get('id');
+    this.isEditMode = !!this.categoryId;
+    this.searchParentCategories('');
+
+    if (this.categoryId) {
+      this.categoryService.getById(this.categoryId).subscribe({
+        next: (category) => this.form.patchValue(category),
+      });
     }
   }
 
-  save(): void {
-    if (this.form.invalid) return;
-    this.saving = true;
+  searchParentCategories(search: string): void {
+    this.categoryService.getAll({ pageSize: 100, search }).subscribe({
+      next: (result) => {
+        this.parentCategories = result.items.filter((category) => category.id !== this.categoryId);
+      },
+    });
+  }
 
+  onSubmit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.saving = true;
     const request = this.isEditMode
-      ? this.categoryService.update(this.data.category!.id, this.form.value)
+      ? this.categoryService.update(this.categoryId!, this.form.value)
       : this.categoryService.create(this.form.value);
 
     request.subscribe({
       next: () => {
         this.notification.success(this.isEditMode ? 'Category updated' : 'Category created');
-        this.dialogRef.close(true);
+        this.router.navigate(['/categories']);
       },
-      error: () => { this.saving = false; },
+      error: () => {
+        this.saving = false;
+      },
     });
+  }
+
+  cancel(): void {
+    this.router.navigate(['/categories']);
   }
 }

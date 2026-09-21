@@ -1,5 +1,6 @@
 import { Component, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,7 +17,7 @@ import { describeApiError } from '../scan-error';
 @Component({
   selector: 'app-scan-count',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIconModule, ScanTargetComponent],
+  imports: [SearchableSelectModule, CommonModule, FormsModule, RouterModule, MatIconModule, ScanTargetComponent],
   templateUrl: './scan-count.component.html',
   styleUrl: './scan-count.component.css',
 })
@@ -56,16 +57,7 @@ export class ScanCountComponent {
   private loadStartOptions(): void {
     this.loading.set(true);
 
-    this.warehouseService.getAll({ pageSize: 100 }).subscribe({
-      next: (result) => {
-        this.warehouses.set(result.items);
-        const preferred = result.items.find((w) => w.isDefault) ?? result.items[0];
-        if (preferred) {
-          this.warehouseId = preferred.id;
-          this.loadLocations(preferred.id);
-        }
-      },
-    });
+    this.searchWarehouses('', true);
 
     // Counts already under way are resumed rather than duplicated.
     this.stockCountService.getAll({ pageSize: 50, status: 'Counting' }).subscribe({
@@ -74,6 +66,20 @@ export class ScanCountComponent {
         this.openCounts.set(result.items);
       },
       error: () => this.loading.set(false),
+    });
+  }
+
+  searchWarehouses(search: string, initializeSelection = false): void {
+    this.warehouseService.getAll({ pageSize: 100, search }).subscribe({
+      next: (result) => {
+        this.warehouses.set(result.items);
+        if (!initializeSelection) return;
+        const preferred = result.items.find((w) => w.isDefault) ?? result.items[0];
+        if (preferred) {
+          this.warehouseId = preferred.id;
+          this.loadLocations(preferred.id);
+        }
+      },
     });
   }
 

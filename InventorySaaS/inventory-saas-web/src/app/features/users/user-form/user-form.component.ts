@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,6 +11,7 @@ import { NotificationService } from '../../../core/services/notification.service
   selector: 'app-user-form',
   standalone: true,
   imports: [
+    SearchableSelectModule,
     CommonModule, ReactiveFormsModule, MatIconModule,
   ],
   templateUrl: './user-form.component.html',

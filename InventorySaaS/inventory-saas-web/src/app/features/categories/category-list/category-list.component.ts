@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
-import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
+import {
+  DataTableComponent,
+  TableColumn,
+} from '../../../shared/components/data-table/data-table.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { CategoryFormComponent } from '../category-form/category-form.component';
 import { CategoryService } from '../../../core/services/category.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { CategoryDto } from '../../../core/models/domain.models';
@@ -16,7 +18,7 @@ import { CategoryDto } from '../../../core/models/domain.models';
 @Component({
   selector: 'app-category-list',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, DataTableComponent],
   templateUrl: './category-list.component.html',
   styleUrl: './category-list.component.css',
 })
@@ -41,7 +43,7 @@ export class CategoryListComponent implements OnInit {
     private categoryService: CategoryService,
     private dialog: MatDialog,
     private notification: NotificationService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -50,28 +52,24 @@ export class CategoryListComponent implements OnInit {
 
   loadCategories(): void {
     this.loading = true;
-    this.categoryService.getAll({
-      pageNumber: this.pageNumber,
-      pageSize: this.pageSize,
-      search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending,
-    }).subscribe({
-      next: (result) => {
-        this.categories = result.items;
-        this.totalCount = result.totalCount;
-        this.loading = false;
-      },
-      error: () => { this.loading = false; },
-    });
-  }
-
-  openForm(category?: CategoryDto): void {
-    const dialogRef = this.dialog.open(CategoryFormComponent, {
-      width: '500px',
-      data: { category, categories: this.categories },
-    });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.loadCategories();
-    });
+    this.categoryService
+      .getAll({
+        pageNumber: this.pageNumber,
+        pageSize: this.pageSize,
+        search: this.searchTerm,
+        sortBy: this.sortBy,
+        sortDescending: this.sortDescending,
+      })
+      .subscribe({
+        next: (result) => {
+          this.categories = result.items;
+          this.totalCount = result.totalCount;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        },
+      });
   }
 
   onPageChange(event: PageEvent): void {
@@ -98,7 +96,7 @@ export class CategoryListComponent implements OnInit {
     if (event.action === 'view') {
       this.router.navigate(['/categories', category.id]);
     } else if (event.action === 'edit') {
-      this.openForm(category);
+      this.router.navigate(['/categories', category.id, 'edit']);
     } else if (event.action === 'toggle:isActive') {
       this.categoryService.update(category.id, { isActive: !category.isActive }).subscribe({
         next: () => this.loadCategories(),
@@ -107,7 +105,10 @@ export class CategoryListComponent implements OnInit {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
         width: '420px',
         panelClass: 'confirm-dialog-panel',
-        data: { title: 'Delete Category', message: `Are you sure you want to delete "${category.name}"?` },
+        data: {
+          title: 'Delete Category',
+          message: `Are you sure you want to delete "${category.name}"?`,
+        },
       });
       dialogRef.afterClosed().subscribe((confirmed) => {
         if (confirmed) {

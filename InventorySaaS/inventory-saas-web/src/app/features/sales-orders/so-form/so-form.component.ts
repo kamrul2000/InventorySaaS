@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,7 +14,7 @@ import { CustomerDto, WarehouseDto, ProductDto } from '../../../core/models/doma
 @Component({
   selector: 'app-so-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
+  imports: [SearchableSelectModule, CommonModule, ReactiveFormsModule, MatIconModule],
   templateUrl: './so-form.component.html',
   styleUrl: './so-form.component.css',
 })
@@ -44,10 +45,22 @@ export class SoFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.customerService.getAll({ pageSize: 200 }).subscribe({ next: (r) => this.customers = r.items });
-    this.warehouseService.getAll({ pageSize: 100 }).subscribe({ next: (r) => this.warehouses = r.items });
-    this.productService.getAll({ pageSize: 200 }).subscribe({ next: (r) => this.products = r.items });
+    this.searchCustomers('');
+    this.searchWarehouses('');
+    this.searchProducts('');
     this.addItem();
+  }
+
+  searchCustomers(search: string): void {
+    this.customerService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.customers = r.items });
+  }
+
+  searchWarehouses(search: string): void {
+    this.warehouseService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.warehouses = r.items });
+  }
+
+  searchProducts(search: string): void {
+    this.productService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.products = r.items });
   }
 
   addItem(): void {

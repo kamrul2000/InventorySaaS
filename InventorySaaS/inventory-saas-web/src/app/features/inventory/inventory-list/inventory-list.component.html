@@ -29,12 +29,12 @@
       <button class="tab-btn" [class.active]="activeTab === 1" (click)="onTabChange(1)">Transactions</button>
     </div>
     <div class="filter-group">
-      <select class="form-select" [(ngModel)]="warehouseFilter" (ngModelChange)="loadData()">
-        <option value="">All Warehouses</option>
+      <mat-select appSearchableSelect class="form-select app-select" [(ngModel)]="warehouseFilter" (ngModelChange)="loadData()" panelClass="app-select-panel" searchPlaceholder="Search warehouses..." (selectSearch)="searchWarehouses($event)">
+        <mat-option value="">All Warehouses</mat-option>
         @for (wh of warehouses; track wh.id) {
-          <option [value]="wh.id">{{ wh.name }}</option>
+          <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
         }
-      </select>
+      </mat-select>
     </div>
   </div>
 

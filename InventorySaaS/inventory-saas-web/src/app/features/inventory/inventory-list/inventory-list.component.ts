@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,6 +19,7 @@ const ADJUSTMENT_ROLES = ['TenantAdmin', 'Manager', 'SuperAdmin'];
   selector: 'app-inventory-list',
   standalone: true,
   imports: [
+    SearchableSelectModule,
     CommonModule,
     FormsModule,
     MatIconModule,
@@ -57,10 +59,14 @@ export class InventoryListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.warehouseService.getAll({ pageSize: 100 }).subscribe({
+    this.searchWarehouses('');
+    this.loadData();
+  }
+
+  searchWarehouses(search: string): void {
+    this.warehouseService.getAll({ pageSize: 100, search }).subscribe({
       next: (result) => this.warehouses = result.items,
     });
-    this.loadData();
   }
 
   loadData(): void {

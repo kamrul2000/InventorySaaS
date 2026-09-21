@@ -25,12 +25,12 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Customer Type</label>
-          <select class="form-select" formControlName="customerType">
-            <option value="">Select type</option>
-            <option value="Individual">Individual</option>
-            <option value="Business">Business</option>
-            <option value="Government">Government</option>
-          </select>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="customerType" panelClass="app-select-panel">
+            <mat-option value="">Select type</mat-option>
+            <mat-option value="Individual">Individual</mat-option>
+            <mat-option value="Business">Business</mat-option>
+            <mat-option value="Government">Government</mat-option>
+          </mat-select>
         </div>
         <div class="form-group">
           <label class="form-label">Contact Person</label>

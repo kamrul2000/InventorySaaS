@@ -188,6 +188,173 @@ mat-divider {
   padding: 0;
 }
 
+// Shared select panel. Material renders overlays outside component style boundaries.
+.mat-mdc-select-panel {
+  max-height: 196px !important;
+  margin-top: 4px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(26, 32, 44, 0.12);
+  --mat-select-panel-background-color: #fff;
+  --mat-option-label-text-color: #2d3748;
+  --mat-option-hover-state-layer-color: transparent;
+  --mat-option-focus-state-layer-color: transparent;
+  --mat-option-selected-state-layer-color: transparent;
+  --mat-option-selected-state-label-text-color: #c94b1a;
+  --mat-pseudo-checkbox-minimal-selected-checkmark-color: #e8602c;
+  --mat-pseudo-checkbox-full-selected-icon-color: #e8602c;
+  --mat-pseudo-checkbox-full-selected-checkmark-color: #fff;
+}
+
+.mat-mdc-select-panel .mat-mdc-option {
+  min-height: 36px;
+  margin: 0;
+  border-radius: 5px;
+  background: #fff !important;
+  font-size: 14px;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.mat-mdc-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.mat-mdc-select-panel .mat-mdc-option.mat-mdc-option-active:not(.mdc-list-item--disabled) {
+  background: #fff7f3 !important;
+}
+
+.mat-mdc-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background: #fff1eb !important;
+  color: #c94b1a;
+  font-weight: 600;
+}
+
+.mat-mdc-select-panel
+  .mat-mdc-option.mdc-list-item--selected.mat-mdc-option-active:not(.mdc-list-item--disabled) {
+  background: #fde7dc !important;
+}
+
+.mat-mdc-select-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mat-mdc-select-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mat-mdc-select-panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #cbd5e0;
+}
+
+.app-select-search {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.app-select-search:focus-within {
+  border-color: #cbd5e0;
+  box-shadow: none;
+}
+
+.app-select-search-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: #718096;
+  font-family: 'Material Icons';
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.app-select-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #2d3748;
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.app-select-search input::placeholder {
+  color: #a0aec0;
+}
+
+.app-select-search input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.app-select-empty {
+  padding: 14px 10px;
+  color: #718096;
+  font-size: 13px;
+  text-align: center;
+}
+
+// Shared trigger for dropdowns that do not need a full Material form-field wrapper.
+.app-select.mat-mdc-select {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff !important;
+  background-image: none !important;
+  color: #2d3748;
+  box-sizing: border-box;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.app-select.mat-mdc-select:hover:not(.mat-mdc-select-disabled) {
+  border-color: #cbd5e0;
+}
+
+.app-select.mat-mdc-select:focus,
+.app-select.mat-mdc-select[aria-expanded='true'] {
+  border-color: #e8602c;
+  box-shadow: none;
+}
+
+.app-select.mat-mdc-select.mat-mdc-select-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background: #f7fafc !important;
+}
+
+.app-select .mat-mdc-select-trigger {
+  min-height: 22px;
+}
+
+.app-select .mat-mdc-select-arrow {
+  color: #718096;
+}
+
+.app-select[aria-expanded='true'] .mat-mdc-select-arrow {
+  color: #e8602c;
+}
+
+.scan-op-select.app-select.mat-mdc-select {
+  min-height: 56px;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
 // ---------------------------------------------------------------------------
 // Scanning screens
 //

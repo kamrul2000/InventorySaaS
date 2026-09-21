@@ -1,5 +1,9 @@
 .dialog-container {
-  font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    'Segoe UI',
+    -apple-system,
+    sans-serif;
   min-width: 440px;
 }
 
@@ -61,7 +65,9 @@
   font-family: inherit;
   color: #2d3748;
   background: #fff;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   box-sizing: border-box;
   outline: none;
 }
@@ -108,7 +114,7 @@
   color: #2d3748;
   cursor: pointer;
 }
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: 18px;
   height: 18px;
   accent-color: #e8602c;
@@ -137,7 +143,9 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
 }
 .btn-primary:hover {
   background: #d4541e;
@@ -166,4 +174,105 @@
 }
 .btn-secondary:hover {
   background: #edf2f7;
+}
+
+/* Full-page form layout (matches the rest of the management screens). */
+.page {
+  font-family:
+    'Inter',
+    'Segoe UI',
+    -apple-system,
+    sans-serif;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+  color: #1a202c;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.page-subtitle {
+  margin: 4px 0 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.form-card {
+  padding: 28px 32px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.form-group-spaced {
+  margin-bottom: 20px;
+}
+
+.form-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.page .btn-secondary {
+  background: #718096;
+  color: #fff;
+}
+
+.page .btn-secondary:hover {
+  background: #4a5568;
+}
+
+.btn-primary mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.dialog-body .form-row {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .form-card {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
 }

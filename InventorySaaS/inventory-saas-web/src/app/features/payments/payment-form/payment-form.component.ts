@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +18,7 @@ interface AllocationRow {
 @Component({
   selector: 'app-payment-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [SearchableSelectModule, CommonModule, FormsModule, MatIconModule],
   templateUrl: './payment-form.component.html',
   styleUrl: './payment-form.component.css',
 })
@@ -47,11 +48,15 @@ export class PaymentFormComponent implements OnInit {
     this.customerId = this.route.snapshot.queryParamMap.get('customerId') || '';
     this.preselectInvoiceId = this.route.snapshot.queryParamMap.get('invoiceId');
 
-    this.customerService.getAll({ pageNumber: 1, pageSize: 200 }).subscribe({
-      next: (r) => { this.customers = r.items; },
-    });
+    this.searchCustomers('');
 
     if (this.customerId) this.loadOutstanding();
+  }
+
+  searchCustomers(search: string): void {
+    this.customerService.getAll({ pageNumber: 1, pageSize: 100, search }).subscribe({
+      next: (r) => { this.customers = r.items; },
+    });
   }
 
   onCustomerChange(): void {

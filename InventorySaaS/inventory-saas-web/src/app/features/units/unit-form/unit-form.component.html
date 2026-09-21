@@ -1,40 +1,60 @@
-<div class="dialog-container">
-  <div class="dialog-header">
-    <h2 class="dialog-title">{{ isEditMode ? 'Edit Unit' : 'New Unit' }}</h2>
-    <button class="dialog-close" (click)="dialogRef.close()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-
-  <div class="dialog-body">
-    <form [formGroup]="form">
-      <div class="form-group">
-        <label class="form-label">Unit Name</label>
-        <input class="form-input" formControlName="name" placeholder="e.g. Piece, Kilogram, Box">
-        @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-          <span class="form-error">Name is required</span>
-        }
+@if (isDialogMode) {
+  <form class="dialog-container" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="dialog-header">
+      <h2 class="dialog-title">{{ isEditMode ? 'Edit Unit' : 'New Unit' }}</h2>
+      <button class="dialog-close" type="button" (click)="cancel()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="dialog-body"><ng-container [ngTemplateOutlet]="fields" /></div>
+    <div class="dialog-actions">
+      <button class="btn-secondary" type="button" (click)="cancel()">Cancel</button>
+      <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+        {{ saving ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
+      </button>
+    </div>
+  </form>
+} @else {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ isEditMode ? 'Edit Unit' : 'New Unit' }}</h1>
+        <p class="page-subtitle">
+          {{ isEditMode ? 'Update unit details' : 'Add a new unit of measure for your products' }}
+        </p>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">Abbreviation</label>
-        <input class="form-input" formControlName="abbreviation" placeholder="e.g. pcs, kg, box">
-        <span class="form-hint">Leave blank to derive it from the name.</span>
-      </div>
-
-      <div class="form-group">
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="isActive">
-          <span>Active</span>
-        </label>
-      </div>
-    </form>
+      <button class="btn-primary" type="button" routerLink="/units">
+        <mat-icon>list</mat-icon> Go to List
+      </button>
+    </div>
+    <div class="form-card">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <ng-container [ngTemplateOutlet]="fields" />
+        <div class="form-actions">
+          <button class="btn-secondary" type="button" (click)="cancel()">Cancel</button>
+          <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+            {{ saving ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
+}
 
-  <div class="dialog-actions">
-    <button class="btn-secondary" (click)="dialogRef.close()">Cancel</button>
-    <button class="btn-primary" (click)="save()" [disabled]="form.invalid || saving">
-      {{ isEditMode ? 'Update' : 'Create' }}
-    </button>
+<ng-template #fields>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Unit Name *</label>
+      <input class="form-input" formControlName="name" placeholder="e.g. Piece, Kilogram, Box" />
+      @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+        <span class="form-error">Name is required</span>
+      }
+    </div>
+    <div class="form-group">
+      <label class="form-label">Abbreviation</label>
+      <input class="form-input" formControlName="abbreviation" placeholder="e.g. pcs, kg, box" />
+      <span class="form-hint">Leave blank to derive it from the name.</span>
+    </div>
   </div>
-</div>
+  <label class="checkbox-label"><input type="checkbox" formControlName="isActive" /> Active</label>
+</ng-template>

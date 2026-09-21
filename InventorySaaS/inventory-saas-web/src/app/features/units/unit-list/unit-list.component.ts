@@ -1,13 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
-import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
+import {
+  DataTableComponent,
+  TableColumn,
+} from '../../../shared/components/data-table/data-table.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { UnitFormComponent } from '../unit-form/unit-form.component';
 import { UnitOfMeasureService } from '../../../core/services/unit-of-measure.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { UnitOfMeasureDto } from '../../../core/models/domain.models';
@@ -15,7 +18,7 @@ import { UnitOfMeasureDto } from '../../../core/models/domain.models';
 @Component({
   selector: 'app-unit-list',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, DataTableComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, DataTableComponent],
   templateUrl: './unit-list.component.html',
   styleUrl: './unit-list.component.css',
 })
@@ -39,7 +42,8 @@ export class UnitListComponent implements OnInit {
   constructor(
     private unitService: UnitOfMeasureService,
     private dialog: MatDialog,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -48,28 +52,24 @@ export class UnitListComponent implements OnInit {
 
   loadUnits(): void {
     this.loading = true;
-    this.unitService.getAll({
-      pageNumber: this.pageNumber,
-      pageSize: this.pageSize,
-      search: this.searchTerm, sortBy: this.sortBy, sortDescending: this.sortDescending,
-    }).subscribe({
-      next: (result) => {
-        this.units = result.items;
-        this.totalCount = result.totalCount;
-        this.loading = false;
-      },
-      error: () => { this.loading = false; },
-    });
-  }
-
-  openForm(unit?: UnitOfMeasureDto): void {
-    const dialogRef = this.dialog.open(UnitFormComponent, {
-      width: '500px',
-      data: { unit },
-    });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.loadUnits();
-    });
+    this.unitService
+      .getAll({
+        pageNumber: this.pageNumber,
+        pageSize: this.pageSize,
+        search: this.searchTerm,
+        sortBy: this.sortBy,
+        sortDescending: this.sortDescending,
+      })
+      .subscribe({
+        next: (result) => {
+          this.units = result.items;
+          this.totalCount = result.totalCount;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        },
+      });
   }
 
   onPageChange(event: PageEvent): void {
@@ -95,7 +95,7 @@ export class UnitListComponent implements OnInit {
     const unit = event.row as UnitOfMeasureDto;
 
     if (event.action === 'view' || event.action === 'edit') {
-      this.openForm(unit);
+      this.router.navigate(['/units', unit.id, 'edit']);
       return;
     }
 
@@ -107,9 +107,10 @@ export class UnitListComponent implements OnInit {
     }
 
     if (event.action === 'delete') {
-      const message = unit.productCount > 0
-        ? `"${unit.name}" is used by ${unit.productCount} product(s) and cannot be deleted until they are reassigned.`
-        : `Are you sure you want to delete "${unit.name}"?`;
+      const message =
+        unit.productCount > 0
+          ? `"${unit.name}" is used by ${unit.productCount} product(s) and cannot be deleted until they are reassigned.`
+          : `Are you sure you want to delete "${unit.name}"?`;
 
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
         width: '420px',

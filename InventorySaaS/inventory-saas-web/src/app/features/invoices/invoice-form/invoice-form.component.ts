@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +12,7 @@ import { CustomerDto } from '../../../core/models/domain.models';
 @Component({
   selector: 'app-invoice-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
+  imports: [SearchableSelectModule, CommonModule, ReactiveFormsModule, MatIconModule],
   templateUrl: './invoice-form.component.html',
   styleUrl: './invoice-form.component.css',
 })
@@ -34,7 +35,11 @@ export class InvoiceFormComponent implements OnInit {
       items: this.fb.array([this.newItem()]),
     });
 
-    this.customerService.getAll({ pageNumber: 1, pageSize: 200 }).subscribe({
+    this.searchCustomers('');
+  }
+
+  searchCustomers(search: string): void {
+    this.customerService.getAll({ pageNumber: 1, pageSize: 100, search }).subscribe({
       next: (r) => { this.customers = r.items; },
     });
   }

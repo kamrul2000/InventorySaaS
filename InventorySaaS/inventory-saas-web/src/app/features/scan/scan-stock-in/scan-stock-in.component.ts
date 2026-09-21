@@ -1,5 +1,6 @@
 import { Component, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,7 +17,7 @@ import { describeApiError } from '../scan-error';
 @Component({
   selector: 'app-scan-stock-in',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIconModule, ScanTargetComponent],
+  imports: [SearchableSelectModule, CommonModule, FormsModule, RouterModule, MatIconModule, ScanTargetComponent],
   templateUrl: './scan-stock-in.component.html',
   styleUrl: './scan-stock-in.component.css',
 })
@@ -54,9 +55,14 @@ export class ScanStockInComponent {
   private idempotencyKey: string | null = null;
 
   constructor() {
-    this.warehouseService.getAll({ pageSize: 100 }).subscribe({
+    this.searchWarehouses('', true);
+  }
+
+  searchWarehouses(search: string, initializeSelection = false): void {
+    this.warehouseService.getAll({ pageSize: 100, search }).subscribe({
       next: (result) => {
         this.warehouses.set(result.items);
+        if (!initializeSelection) return;
         const preferred = result.items.find((w) => w.isDefault) ?? result.items[0];
         if (preferred) {
           this.warehouseId = preferred.id;

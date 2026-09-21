@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,6 +22,7 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
   selector: 'app-product-form',
   standalone: true,
   imports: [
+    SearchableSelectModule,
     CommonModule,
     ReactiveFormsModule,
     MatIconModule,
@@ -86,24 +88,24 @@ export class ProductFormComponent implements OnInit {
     }
   }
 
-  loadCategories(): void {
-    this.categoryService.getAll({ pageSize: 100 }).subscribe({
+  loadCategories(search = ''): void {
+    this.categoryService.getAll({ pageSize: 100, search }).subscribe({
       next: (result) => {
         this.categories = result.items;
       },
     });
   }
 
-  loadBrands(): void {
-    this.brandService.getAll({ pageSize: 200 }).subscribe({
+  loadBrands(search = ''): void {
+    this.brandService.getAll({ pageSize: 100, search }).subscribe({
       next: (result) => {
         this.brands = result.items.filter((b) => b.isActive);
       },
     });
   }
 
-  loadUnits(): void {
-    this.unitService.getAll({ pageSize: 200 }).subscribe({
+  loadUnits(search = ''): void {
+    this.unitService.getAll({ pageSize: 100, search }).subscribe({
       next: (result) => {
         this.units = result.items.filter((u) => u.isActive);
       },

@@ -78,21 +78,21 @@
             <div class="scan-op-grid">
               <div class="scan-op-field">
                 <label for="wh">Warehouse <span class="required-mark">*</span></label>
-                <select id="wh" class="scan-op-select" [(ngModel)]="warehouseId" (ngModelChange)="onWarehouseChange()">
-                  <option value="">Select a warehouse…</option>
+                <mat-select appSearchableSelect id="wh" class="scan-op-select app-select" [(ngModel)]="warehouseId" (ngModelChange)="onWarehouseChange()" panelClass="app-select-panel" searchPlaceholder="Search warehouses..." (selectSearch)="searchWarehouses($event)">
+                  <mat-option value="">Select a warehouse…</mat-option>
                   @for (w of warehouses(); track w.id) {
-                    <option [value]="w.id">{{ w.name }} ({{ w.code }})</option>
+                    <mat-option [value]="w.id">{{ w.name }} ({{ w.code }})</mat-option>
                   }
-                </select>
+                </mat-select>
               </div>
               <div class="scan-op-field">
                 <label for="loc">Location / bin</label>
-                <select id="loc" class="scan-op-select" [(ngModel)]="locationId" [disabled]="!locations().length">
-                  <option value="">No specific bin</option>
+                <mat-select appSearchableSelect id="loc" class="scan-op-select app-select" [(ngModel)]="locationId" [disabled]="!locations().length" panelClass="app-select-panel">
+                  <mat-option value="">No specific bin</mat-option>
                   @for (l of locations(); track l.id) {
-                    <option [value]="l.id">{{ l.name }}{{ l.code ? ' · ' + l.code : '' }}</option>
+                    <mat-option [value]="l.id">{{ l.name }}{{ l.code ? ' · ' + l.code : '' }}</mat-option>
                   }
-                </select>
+                </mat-select>
               </div>
             </div>
           </section>

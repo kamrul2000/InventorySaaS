@@ -7,12 +7,12 @@
     <div class="form-row">
       <div class="form-field">
         <label>Customer *</label>
-        <select [(ngModel)]="customerId" (ngModelChange)="onCustomerChange()">
-          <option value="">Select customer</option>
+        <mat-select appSearchableSelect class="app-select" [(ngModel)]="customerId" (ngModelChange)="onCustomerChange()" panelClass="app-select-panel" searchPlaceholder="Search customers..." (selectSearch)="searchCustomers($event)">
+          <mat-option value="">Select customer</mat-option>
           @for (c of customers; track c.id) {
-            <option [value]="c.id">{{ c.name }}</option>
+            <mat-option [value]="c.id">{{ c.name }}</mat-option>
           }
-        </select>
+        </mat-select>
       </div>
       <div class="form-field">
         <label>Payment Date</label>
@@ -27,9 +27,9 @@
       </div>
       <div class="form-field">
         <label>Method</label>
-        <select [(ngModel)]="method">
-          @for (m of methods; track m) { <option [value]="m">{{ m }}</option> }
-        </select>
+        <mat-select appSearchableSelect class="app-select" [(ngModel)]="method" panelClass="app-select-panel">
+          @for (m of methods; track m) { <mat-option [value]="m">{{ m }}</mat-option> }
+        </mat-select>
       </div>
     </div>
 

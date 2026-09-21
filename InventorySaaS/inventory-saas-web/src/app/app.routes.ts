@@ -11,8 +11,11 @@ import { ProductListComponent } from './features/products/product-list/product-l
 import { ProductFormComponent } from './features/products/product-form/product-form.component';
 import { ProductImportComponent } from './features/products/product-import/product-import.component';
 import { CategoryListComponent } from './features/categories/category-list/category-list.component';
+import { CategoryFormComponent } from './features/categories/category-form/category-form.component';
 import { BrandListComponent } from './features/brands/brand-list/brand-list.component';
+import { BrandFormComponent } from './features/brands/brand-form/brand-form.component';
 import { UnitListComponent } from './features/units/unit-list/unit-list.component';
+import { UnitFormComponent } from './features/units/unit-form/unit-form.component';
 import { WarehouseListComponent } from './features/warehouses/warehouse-list/warehouse-list.component';
 import { WarehouseFormComponent } from './features/warehouses/warehouse-form/warehouse-form.component';
 import { InventoryListComponent } from './features/inventory/inventory-list/inventory-list.component';
@@ -76,9 +79,15 @@ export const routes: Routes = [
       { path: 'products/:id/edit', component: ProductFormComponent },
       { path: 'products/:id', component: ProductDetailComponent },
       { path: 'categories', component: CategoryListComponent },
+      { path: 'categories/new', component: CategoryFormComponent },
+      { path: 'categories/:id/edit', component: CategoryFormComponent },
       { path: 'categories/:id', component: CategoryDetailComponent },
       { path: 'brands', component: BrandListComponent },
+      { path: 'brands/new', component: BrandFormComponent },
+      { path: 'brands/:id/edit', component: BrandFormComponent },
       { path: 'units', component: UnitListComponent },
+      { path: 'units/new', component: UnitFormComponent },
+      { path: 'units/:id/edit', component: UnitFormComponent },
       { path: 'warehouses', component: WarehouseListComponent },
       { path: 'warehouses/new', component: WarehouseFormComponent },
       { path: 'warehouses/:id/edit', component: WarehouseFormComponent },
@@ -94,7 +103,7 @@ export const routes: Routes = [
         path: 'stock-counts',
         loadComponent: () =>
           import('./features/stock-counts/stock-count-list/stock-count-list.component').then(
-            (m) => m.StockCountListComponent
+            (m) => m.StockCountListComponent,
           ),
       },
       { path: 'inventory/stock-in', component: StockInComponent },
@@ -139,10 +148,30 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['TenantAdmin', 'SuperAdmin'] },
       },
-      { path: 'users/new', component: UserFormComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
-      { path: 'users/:id/edit', component: UserFormComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
-      { path: 'users/:id', component: UserDetailComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
-      { path: 'settings', component: SettingsComponent, canActivate: [roleGuard], data: { roles: ['TenantAdmin', 'SuperAdmin'] } },
+      {
+        path: 'users/new',
+        component: UserFormComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+      },
+      {
+        path: 'users/:id/edit',
+        component: UserFormComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+      },
+      {
+        path: 'users/:id',
+        component: UserDetailComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+      },
+      {
+        path: 'settings',
+        component: SettingsComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

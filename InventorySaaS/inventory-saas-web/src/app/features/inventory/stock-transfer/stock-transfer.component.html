@@ -14,12 +14,12 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Product</label>
-          <select class="form-select" formControlName="productId">
-            <option value="" disabled>Select a product</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="productId" panelClass="app-select-panel" searchPlaceholder="Search products..." (selectSearch)="searchProducts($event)">
+            <mat-option value="" disabled>Select a product</mat-option>
             @for (p of products; track p.id) {
-              <option [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
+              <mat-option [value]="p.id">{{ p.name }} ({{ p.sku }})</mat-option>
             }
-          </select>
+          </mat-select>
         </div>
         <div class="form-group">
           <label class="form-label">Quantity</label>
@@ -31,22 +31,22 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Source Warehouse</label>
-          <select class="form-select" formControlName="sourceWarehouseId" (change)="onSourceWarehouseChange(form.value.sourceWarehouseId)">
-            <option value="" disabled>Select source warehouse</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="sourceWarehouseId" (selectionChange)="onSourceWarehouseChange(form.value.sourceWarehouseId)" panelClass="app-select-panel" searchPlaceholder="Search warehouses..." (selectSearch)="searchWarehouses($event)">
+            <mat-option value="" disabled>Select source warehouse</mat-option>
             @for (wh of warehouses; track wh.id) {
-              <option [value]="wh.id">{{ wh.name }}</option>
+              <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
             }
-          </select>
+          </mat-select>
         </div>
         <div class="form-group">
           @if (sourceLocations.length > 0) {
             <label class="form-label">Source Location</label>
-            <select class="form-select" formControlName="sourceLocationId">
-              <option value="">-- None --</option>
+            <mat-select appSearchableSelect class="form-select app-select" formControlName="sourceLocationId" panelClass="app-select-panel">
+              <mat-option value="">-- None --</mat-option>
               @for (loc of sourceLocations; track loc.id) {
-                <option [value]="loc.id">{{ loc.name }}</option>
+                <mat-option [value]="loc.id">{{ loc.name }}</mat-option>
               }
-            </select>
+            </mat-select>
           }
         </div>
       </div>
@@ -55,22 +55,22 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Destination Warehouse</label>
-          <select class="form-select" formControlName="destinationWarehouseId" (change)="onDestWarehouseChange(form.value.destinationWarehouseId)">
-            <option value="" disabled>Select destination warehouse</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="destinationWarehouseId" (selectionChange)="onDestWarehouseChange(form.value.destinationWarehouseId)" panelClass="app-select-panel" searchPlaceholder="Search warehouses..." (selectSearch)="searchWarehouses($event)">
+            <mat-option value="" disabled>Select destination warehouse</mat-option>
             @for (wh of warehouses; track wh.id) {
-              <option [value]="wh.id">{{ wh.name }}</option>
+              <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
             }
-          </select>
+          </mat-select>
         </div>
         <div class="form-group">
           @if (destLocations.length > 0) {
             <label class="form-label">Destination Location</label>
-            <select class="form-select" formControlName="destinationLocationId">
-              <option value="">-- None --</option>
+            <mat-select appSearchableSelect class="form-select app-select" formControlName="destinationLocationId" panelClass="app-select-panel">
+              <mat-option value="">-- None --</mat-option>
               @for (loc of destLocations; track loc.id) {
-                <option [value]="loc.id">{{ loc.name }}</option>
+                <mat-option [value]="loc.id">{{ loc.name }}</mat-option>
               }
-            </select>
+            </mat-select>
           }
         </div>
       </div>

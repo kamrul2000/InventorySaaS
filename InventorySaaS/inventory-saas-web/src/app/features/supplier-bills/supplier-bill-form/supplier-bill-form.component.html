@@ -7,12 +7,12 @@
     <div class="form-row">
       <div class="form-field">
         <label>Supplier *</label>
-        <select formControlName="supplierId">
-          <option value="">Select supplier</option>
+        <mat-select appSearchableSelect class="app-select" formControlName="supplierId" panelClass="app-select-panel" searchPlaceholder="Search suppliers..." (selectSearch)="searchSuppliers($event)">
+          <mat-option value="">Select supplier</mat-option>
           @for (s of suppliers; track s.id) {
-            <option [value]="s.id">{{ s.name }}</option>
+            <mat-option [value]="s.id">{{ s.name }}</mat-option>
           }
-        </select>
+        </mat-select>
       </div>
       <div class="form-field">
         <label>Supplier Invoice #</label>

@@ -12,13 +12,13 @@
 
   <div class="filter-bar">
     <label for="status">Show</label>
-    <select id="status" class="filter-select" [(ngModel)]="statusFilter" (ngModelChange)="load()">
-      <option value="PendingApproval">Awaiting approval</option>
-      <option value="Counting">In progress</option>
-      <option value="Approved">Approved</option>
-      <option value="Cancelled">Cancelled</option>
-      <option value="">All</option>
-    </select>
+    <mat-select appSearchableSelect id="status" class="filter-select app-select" [(ngModel)]="statusFilter" (ngModelChange)="load()" panelClass="app-select-panel">
+      <mat-option value="PendingApproval">Awaiting approval</mat-option>
+      <mat-option value="Counting">In progress</mat-option>
+      <mat-option value="Approved">Approved</mat-option>
+      <mat-option value="Cancelled">Cancelled</mat-option>
+      <mat-option value="">All</mat-option>
+    </mat-select>
     <button type="button" class="ghost-btn" (click)="load()">
       <mat-icon>refresh</mat-icon>
       <span>Refresh</span>

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +12,7 @@ import { SupplierDto } from '../../../core/models/domain.models';
 @Component({
   selector: 'app-supplier-bill-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
+  imports: [SearchableSelectModule, CommonModule, ReactiveFormsModule, MatIconModule],
   templateUrl: './supplier-bill-form.component.html',
   styleUrl: './supplier-bill-form.component.css',
 })
@@ -35,7 +36,11 @@ export class SupplierBillFormComponent implements OnInit {
       items: this.fb.array([this.newItem()]),
     });
 
-    this.supplierService.getAll({ pageNumber: 1, pageSize: 200 }).subscribe({
+    this.searchSuppliers('');
+  }
+
+  searchSuppliers(search: string): void {
+    this.supplierService.getAll({ pageNumber: 1, pageSize: 100, search }).subscribe({
       next: (r) => { this.suppliers = r.items; },
     });
   }

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,6 +16,7 @@ import { SupplierDto, WarehouseDto, ProductDto } from '../../../core/models/doma
   selector: 'app-po-form',
   standalone: true,
   imports: [
+    SearchableSelectModule,
     CommonModule, ReactiveFormsModule, MatIconModule, MatProgressSpinnerModule,
   ],
   templateUrl: './po-form.component.html',
@@ -48,10 +50,22 @@ export class PoFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.supplierService.getAll({ pageSize: 200 }).subscribe({ next: (r) => this.suppliers = r.items });
-    this.warehouseService.getAll({ pageSize: 100 }).subscribe({ next: (r) => this.warehouses = r.items });
-    this.productService.getAll({ pageSize: 200 }).subscribe({ next: (r) => this.products = r.items });
+    this.searchSuppliers('');
+    this.searchWarehouses('');
+    this.searchProducts('');
     this.addItem();
+  }
+
+  searchSuppliers(search: string): void {
+    this.supplierService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.suppliers = r.items });
+  }
+
+  searchWarehouses(search: string): void {
+    this.warehouseService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.warehouses = r.items });
+  }
+
+  searchProducts(search: string): void {
+    this.productService.getAll({ pageSize: 100, search }).subscribe({ next: (r) => this.products = r.items });
   }
 
   addItem(): void {

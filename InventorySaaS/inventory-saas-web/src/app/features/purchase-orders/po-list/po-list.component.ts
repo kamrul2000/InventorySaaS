@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,7 +13,7 @@ import { PurchaseOrderDto } from '../../../core/models/domain.models';
 @Component({
   selector: 'app-po-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, DataTableComponent],
+  imports: [SearchableSelectModule, CommonModule, FormsModule, MatIconModule, DataTableComponent],
   templateUrl: './po-list.component.html',
   styleUrl: './po-list.component.css',
 })

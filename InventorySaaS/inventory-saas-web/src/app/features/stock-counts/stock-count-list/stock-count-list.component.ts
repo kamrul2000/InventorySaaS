@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SearchableSelectModule } from '../../../shared/searchable-select/searchable-select.module';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +21,7 @@ const MANAGER_ROLES = ['TenantAdmin', 'Manager', 'SuperAdmin'];
 @Component({
   selector: 'app-stock-count-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIconModule],
+  imports: [SearchableSelectModule, CommonModule, FormsModule, RouterModule, MatIconModule],
   templateUrl: './stock-count-list.component.html',
   styleUrl: './stock-count-list.component.css',
 })

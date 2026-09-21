@@ -14,21 +14,21 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Product</label>
-          <select class="form-select" formControlName="productId">
-            <option value="" disabled>Select a product</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="productId" panelClass="app-select-panel" searchPlaceholder="Search products..." (selectSearch)="searchProducts($event)">
+            <mat-option value="" disabled>Select a product</mat-option>
             @for (p of products; track p.id) {
-              <option [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
+              <mat-option [value]="p.id">{{ p.name }} ({{ p.sku }})</mat-option>
             }
-          </select>
+          </mat-select>
         </div>
         <div class="form-group">
           <label class="form-label">Warehouse</label>
-          <select class="form-select" formControlName="warehouseId" (change)="onWarehouseChange(form.value.warehouseId)">
-            <option value="" disabled>Select a warehouse</option>
+          <mat-select appSearchableSelect class="form-select app-select" formControlName="warehouseId" (selectionChange)="onWarehouseChange(form.value.warehouseId)" panelClass="app-select-panel" searchPlaceholder="Search warehouses..." (selectSearch)="searchWarehouses($event)">
+            <mat-option value="" disabled>Select a warehouse</mat-option>
             @for (wh of warehouses; track wh.id) {
-              <option [value]="wh.id">{{ wh.name }}</option>
+              <mat-option [value]="wh.id">{{ wh.name }}</mat-option>
             }
-          </select>
+          </mat-select>
         </div>
       </div>
 
@@ -36,12 +36,12 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Location</label>
-            <select class="form-select" formControlName="locationId">
-              <option value="">-- None --</option>
+            <mat-select appSearchableSelect class="form-select app-select" formControlName="locationId" panelClass="app-select-panel">
+              <mat-option value="">-- None --</mat-option>
               @for (loc of locations; track loc.id) {
-                <option [value]="loc.id">{{ loc.name }}</option>
+                <mat-option [value]="loc.id">{{ loc.name }}</mat-option>
               }
-            </select>
+            </mat-select>
           </div>
           <div class="form-group"></div>
         </div>

@@ -1,49 +1,73 @@
-<div class="dialog-container">
-  <div class="dialog-header">
-    <h2 class="dialog-title">{{ isEditMode ? 'Edit Category' : 'New Category' }}</h2>
-    <button class="dialog-close" (click)="dialogRef.close()">
-      <mat-icon>close</mat-icon>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ isEditMode ? 'Edit Category' : 'New Category' }}</h1>
+      <p class="page-subtitle">
+        {{
+          isEditMode ? 'Update category details' : 'Add a new category to organize your products'
+        }}
+      </p>
+    </div>
+    <button class="btn-primary" type="button" routerLink="/categories">
+      <mat-icon>list</mat-icon>
+      Go to List
     </button>
   </div>
 
-  <div class="dialog-body">
-    <form [formGroup]="form">
-      <div class="form-group">
-        <label class="form-label">Category Name</label>
-        <input class="form-input" formControlName="name" placeholder="Enter category name">
-        @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-          <span class="form-error">Name is required</span>
-        }
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Description</label>
-        <textarea class="form-input form-textarea" formControlName="description" rows="3" placeholder="Enter description"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Parent Category</label>
-        <select class="form-select" formControlName="parentCategoryId">
-          <option [ngValue]="null">-- None --</option>
-          @for (cat of parentCategories; track cat.id) {
-            <option [ngValue]="cat.id">{{ cat.name }}</option>
+  <div class="form-card">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category Name *</label>
+          <input class="form-input" formControlName="name" placeholder="Enter category name" />
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <span class="form-error">Name is required</span>
           }
-        </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Parent Category</label>
+          <mat-form-field class="category-select-field" appearance="outline" subscriptSizing="dynamic">
+            <mat-select appSearchableSelect
+              formControlName="parentCategoryId"
+              panelClass="app-select-panel"
+              placeholder="Select category"
+              [disableOptionCentering]="true"
+              [canSelectNullableOptions]="false"
+              aria-label="Parent Category"
+              searchPlaceholder="Search categories..."
+              (selectSearch)="searchParentCategories($event)"
+            >
+              <mat-option [value]="null">No parent category</mat-option>
+            @for (category of parentCategories; track category.id) {
+                <mat-option [value]="category.id">{{ category.name }}</mat-option>
+            }
+            </mat-select>
+          </mat-form-field>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="isActive">
-          <span>Active</span>
-        </label>
+      <div class="form-group form-group-spaced">
+        <label class="form-label">Description</label>
+        <textarea
+          class="form-input form-textarea"
+          formControlName="description"
+          rows="4"
+          placeholder="Enter category description"
+        ></textarea>
+      </div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" formControlName="isActive" />
+        Active
+      </label>
+
+      <div class="form-actions">
+        <button class="btn-secondary" type="button" (click)="cancel()">Cancel</button>
+        <button class="btn-primary" type="submit" [disabled]="form.invalid || saving">
+          {{ saving ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
+        </button>
       </div>
     </form>
-  </div>
-
-  <div class="dialog-actions">
-    <button class="btn-secondary" (click)="dialogRef.close()">Cancel</button>
-    <button class="btn-primary" (click)="save()" [disabled]="form.invalid || saving">
-      {{ isEditMode ? 'Update' : 'Create' }}
-    </button>
   </div>
 </div>
