@@ -16,8 +16,8 @@ html {
 
 body {
   color-scheme: light;
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
+  background-color: #fff;
+  color: #1a202c;
   font: var(--mat-sys-body-medium);
   margin: 0;
   padding: 0;
@@ -27,6 +27,8 @@ body {
 // Page container
 .page-container {
   padding: 24px;
+  font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+  color: #1a202c;
 }
 
 // Card grid for dashboard
@@ -385,8 +387,8 @@ mat-divider {
   gap: 20px;
   padding: 24px;
   border-radius: 16px;
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
+  background: #fff;
+  border: 1px solid #e2e8f0;
 }
 
 .scan-op-step {
@@ -411,8 +413,8 @@ mat-divider {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--mat-sys-primary);
-  color: var(--mat-sys-on-primary);
+  background: #e8602c;
+  color: #fff;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -434,7 +436,7 @@ mat-divider {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .scan-op-field .required-mark {
@@ -446,9 +448,9 @@ mat-divider {
   min-height: 56px;
   padding: 0 14px;
   border-radius: 12px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #1a202c;
   // 16px minimum stops iOS Safari zooming the page on focus.
   font-size: 1rem;
   width: 100%;
@@ -458,8 +460,8 @@ mat-divider {
 .scan-op-input:focus,
 .scan-op-select:focus {
   outline: none;
-  border-color: var(--mat-sys-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mat-sys-primary) 18%, transparent);
+  border-color: #e8602c;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #e8602c 18%, transparent);
 }
 
 .scan-op-input.is-invalid {
@@ -481,7 +483,7 @@ textarea.scan-op-input {
 .scan-op-hint {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .scan-op-hint.is-error {
@@ -503,9 +505,9 @@ textarea.scan-op-input {
   min-height: 56px;
   padding: 0 24px;
   border-radius: 12px;
-  border: 1px solid var(--mat-sys-outline);
-  background: var(--mat-sys-surface-container);
-  color: var(--mat-sys-on-surface);
+  border: 1px solid #cbd5e0;
+  background: #f7fafc;
+  color: #1a202c;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -518,8 +520,8 @@ textarea.scan-op-input {
 
 .scan-op-btn.is-primary {
   flex: 1 1 200px;
-  background: var(--mat-sys-primary);
-  color: var(--mat-sys-on-primary);
+  background: #e8602c;
+  color: #fff;
   border-color: transparent;
 }
 
@@ -570,7 +572,7 @@ textarea.scan-op-input {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .scan-op-summary dd {
@@ -590,8 +592,8 @@ textarea.scan-op-input {
   padding: 32px;
   text-align: center;
   border-radius: 16px;
-  border: 1px dashed var(--mat-sys-outline-variant);
-  color: var(--mat-sys-on-surface-variant);
+  border: 1px dashed #e2e8f0;
+  color: #718096;
 }
 
 .scan-op-empty mat-icon {
@@ -605,7 +607,7 @@ textarea.scan-op-input {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--mat-sys-on-surface);
+  color: #1a202c;
 }
 
 .scan-op-empty p {
@@ -621,7 +623,7 @@ textarea.scan-op-input {
   gap: 12px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: var(--mat-sys-surface-container);
+  background: #f7fafc;
   font-size: 0.9rem;
 }
 
@@ -651,8 +653,8 @@ textarea.scan-op-input {
   gap: 6px;
   padding: 8px 10px 8px 12px;
   border-radius: 10px;
-  background: var(--mat-sys-surface-container);
-  border: 1px solid var(--mat-sys-outline-variant);
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
   font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
   font-size: 0.85rem;
 }
@@ -662,7 +664,7 @@ textarea.scan-op-input {
   align-items: center;
   border: none;
   background: transparent;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
   cursor: pointer;
   padding: 0;
 }
@@ -676,13 +678,13 @@ textarea.scan-op-input {
   align-items: center;
   gap: 4px;
   margin-bottom: 8px;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
   text-decoration: none;
   font-size: 0.875rem;
 }
 
 .scan-op-back:hover {
-  color: var(--mat-sys-primary);
+  color: #e8602c;
 }
 
 .scan-op-back mat-icon {
@@ -699,7 +701,7 @@ textarea.scan-op-input {
 
 .scan-op-header p {
   margin: 0 0 20px;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 @media (max-width: 1024px) {

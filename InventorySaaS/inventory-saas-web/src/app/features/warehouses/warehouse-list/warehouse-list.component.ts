@@ -10,6 +10,8 @@ import { DataTableComponent, TableColumn } from '../../../shared/components/data
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { MANAGER_UP } from '../../../core/constants/roles';
 import { WarehouseDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -42,8 +44,12 @@ export class WarehouseListComponent implements OnInit {
     private warehouseService: WarehouseService,
     private router: Router,
     private dialog: MatDialog,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private authService: AuthService
   ) {}
+
+  /** Warehouses are ManagerUp for every write action on the API, unlike most other master data. */
+  get canWrite(): boolean { return this.authService.hasAnyRole(MANAGER_UP); }
 
   ngOnInit(): void {
     this.loadWarehouses();

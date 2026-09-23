@@ -7,8 +7,11 @@ public record SupplierDto(
     string? ContactPerson,
     string? Email,
     string? Phone,
+    string? Address,
     string? City,
     string? Country,
+    string? TaxId,
+    string? PaymentTerms,
     bool IsActive);
 
 public record CreateSupplierRequest(

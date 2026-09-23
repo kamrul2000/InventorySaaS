@@ -56,18 +56,19 @@ public class ReportsController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false,
+        [FromQuery] Guid? warehouseId = null,
         CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _reportService.GetLowStockAsync(pagination, cancellationToken);
+        var result = await _reportService.GetLowStockAsync(pagination, warehouseId, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("low-stock/pdf")]
-    public async Task<IActionResult> LowStockPdf(CancellationToken cancellationToken)
+    public async Task<IActionResult> LowStockPdf([FromQuery] Guid? warehouseId = null, CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(1, 10000, null, null, false);
-        var result = await _reportService.GetLowStockAsync(pagination, cancellationToken);
+        var result = await _reportService.GetLowStockAsync(pagination, warehouseId, cancellationToken);
 
         var pdf = _pdfService.GenerateLowStockPdf(result.Items, "InventorySaaS");
         return File(pdf, "application/pdf", $"Low_Stock_{DateTime.UtcNow:yyyyMMdd}.pdf");
@@ -81,18 +82,22 @@ public class ReportsController : ControllerBase
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false,
         [FromQuery] int daysAhead = 30,
+        [FromQuery] Guid? warehouseId = null,
         CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _reportService.GetExpiryAsync(pagination, daysAhead, cancellationToken);
+        var result = await _reportService.GetExpiryAsync(pagination, daysAhead, warehouseId, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("expiry/pdf")]
-    public async Task<IActionResult> ExpiryPdf([FromQuery] int daysAhead = 30, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ExpiryPdf(
+        [FromQuery] int daysAhead = 30,
+        [FromQuery] Guid? warehouseId = null,
+        CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(1, 10000, null, null, false);
-        var result = await _reportService.GetExpiryAsync(pagination, daysAhead, cancellationToken);
+        var result = await _reportService.GetExpiryAsync(pagination, daysAhead, warehouseId, cancellationToken);
 
         var pdf = _pdfService.GenerateExpiryPdf(result.Items, "InventorySaaS");
         return File(pdf, "application/pdf", $"Expiry_Report_{DateTime.UtcNow:yyyyMMdd}.pdf");

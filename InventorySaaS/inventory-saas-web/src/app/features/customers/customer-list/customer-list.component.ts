@@ -9,6 +9,8 @@ import { DataTableComponent, TableColumn } from '../../../shared/components/data
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CustomerService } from '../../../core/services/customer.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP, MANAGER_UP } from '../../../core/constants/roles';
 import { CustomerDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -41,8 +43,12 @@ export class CustomerListComponent implements OnInit {
 
   constructor(
     private customerService: CustomerService, private router: Router,
-    private dialog: MatDialog, private notification: NotificationService
+    private dialog: MatDialog, private notification: NotificationService,
+    private authService: AuthService
   ) {}
+
+  get canWrite(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
+  get canDelete(): boolean { return this.authService.hasAnyRole(MANAGER_UP); }
 
   ngOnInit(): void { this.loadCustomers(); }
 

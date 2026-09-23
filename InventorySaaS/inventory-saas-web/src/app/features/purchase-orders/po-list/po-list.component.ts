@@ -8,6 +8,8 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { PurchaseOrderService } from '../../../core/services/purchase-order.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP } from '../../../core/constants/roles';
 import { PurchaseOrderDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -37,7 +39,9 @@ export class PoListComponent implements OnInit {
   sortDescending = false;
   statusFilter = '';
 
-  constructor(private poService: PurchaseOrderService, private router: Router) {}
+  constructor(private poService: PurchaseOrderService, private router: Router, private authService: AuthService) {}
+
+  get canCreate(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
 
   ngOnInit(): void { this.loadOrders(); }
 
@@ -64,7 +68,7 @@ export class PoListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const po = event.row as PurchaseOrderDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view' || event.action === 'edit') {
       this.router.navigate(['/purchase-orders', po.id]);
     }
   }

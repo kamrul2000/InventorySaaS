@@ -20,12 +20,13 @@ public class SalesOrdersController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
+        [FromQuery] string? status = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false,
         CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _salesOrderService.GetAllAsync(pagination, cancellationToken);
+        var result = await _salesOrderService.GetAllAsync(pagination, status, cancellationToken);
         return Ok(result);
     }
 

@@ -4,9 +4,11 @@
       <h1 class="page-title">Sales Orders</h1>
       <p class="page-subtitle">Manage your sales orders</p>
     </div>
-    <button class="btn-primary" (click)="create()">
-      <mat-icon>add</mat-icon> New Sales Order
-    </button>
+    @if (canCreate) {
+      <button class="btn-primary" (click)="create()">
+        <mat-icon>add</mat-icon> New Sales Order
+      </button>
+    }
   </div>
   <app-data-table
     [columns]="columns"
@@ -14,6 +16,7 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canDelete]="false"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

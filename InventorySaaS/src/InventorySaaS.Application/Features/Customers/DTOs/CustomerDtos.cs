@@ -8,8 +8,12 @@ public record CustomerDto(
     string? ContactPerson,
     string? Email,
     string? Phone,
+    string? Address,
     string? City,
     string? Country,
+    string? TaxId,
+    string? PaymentTerms,
+    decimal? CreditLimit,
     bool IsActive);
 
 public record CreateCustomerRequest(

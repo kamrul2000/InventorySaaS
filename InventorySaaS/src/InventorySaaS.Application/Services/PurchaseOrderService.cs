@@ -1,9 +1,11 @@
+using FluentValidation;
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.PurchaseOrders.DTOs;
 using InventorySaaS.Application.Interfaces;
 using InventorySaaS.Domain.Common.Enums;
 using InventorySaaS.Domain.Common.Interfaces;
 using InventorySaaS.Domain.Entities.Inventory;
+using InventorySaaS.Domain.Entities.Product;
 using InventorySaaS.Domain.Entities.Purchase;
 using InventorySaaS.Domain.Entities.Supplier;
 using InventorySaaS.Domain.Entities.Warehouse;
@@ -16,15 +18,21 @@ public class PurchaseOrderService : IPurchaseOrderService
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IValidator<CreatePurchaseOrderRequest> _createValidator;
 
-    public PurchaseOrderService(IApplicationDbContext context, ICurrentUserService currentUserService)
+    public PurchaseOrderService(
+        IApplicationDbContext context,
+        ICurrentUserService currentUserService,
+        IValidator<CreatePurchaseOrderRequest> createValidator)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _createValidator = createValidator;
     }
 
     public async Task<PaginatedList<PurchaseOrderDto>> GetAllAsync(
         PaginationParams pagination,
+        string? status,
         CancellationToken cancellationToken)
     {
         var query = _context.PurchaseOrders
@@ -34,6 +42,9 @@ public class PurchaseOrderService : IPurchaseOrderService
                 .ThenInclude(i => i.Product)
             .Where(po => !po.IsDeleted)
             .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PurchaseOrderStatus>(status, true, out var parsedStatus))
+            query = query.Where(po => po.Status == parsedStatus);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {
@@ -81,6 +92,8 @@ public class PurchaseOrderService : IPurchaseOrderService
         CreatePurchaseOrderRequest request,
         CancellationToken cancellationToken)
     {
+        await _createValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var supplier = await _context.Suppliers
             .FirstOrDefaultAsync(s => s.Id == request.SupplierId, cancellationToken)
             ?? throw new NotFoundException(nameof(SupplierInfo), request.SupplierId);
@@ -120,7 +133,7 @@ public class PurchaseOrderService : IPurchaseOrderService
         {
             var product = await _context.Products
                 .FirstOrDefaultAsync(p => p.Id == item.ProductId, cancellationToken)
-                ?? throw new BadRequestException($"Product with ID {item.ProductId} not found.");
+                ?? throw new NotFoundException(nameof(ProductInfo), item.ProductId);
 
             var lineSubTotal = item.Quantity * item.UnitPrice;
             var lineTax = lineSubTotal * (item.TaxRate / 100m);
@@ -185,6 +198,32 @@ public class PurchaseOrderService : IPurchaseOrderService
         return ToDto(po);
     }
 
+    public async Task<PurchaseOrderDto> CancelAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var po = await _context.PurchaseOrders
+            .Include(p => p.Supplier)
+            .Include(p => p.Warehouse)
+            .Include(p => p.Items)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
+            ?? throw new NotFoundException(nameof(PurchaseOrder), id);
+
+        // A PO with any goods already received has inventory/costing consequences a plain cancel
+        // can't safely undo (that's what Return is for), so cancel is only for a mis-created order
+        // that never progressed past approval (PUR-03).
+        if (po.Status != PurchaseOrderStatus.Draft && po.Status != PurchaseOrderStatus.Submitted && po.Status != PurchaseOrderStatus.Approved)
+            throw new BadRequestException(
+                $"Cannot cancel a purchase order with status '{po.Status}'. Only Draft, Submitted, or Approved orders with nothing received yet can be cancelled.");
+
+        if (po.Items.Any(i => i.ReceivedQuantity > 0))
+            throw new BadRequestException("Cannot cancel a purchase order that already has goods received. Use Return instead.");
+
+        po.Status = PurchaseOrderStatus.Cancelled;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ToDto(po);
+    }
+
     public async Task<PurchaseOrderDto> ReceiveAsync(
         Guid id,
         ReceiveGoodsRequest request,
@@ -214,6 +253,13 @@ public class PurchaseOrderService : IPurchaseOrderService
             Notes = request.Notes
         };
 
+        // Pre-fetch every balance row that could match one of this receipt's lines in a single
+        // query instead of one FirstOrDefaultAsync per item (PERF-02).
+        var candidateProductIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
+        var candidateBalances = await _context.InventoryBalances
+            .Where(ib => ib.WarehouseId == po.WarehouseId && candidateProductIds.Contains(ib.ProductId))
+            .ToListAsync(cancellationToken);
+
         foreach (var receiveItem in request.Items)
         {
             var poItem = po.Items.FirstOrDefault(i => i.ProductId == receiveItem.ProductId)
@@ -242,13 +288,18 @@ public class PurchaseOrderService : IPurchaseOrderService
             var acceptedQuantity = receiveItem.Quantity - receiveItem.RejectedQuantity;
             if (acceptedQuantity > 0)
             {
-                var balance = await _context.InventoryBalances
-                    .FirstOrDefaultAsync(ib =>
+                // When no bin location is given (the UI never collects one today - PUR-06), match
+                // any existing balance for this product+warehouse+batch regardless of its location
+                // instead of always requiring an exact LocationId==null match; otherwise every
+                // unlocated receipt against an already-located balance fragments into its own row.
+                var balance = receiveItem.LocationId is null
+                    ? candidateBalances.FirstOrDefault(ib =>
                         ib.ProductId == receiveItem.ProductId &&
-                        ib.WarehouseId == po.WarehouseId &&
+                        ib.BatchNumber == receiveItem.BatchNumber)
+                    : candidateBalances.FirstOrDefault(ib =>
+                        ib.ProductId == receiveItem.ProductId &&
                         ib.LocationId == receiveItem.LocationId &&
-                        ib.BatchNumber == receiveItem.BatchNumber,
-                        cancellationToken);
+                        ib.BatchNumber == receiveItem.BatchNumber);
 
                 if (balance is null)
                 {
@@ -265,6 +316,7 @@ public class PurchaseOrderService : IPurchaseOrderService
                         UnitCost = poItem.UnitPrice
                     };
                     _context.InventoryBalances.Add(balance);
+                    candidateBalances.Add(balance);
                 }
 
                 // Blend the purchase cost into the moving weighted-average cost.

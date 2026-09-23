@@ -5,10 +5,12 @@
       <h1 class="page-title">Brands</h1>
       <p class="page-subtitle">Manage the brand list your products are chosen from</p>
     </div>
-    <button class="btn-primary" routerLink="/brands/new">
-      <mat-icon>add</mat-icon>
-      Add Brand
-    </button>
+    @if (canWrite) {
+      <button class="btn-primary" routerLink="/brands/new">
+        <mat-icon>add</mat-icon>
+        Add Brand
+      </button>
+    }
   </div>
 
   <!-- Data Table -->
@@ -18,6 +20,8 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canEdit]="canWrite"
+    [canDelete]="canDelete"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

@@ -11,12 +11,12 @@
         <p class="page-subtitle">Purchase order details and line items</p>
       </div>
       <div class="btn-group">
-        @if (order.status === 'Draft' || order.status === 'Submitted') {
+        @if (canApprove) {
           <button class="btn-primary" (click)="approve()">
             <mat-icon>check</mat-icon> Approve
           </button>
         }
-        @if (order.status === 'Approved') {
+        @if (canReceiveGoods) {
           <button class="btn-primary" (click)="receiveGoods()">
             <mat-icon>inventory</mat-icon> Receive Goods
           </button>

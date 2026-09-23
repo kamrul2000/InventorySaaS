@@ -1,3 +1,4 @@
+using FluentValidation;
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.SalesOrders.DTOs;
 using InventorySaaS.Application.Interfaces;
@@ -5,6 +6,7 @@ using InventorySaaS.Domain.Common.Enums;
 using InventorySaaS.Domain.Common.Interfaces;
 using InventorySaaS.Domain.Entities.Customer;
 using InventorySaaS.Domain.Entities.Inventory;
+using InventorySaaS.Domain.Entities.Product;
 using InventorySaaS.Domain.Entities.Sales;
 using InventorySaaS.Domain.Entities.Warehouse;
 using InventorySaaS.Domain.Exceptions;
@@ -16,15 +18,21 @@ public class SalesOrderService : ISalesOrderService
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IValidator<CreateSalesOrderRequest> _createValidator;
 
-    public SalesOrderService(IApplicationDbContext context, ICurrentUserService currentUserService)
+    public SalesOrderService(
+        IApplicationDbContext context,
+        ICurrentUserService currentUserService,
+        IValidator<CreateSalesOrderRequest> createValidator)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _createValidator = createValidator;
     }
 
     public async Task<PaginatedList<SalesOrderDto>> GetAllAsync(
         PaginationParams pagination,
+        string? status,
         CancellationToken cancellationToken)
     {
         var query = _context.SalesOrders
@@ -34,6 +42,9 @@ public class SalesOrderService : ISalesOrderService
                 .ThenInclude(i => i.Product)
             .Where(so => !so.IsDeleted)
             .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<SalesOrderStatus>(status, true, out var parsedStatus))
+            query = query.Where(so => so.Status == parsedStatus);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {
@@ -82,6 +93,8 @@ public class SalesOrderService : ISalesOrderService
         CreateSalesOrderRequest request,
         CancellationToken cancellationToken)
     {
+        await _createValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var customer = await _context.Customers
             .FirstOrDefaultAsync(c => c.Id == request.CustomerId, cancellationToken)
             ?? throw new NotFoundException(nameof(CustomerInfo), request.CustomerId);
@@ -122,7 +135,7 @@ public class SalesOrderService : ISalesOrderService
         {
             var product = await _context.Products
                 .FirstOrDefaultAsync(p => p.Id == item.ProductId, cancellationToken)
-                ?? throw new BadRequestException($"Product with ID {item.ProductId} not found.");
+                ?? throw new NotFoundException(nameof(ProductInfo), item.ProductId);
 
             var lineSubTotal = item.Quantity * item.UnitPrice;
             var lineTax = lineSubTotal * (item.TaxRate / 100m);
@@ -182,11 +195,18 @@ public class SalesOrderService : ISalesOrderService
         if (so.Status != SalesOrderStatus.Draft)
             throw new BadRequestException($"Cannot confirm a sales order with status '{so.Status}'.");
 
+        // Fetch every balance this order could draw from in one query instead of two round-trips
+        // per line item (a check pass and a reservation pass) - PERF-01.
+        var itemProductIds = so.Items.Select(i => i.ProductId).Distinct().ToList();
+        var warehouseBalances = await _context.InventoryBalances
+            .Where(ib => ib.WarehouseId == so.WarehouseId && itemProductIds.Contains(ib.ProductId))
+            .OrderBy(ib => ib.ExpiryDate)
+            .ToListAsync(cancellationToken);
+        var balancesByProduct = warehouseBalances.ToLookup(ib => ib.ProductId);
+
         foreach (var item in so.Items)
         {
-            var availableStock = await _context.InventoryBalances
-                .Where(ib => ib.ProductId == item.ProductId && ib.WarehouseId == so.WarehouseId)
-                .SumAsync(ib => ib.QuantityOnHand - ib.QuantityReserved, cancellationToken);
+            var availableStock = balancesByProduct[item.ProductId].Sum(ib => ib.QuantityOnHand - ib.QuantityReserved);
 
             if (availableStock < item.Quantity)
                 throw new BadRequestException($"Insufficient stock for product '{item.Product.Name}'. Available: {availableStock}, Required: {item.Quantity}.");
@@ -194,13 +214,8 @@ public class SalesOrderService : ISalesOrderService
 
         foreach (var item in so.Items)
         {
-            var balances = await _context.InventoryBalances
-                .Where(ib => ib.ProductId == item.ProductId && ib.WarehouseId == so.WarehouseId)
-                .OrderBy(ib => ib.ExpiryDate)
-                .ToListAsync(cancellationToken);
-
             var remainingToReserve = item.Quantity;
-            foreach (var balance in balances)
+            foreach (var balance in balancesByProduct[item.ProductId])
             {
                 if (remainingToReserve <= 0) break;
 
@@ -236,6 +251,15 @@ public class SalesOrderService : ISalesOrderService
 
         var tenantId = _currentUserService.TenantId!.Value;
 
+        // Fetch every balance this delivery could draw from in one query instead of one per line
+        // item (PERF-01).
+        var deliverProductIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
+        var deliverBalances = await _context.InventoryBalances
+            .Where(ib => ib.WarehouseId == so.WarehouseId && deliverProductIds.Contains(ib.ProductId))
+            .OrderBy(ib => ib.ExpiryDate)
+            .ToListAsync(cancellationToken);
+        var deliverBalancesByProduct = deliverBalances.ToLookup(ib => ib.ProductId);
+
         foreach (var deliverItem in request.Items)
         {
             var soItem = so.Items.FirstOrDefault(i => i.ProductId == deliverItem.ProductId)
@@ -247,14 +271,9 @@ public class SalesOrderService : ISalesOrderService
 
             soItem.DeliveredQuantity += deliverItem.Quantity;
 
-            var balances = await _context.InventoryBalances
-                .Where(ib => ib.ProductId == deliverItem.ProductId && ib.WarehouseId == so.WarehouseId)
-                .OrderBy(ib => ib.ExpiryDate)
-                .ToListAsync(cancellationToken);
-
             var remainingToDeduct = deliverItem.Quantity;
             decimal totalCost = 0;
-            foreach (var balance in balances)
+            foreach (var balance in deliverBalancesByProduct[deliverItem.ProductId])
             {
                 if (remainingToDeduct <= 0) break;
 
@@ -319,6 +338,18 @@ public class SalesOrderService : ISalesOrderService
 
         if (so.Status != SalesOrderStatus.Delivered && so.Status != SalesOrderStatus.PartiallyDelivered)
             throw new BadRequestException($"Cannot process returns for a sales order with status '{so.Status}'.");
+
+        // There is no credit-note/refund mechanism yet, so a return can't safely reconcile an
+        // invoice's AmountPaid/BalanceDue on its own (SALES-04). Block until the invoice is voided
+        // (only possible while unpaid) or, for a paid invoice, handled manually outside the system.
+        var activeInvoice = await _context.Invoices
+            .FirstOrDefaultAsync(i => i.SalesOrderId == so.Id && i.Status != InvoiceStatus.Cancelled, cancellationToken);
+        if (activeInvoice is not null)
+            throw new BadRequestException(
+                $"Cannot process a return: invoice '{activeInvoice.InvoiceNumber}' has already been issued for this order. " +
+                (activeInvoice.AmountPaid > 0
+                    ? "It has payments applied and must be reconciled manually before returning goods."
+                    : "Cancel that invoice first, then process the return."));
 
         var tenantId = _currentUserService.TenantId!.Value;
 

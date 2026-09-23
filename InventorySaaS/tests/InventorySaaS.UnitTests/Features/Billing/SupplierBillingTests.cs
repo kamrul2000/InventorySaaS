@@ -1,5 +1,6 @@
 using FluentAssertions;
 using InventorySaaS.Application.Features.Billing.DTOs;
+using InventorySaaS.Application.Features.Billing.Validators;
 using InventorySaaS.Application.Services;
 using InventorySaaS.Domain.Common.Enums;
 using InventorySaaS.Domain.Common.Interfaces;
@@ -85,7 +86,7 @@ public class SupplierBillingTests
 
         using (var ctx = CreateContext(dbName))
         {
-            var service = new SupplierBillService(ctx, new FakeCurrentUserService());
+            var service = new SupplierBillService(ctx, new FakeCurrentUserService(), new CreateSupplierBillRequestValidator());
 
             var bill = await service.CreateFromPurchaseOrderAsync(
                 new CreateBillFromPurchaseOrderRequest(poId, "SUP-INV-99", null), default);
@@ -102,7 +103,7 @@ public class SupplierBillingTests
 
         using (var ctx = CreateContext(dbName))
         {
-            var service = new SupplierBillService(ctx, new FakeCurrentUserService());
+            var service = new SupplierBillService(ctx, new FakeCurrentUserService(), new CreateSupplierBillRequestValidator());
             var act = async () => await service.CreateFromPurchaseOrderAsync(
                 new CreateBillFromPurchaseOrderRequest(poId, null, null), default);
             await act.Should().ThrowAsync<ConflictException>();

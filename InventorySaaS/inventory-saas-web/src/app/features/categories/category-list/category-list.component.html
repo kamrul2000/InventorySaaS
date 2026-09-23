@@ -5,10 +5,12 @@
       <h1 class="page-title">Categories</h1>
       <p class="page-subtitle">Manage your product categories</p>
     </div>
-    <button class="btn-primary" routerLink="/categories/new">
-      <mat-icon>add</mat-icon>
-      Add Category
-    </button>
+    @if (canWrite) {
+      <button class="btn-primary" routerLink="/categories/new">
+        <mat-icon>add</mat-icon>
+        Add Category
+      </button>
+    }
   </div>
 
   <!-- Data Table -->
@@ -18,6 +20,8 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canEdit]="canWrite"
+    [canDelete]="canDelete"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

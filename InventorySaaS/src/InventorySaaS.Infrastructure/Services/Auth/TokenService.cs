@@ -22,6 +22,9 @@ public class TokenService : ITokenService
         _configuration = configuration;
     }
 
+    public TimeSpan GetAccessTokenLifetime() =>
+        TimeSpan.FromMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"] ?? "60"));
+
     public async Task<(string AccessToken, string RefreshToken)> GenerateTokensAsync(ApplicationUser user, IList<string> roles)
     {
         var accessToken = GenerateAccessToken(user, roles);

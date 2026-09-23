@@ -44,7 +44,7 @@ export class WarehouseFormComponent implements OnInit {
       city: [''],
       country: [''],
       contactPerson: [''],
-      phone: [''],
+      contactPhone: [''],
       isDefault: [false],
     });
   }

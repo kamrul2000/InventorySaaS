@@ -1,4 +1,5 @@
 using FluentAssertions;
+using InventorySaaS.Application.Features.SalesOrders.Validators;
 using InventorySaaS.Application.Services;
 using InventorySaaS.Domain.Common.Enums;
 using InventorySaaS.Domain.Common.Interfaces;
@@ -94,7 +95,7 @@ public class SalesOrderReservationTests
         // Confirm reserves stock.
         using (var ctx = CreateContext(dbName))
         {
-            var service = new SalesOrderService(ctx, new FakeCurrentUserService());
+            var service = new SalesOrderService(ctx, new FakeCurrentUserService(), new CreateSalesOrderRequestValidator());
             orderId = await ctx.SalesOrders.Select(s => s.Id).FirstAsync();
 
             var confirmed = await service.ConfirmAsync(orderId, default);
@@ -108,7 +109,7 @@ public class SalesOrderReservationTests
         // Cancel releases the reservation.
         using (var ctx = CreateContext(dbName))
         {
-            var service = new SalesOrderService(ctx, new FakeCurrentUserService());
+            var service = new SalesOrderService(ctx, new FakeCurrentUserService(), new CreateSalesOrderRequestValidator());
 
             var cancelled = await service.CancelAsync(orderId, default);
             cancelled.Status.Should().Be(nameof(SalesOrderStatus.Cancelled));

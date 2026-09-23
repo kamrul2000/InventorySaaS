@@ -13,6 +13,8 @@ import {
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { UnitOfMeasureService } from '../../../core/services/unit-of-measure.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP, MANAGER_UP } from '../../../core/constants/roles';
 import { UnitOfMeasureDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -44,7 +46,11 @@ export class UnitListComponent implements OnInit {
     private dialog: MatDialog,
     private notification: NotificationService,
     private router: Router,
+    private authService: AuthService,
   ) {}
+
+  get canWrite(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
+  get canDelete(): boolean { return this.authService.hasAnyRole(MANAGER_UP); }
 
   ngOnInit(): void {
     this.loadUnits();
@@ -94,7 +100,12 @@ export class UnitListComponent implements OnInit {
   onRowAction(event: { action: string; row: unknown }): void {
     const unit = event.row as UnitOfMeasureDto;
 
-    if (event.action === 'view' || event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/units', unit.id]);
+      return;
+    }
+
+    if (event.action === 'edit') {
       this.router.navigate(['/units', unit.id, 'edit']);
       return;
     }

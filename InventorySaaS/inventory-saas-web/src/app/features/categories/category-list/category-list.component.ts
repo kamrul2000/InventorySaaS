@@ -13,6 +13,8 @@ import {
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CategoryService } from '../../../core/services/category.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP, MANAGER_UP } from '../../../core/constants/roles';
 import { CategoryDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -44,7 +46,11 @@ export class CategoryListComponent implements OnInit {
     private dialog: MatDialog,
     private notification: NotificationService,
     private router: Router,
+    private authService: AuthService,
   ) {}
+
+  get canWrite(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
+  get canDelete(): boolean { return this.authService.hasAnyRole(MANAGER_UP); }
 
   ngOnInit(): void {
     this.loadCategories();

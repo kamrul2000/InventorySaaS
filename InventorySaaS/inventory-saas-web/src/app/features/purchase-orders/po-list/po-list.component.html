@@ -4,9 +4,11 @@
       <h1 class="page-title">Purchase Orders</h1>
       <p class="page-subtitle">Track and manage supplier purchase orders</p>
     </div>
-    <button class="btn-primary" (click)="create()">
-      <mat-icon>add</mat-icon> Create PO
-    </button>
+    @if (canCreate) {
+      <button class="btn-primary" (click)="create()">
+        <mat-icon>add</mat-icon> Create PO
+      </button>
+    }
   </div>
 
   <div class="filters">
@@ -29,6 +31,7 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canDelete]="false"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
+using FluentValidation;
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.Users.DTOs;
 using InventorySaaS.Application.Interfaces;
+using InventorySaaS.Domain.Common.Enums;
 using InventorySaaS.Domain.Common.Interfaces;
 using InventorySaaS.Domain.Entities.Identity;
 using InventorySaaS.Domain.Exceptions;
@@ -15,17 +17,20 @@ public class UserService : IUserService
     private readonly ICurrentUserService _currentUserService;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IEmailService _emailService;
+    private readonly IValidator<CreateUserRequest> _createUserValidator;
 
     public UserService(
         IApplicationDbContext context,
         ICurrentUserService currentUserService,
         IPasswordHasher passwordHasher,
-        IEmailService emailService)
+        IEmailService emailService,
+        IValidator<CreateUserRequest> createUserValidator)
     {
         _context = context;
         _currentUserService = currentUserService;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
+        _createUserValidator = createUserValidator;
     }
 
     public async Task<PaginatedList<UserDto>> GetAllAsync(
@@ -80,6 +85,8 @@ public class UserService : IUserService
         CreateUserRequest request,
         CancellationToken cancellationToken)
     {
+        await _createUserValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var normalizedEmail = request.Email.ToUpperInvariant();
 
         var emailExists = await _context.Users
@@ -87,6 +94,8 @@ public class UserService : IUserService
 
         if (emailExists)
             throw new ConflictException("A user with this email already exists.");
+
+        EnsureCanAssignRoles(request.Roles);
 
         var passwordHash = _passwordHasher.Hash(request.Password);
 
@@ -115,7 +124,14 @@ public class UserService : IUserService
             _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("A user with this email already exists.");
+        }
 
         return new UserDto(
             user.Id, user.Email, user.FirstName, user.LastName, user.PhoneNumber, user.IsActive,
@@ -140,6 +156,8 @@ public class UserService : IUserService
 
         if (request.Roles is not null)
         {
+            EnsureCanAssignRoles(request.Roles);
+
             var existingUserRoles = await _context.UserRoles
                 .Where(ur => ur.UserId == user.Id)
                 .ToListAsync(cancellationToken);
@@ -183,6 +201,8 @@ public class UserService : IUserService
         if (emailExists)
             throw new ConflictException("A user with this email already exists.");
 
+        EnsureCanAssignRoles(request.Roles);
+
         var tempPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(12));
         var passwordHash = _passwordHasher.Hash(tempPassword);
 
@@ -210,7 +230,14 @@ public class UserService : IUserService
             _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("A user with this email already exists.");
+        }
 
         var placeholders = new Dictionary<string, string>
         {
@@ -220,5 +247,35 @@ public class UserService : IUserService
         };
 
         await _emailService.SendTemplateAsync(request.Email, "UserInvitation", placeholders, cancellationToken);
+    }
+
+    // Only a SuperAdmin may grant the SuperAdmin role. A TenantAdmin may assign any of the
+    // ordinary tenant-scoped roles (which AppRoles.TenantRoles already deliberately excludes
+    // SuperAdmin from), but never elevate a user - themselves included - to platform-wide access.
+    private void EnsureCanAssignRoles(IEnumerable<string> requestedRoles)
+    {
+        var requested = requestedRoles.ToList();
+
+        // A typo'd/unknown role name used to be silently dropped instead of rejected, so the
+        // user ended up with fewer roles than requested and no error telling them why (AUTH-06).
+        var knownRoles = AppRoles.All.Select(r => r.ToUpperInvariant()).ToHashSet();
+        var unknown = requested.Where(r => !knownRoles.Contains(r.ToUpperInvariant())).ToList();
+        if (unknown.Count > 0)
+            throw new BadRequestException($"Unknown role(s): {string.Join(", ", unknown)}.");
+
+        if (_currentUserService.IsSuperAdmin)
+            return;
+
+        var allowedRoles = AppRoles.TenantRoles
+            .Select(r => r.ToUpperInvariant())
+            .ToHashSet();
+
+        var disallowed = requested
+            .Where(r => !allowedRoles.Contains(r.ToUpperInvariant()))
+            .ToList();
+
+        if (disallowed.Count > 0)
+            throw new ForbiddenAccessException(
+                $"You are not allowed to assign the role(s): {string.Join(", ", disallowed)}.");
     }
 }

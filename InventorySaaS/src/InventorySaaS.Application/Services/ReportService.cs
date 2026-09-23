@@ -73,13 +73,20 @@ public class ReportService : IReportService
 
     public async Task<PaginatedList<LowStockReportDto>> GetLowStockAsync(
         PaginationParams pagination,
+        Guid? warehouseId,
         CancellationToken cancellationToken)
     {
         var query = _context.InventoryBalances
             .AsNoTracking()
             .Include(ib => ib.Product)
             .Include(ib => ib.Warehouse)
-            .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel && ib.QuantityOnHand > 0);
+            // A fully out-of-stock product (QuantityOnHand == 0) is the most urgent case of
+            // "needs reordering", so it must be included here too (RPT-01) - this now matches
+            // InventoryAlertJob's definition, which never excluded qty=0.
+            .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel);
+
+        if (warehouseId.HasValue)
+            query = query.Where(ib => ib.WarehouseId == warehouseId.Value);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {
@@ -112,6 +119,7 @@ public class ReportService : IReportService
     public async Task<PaginatedList<ExpiryReportDto>> GetExpiryAsync(
         PaginationParams pagination,
         int daysAhead,
+        Guid? warehouseId,
         CancellationToken cancellationToken)
     {
         var expiryThreshold = DateTime.UtcNow.AddDays(daysAhead);
@@ -123,6 +131,9 @@ public class ReportService : IReportService
                 ib.ExpiryDate != null &&
                 ib.ExpiryDate <= expiryThreshold &&
                 ib.QuantityOnHand > 0);
+
+        if (warehouseId.HasValue)
+            query = query.Where(ib => ib.WarehouseId == warehouseId.Value);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {

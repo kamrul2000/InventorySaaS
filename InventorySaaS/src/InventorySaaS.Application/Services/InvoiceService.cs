@@ -138,6 +138,13 @@ public class InvoiceService : IInvoiceService
             .FirstOrDefaultAsync(s => s.Id == request.SalesOrderId && !s.IsDeleted, cancellationToken)
             ?? throw new NotFoundException(nameof(SalesOrder), request.SalesOrderId);
 
+        // Mirrors the frontend's canInvoice guard (so-detail.component.ts) - only orders that have
+        // actually shipped something are eligible, so a Draft/Confirmed/Cancelled/Returned order
+        // can't be invoiced via a direct API call that bypasses the UI (SALES-05).
+        if (so.Status is not (SalesOrderStatus.Delivered or SalesOrderStatus.PartiallyDelivered))
+            throw new BadRequestException(
+                $"Cannot invoice a sales order with status '{so.Status}'. It must be Delivered or PartiallyDelivered.");
+
         var alreadyInvoiced = await _context.Invoices
             .AnyAsync(i => i.SalesOrderId == so.Id && i.Status != InvoiceStatus.Cancelled, cancellationToken);
         if (alreadyInvoiced)

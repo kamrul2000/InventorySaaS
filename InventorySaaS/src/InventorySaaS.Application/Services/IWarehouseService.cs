@@ -5,7 +5,7 @@ namespace InventorySaaS.Application.Services;
 
 public interface IWarehouseService
 {
-    Task<PaginatedList<WarehouseDto>> GetAllAsync(PaginationParams pagination, CancellationToken cancellationToken);
+    Task<PaginatedList<WarehouseDto>> GetAllAsync(PaginationParams pagination, bool? isActive, CancellationToken cancellationToken);
     Task<WarehouseDto> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<WarehouseDto> CreateAsync(CreateWarehouseRequest request, CancellationToken cancellationToken);
     Task<WarehouseDto> UpdateAsync(Guid id, UpdateWarehouseRequest request, CancellationToken cancellationToken);

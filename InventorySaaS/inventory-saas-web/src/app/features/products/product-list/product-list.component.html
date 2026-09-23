@@ -6,14 +6,16 @@
       <p class="page-subtitle">Manage your product inventory</p>
     </div>
     <div class="header-actions">
-      <button class="btn-primary" (click)="addProduct()">
-        <mat-icon>add</mat-icon>
-        Add Product
-      </button>
-      <button class="btn-secondary" (click)="importProducts()">
-        <mat-icon>upload_file</mat-icon>
-        Import
-      </button>
+      @if (canWrite) {
+        <button class="btn-primary" (click)="addProduct()">
+          <mat-icon>add</mat-icon>
+          Add Product
+        </button>
+        <button class="btn-secondary" (click)="importProducts()">
+          <mat-icon>upload_file</mat-icon>
+          Import
+        </button>
+      }
       <button class="btn-secondary" (click)="exportProducts()" [disabled]="exporting">
         <mat-icon>download</mat-icon>
         Export
@@ -28,9 +30,13 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [error]="error"
+    [canEdit]="canWrite"
+    [canDelete]="canDelete"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"
+    (retry)="loadProducts()"
     (rowAction)="onRowAction($event)">
   </app-data-table>
 </div>

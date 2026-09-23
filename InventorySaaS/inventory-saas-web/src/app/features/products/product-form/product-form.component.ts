@@ -13,6 +13,7 @@ import { UnitOfMeasureService } from '../../../core/services/unit-of-measure.ser
 import { NotificationService } from '../../../core/services/notification.service';
 import { BrandFormComponent } from '../../brands/brand-form/brand-form.component';
 import { UnitFormComponent } from '../../units/unit-form/unit-form.component';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { BrandDto, CategoryDto, ProductExtractionResult, UnitOfMeasureDto } from '../../../core/models/domain.models';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -56,7 +57,11 @@ export class ProductFormComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       name: ['', [Validators.required]],
-      sku: [''],
+      // Always server-generated (CreateProductRequest/UpdateProductRequest have no Sku property
+      // at all) - disabled so it's excluded from form.value on submit instead of silently
+      // discarding whatever the user typed here (MASTER-04). Still shown, read-only, for an
+      // existing product so the real SKU is visible.
+      sku: [{ value: '', disabled: true }],
       barcode: [''],
       categoryId: ['', [Validators.required]],
       brandId: [null],
@@ -138,10 +143,18 @@ export class ProductFormComponent implements OnInit {
     if (this.scanning) return;
 
     if (this.form.dirty) {
-      const ok = window.confirm(
-        'Scanning a photo will overwrite values you have already entered. Continue?'
-      );
-      if (!ok) return;
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '420px',
+        panelClass: 'confirm-dialog-panel',
+        data: {
+          title: 'Overwrite Entered Values?',
+          message: 'Scanning a photo will overwrite values you have already entered. Continue?',
+        },
+      });
+      dialogRef.afterClosed().subscribe((confirmed) => {
+        if (confirmed) this.fileInput?.nativeElement.click();
+      });
+      return;
     }
 
     this.fileInput?.nativeElement.click();

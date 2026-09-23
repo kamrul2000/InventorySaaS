@@ -7,6 +7,7 @@ public interface ICategoryService
 {
     Task<PaginatedList<CategoryDto>> GetAllAsync(
         PaginationParams pagination,
+        bool? isActive,
         CancellationToken cancellationToken);
 
     Task<CategoryDto> GetByIdAsync(

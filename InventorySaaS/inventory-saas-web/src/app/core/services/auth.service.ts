@@ -82,7 +82,29 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    // A presence-only check used to let a route with a stale access token render before the
+    // first API call 401s and the interceptor redirects - a brief flash of a protected page with
+    // no data (FE-03). Treat an expired token the same as no token.
+    return !!token && !this.isTokenExpired(token);
+  }
+
+  /** Decodes the JWT payload's `exp` claim without verifying the signature - only used for a
+   *  client-side "should I bother sending this" check; the server is still the real authority. */
+  private isTokenExpired(token: string): boolean {
+    const exp = this.decodeExpiry(token);
+    if (exp === null) return false; // Malformed token: let the API's real 401 handle it.
+    return Date.now() >= exp * 1000;
+  }
+
+  private decodeExpiry(token: string): number | null {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+      return typeof decoded.exp === 'number' ? decoded.exp : null;
+    } catch {
+      return null;
+    }
   }
 
   getToken(): string | null {
@@ -98,12 +120,10 @@ export class AuthService {
     return user?.roles || [];
   }
 
-  isSuperAdmin(): boolean {
-    return this.getUserRoles().includes('SuperAdmin');
-  }
-
-  isTenantAdmin(): boolean {
-    return this.getUserRoles().includes('TenantAdmin');
+  /** Whether the current user holds any of the given roles — pass one of the groups from `core/constants/roles`. */
+  hasAnyRole(roles: string[]): boolean {
+    const userRoles = this.getUserRoles();
+    return roles.some((role) => userRoles.includes(role));
   }
 
   getCurrentUser(): User | null {

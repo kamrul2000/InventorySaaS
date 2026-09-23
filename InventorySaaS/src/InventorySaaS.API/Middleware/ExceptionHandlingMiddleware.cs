@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using FluentValidation;
 using InventorySaaS.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
@@ -83,6 +84,19 @@ public class ExceptionHandlingMiddleware
                     Type = "BadRequest",
                     Title = badReqEx.Message,
                     Status = (int)HttpStatusCode.BadRequest,
+                    CorrelationId = correlationId
+                }),
+
+            ValidationException validationEx => (
+                HttpStatusCode.BadRequest,
+                new ProblemResponse
+                {
+                    Type = "BadRequest",
+                    Title = "One or more validation errors occurred.",
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Errors = validationEx.Errors
+                        .GroupBy(e => e.PropertyName)
+                        .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()),
                     CorrelationId = correlationId
                 }),
 

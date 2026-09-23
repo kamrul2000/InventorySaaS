@@ -13,11 +13,13 @@ public interface IReportService
 
     Task<PaginatedList<LowStockReportDto>> GetLowStockAsync(
         PaginationParams pagination,
+        Guid? warehouseId,
         CancellationToken cancellationToken);
 
     Task<PaginatedList<ExpiryReportDto>> GetExpiryAsync(
         PaginationParams pagination,
         int daysAhead,
+        Guid? warehouseId,
         CancellationToken cancellationToken);
 
     Task<List<InventoryValuationDto>> GetInventoryValuationAsync(CancellationToken cancellationToken);

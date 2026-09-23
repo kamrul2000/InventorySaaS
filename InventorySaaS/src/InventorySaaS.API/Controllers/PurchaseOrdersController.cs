@@ -20,12 +20,13 @@ public class PurchaseOrdersController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
+        [FromQuery] string? status = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false,
         CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _purchaseOrderService.GetAllAsync(pagination, cancellationToken);
+        var result = await _purchaseOrderService.GetAllAsync(pagination, status, cancellationToken);
         return Ok(result);
     }
 
@@ -51,6 +52,14 @@ public class PurchaseOrdersController : ControllerBase
     public async Task<IActionResult> Approve(Guid id, CancellationToken cancellationToken)
     {
         var result = await _purchaseOrderService.ApproveAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{id:guid}/cancel")]
+    [Authorize(Policy = "ManagerUp")]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _purchaseOrderService.CancelAsync(id, cancellationToken);
         return Ok(result);
     }
 

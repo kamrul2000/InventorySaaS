@@ -7,13 +7,13 @@
   align-items: center;
   gap: 4px;
   margin-bottom: 8px;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
   text-decoration: none;
   font-size: 0.875rem;
 }
 
 .back-link:hover {
-  color: var(--mat-sys-primary);
+  color: #e8602c;
 }
 
 .back-link mat-icon {
@@ -30,7 +30,7 @@
 
 .scan-page-header p {
   margin: 0;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 /* Scanner on the left, results on the right; stacks on tablet and phone so the scan field
@@ -56,8 +56,8 @@
   gap: 20px;
   padding: 24px;
   border-radius: 16px;
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
+  background: #fff;
+  border: 1px solid #e2e8f0;
 }
 
 .result-header {
@@ -79,8 +79,8 @@
   margin-bottom: 10px;
   padding: 3px 10px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--mat-sys-primary) 14%, transparent);
-  color: var(--mat-sys-primary);
+  background: color-mix(in srgb, #e8602c 14%, transparent);
+  color: #e8602c;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -103,7 +103,7 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .identity-fields dd {
@@ -120,7 +120,7 @@ code,
   margin-left: 6px;
   padding: 1px 6px;
   border-radius: 5px;
-  background: var(--mat-sys-surface-container-high);
+  background: #edf2f7;
   font-size: 0.75rem;
 }
 
@@ -137,17 +137,17 @@ code,
   min-height: 44px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface-variant);
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #718096;
   font-size: 0.875rem;
   text-decoration: none;
   cursor: pointer;
 }
 
 .ghost-btn:hover {
-  border-color: var(--mat-sys-primary);
-  color: var(--mat-sys-primary);
+  border-color: #e8602c;
+  color: #e8602c;
 }
 
 .ghost-btn mat-icon {
@@ -168,7 +168,7 @@ code,
   gap: 2px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: var(--mat-sys-surface-container);
+  background: #f7fafc;
 }
 
 .metric-value {
@@ -181,7 +181,7 @@ code,
 
 .metric-label {
   font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .flag-row {
@@ -196,8 +196,8 @@ code,
   gap: 5px;
   padding: 4px 10px;
   border-radius: 10px;
-  background: var(--mat-sys-surface-container-high);
-  color: var(--mat-sys-on-surface-variant);
+  background: #edf2f7;
+  color: #718096;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -233,7 +233,7 @@ code,
 .stock-table td {
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
 }
 
@@ -242,7 +242,7 @@ code,
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .stock-table .num {
@@ -279,8 +279,8 @@ code,
   gap: 2px;
   padding: 8px 12px;
   border-radius: 10px;
-  background: var(--mat-sys-surface-container);
-  border: 1px solid var(--mat-sys-outline-variant);
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
 }
 
 .serial-chip.is-reserved {
@@ -290,15 +290,15 @@ code,
 
 .serial-meta {
   font-size: 0.7rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .empty-note {
   margin: 0;
   padding: 16px;
   border-radius: 10px;
-  background: var(--mat-sys-surface-container);
-  color: var(--mat-sys-on-surface-variant);
+  background: #f7fafc;
+  color: #718096;
   font-size: 0.875rem;
 }
 
@@ -312,8 +312,8 @@ code,
   padding: 32px;
   text-align: center;
   border-radius: 16px;
-  border: 1px dashed var(--mat-sys-outline-variant);
-  color: var(--mat-sys-on-surface-variant);
+  border: 1px dashed #e2e8f0;
+  color: #718096;
 }
 
 .placeholder mat-icon {
@@ -327,7 +327,7 @@ code,
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--mat-sys-on-surface);
+  color: #1a202c;
 }
 
 .placeholder p {
@@ -353,8 +353,8 @@ code,
 .recent-panel {
   padding: 16px 20px;
   border-radius: 16px;
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
+  background: #fff;
+  border: 1px solid #e2e8f0;
 }
 
 .recent-panel h2 {
@@ -363,7 +363,7 @@ code,
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .recent-list {
@@ -403,7 +403,7 @@ code,
 
 .recent-code {
   font-size: 0.7rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
   max-width: 10ch;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -412,7 +412,7 @@ code,
 
 .recent-time {
   font-size: 0.7rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
   font-variant-numeric: tabular-nums;
 }
 

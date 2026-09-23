@@ -21,6 +21,12 @@ public class SupplierInfoConfiguration : IEntityTypeConfiguration<SupplierInfo>
         builder.Property(s => s.Email)
             .HasMaxLength(256);
 
+        // Mirrors ProductInfoConfiguration's Barcode index: most suppliers never get a Code, and
+        // a removed supplier releases its code for reuse (DATA-01).
+        builder.HasIndex(s => new { s.TenantId, s.Code })
+            .IsUnique()
+            .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
+
         builder.Property(s => s.RowVersion)
             .IsRowVersion();
     }

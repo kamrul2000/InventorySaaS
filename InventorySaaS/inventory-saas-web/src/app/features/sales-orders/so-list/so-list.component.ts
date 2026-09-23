@@ -6,6 +6,8 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { SalesOrderService } from '../../../core/services/sales-order.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP } from '../../../core/constants/roles';
 import { SalesOrderDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -35,7 +37,9 @@ export class SoListComponent implements OnInit {
   sortDescending = false;
   statusFilter = '';
 
-  constructor(private soService: SalesOrderService, private router: Router) {}
+  constructor(private soService: SalesOrderService, private router: Router, private authService: AuthService) {}
+
+  get canCreate(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
 
   ngOnInit(): void { this.loadOrders(); }
 
@@ -62,7 +66,7 @@ export class SoListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const so = event.row as SalesOrderDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view' || event.action === 'edit') {
       this.router.navigate(['/sales-orders', so.id]);
     }
   }

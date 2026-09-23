@@ -4,9 +4,11 @@
       <h1 class="page-title">Customers</h1>
       <p class="page-subtitle">Manage your customer directory</p>
     </div>
-    <button class="btn-primary" (click)="addCustomer()">
-      <mat-icon>add</mat-icon> Add Customer
-    </button>
+    @if (canWrite) {
+      <button class="btn-primary" (click)="addCustomer()">
+        <mat-icon>add</mat-icon> Add Customer
+      </button>
+    }
   </div>
   <app-data-table
     [columns]="columns"
@@ -14,6 +16,8 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canEdit]="canWrite"
+    [canDelete]="canDelete"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

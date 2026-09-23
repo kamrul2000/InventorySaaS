@@ -1,3 +1,4 @@
+using FluentValidation;
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.Customers.DTOs;
 using InventorySaaS.Application.Interfaces;
@@ -12,20 +13,31 @@ public class CustomerService : ICustomerService
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IValidator<CreateCustomerRequest> _createValidator;
+    private readonly IValidator<UpdateCustomerRequest> _updateValidator;
 
-    public CustomerService(IApplicationDbContext context, ICurrentUserService currentUserService)
+    public CustomerService(
+        IApplicationDbContext context,
+        ICurrentUserService currentUserService,
+        IValidator<CreateCustomerRequest> createValidator,
+        IValidator<UpdateCustomerRequest> updateValidator)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
     }
 
     public async Task<PaginatedList<CustomerDto>> GetAllAsync(
         PaginationParams pagination,
+        bool? isActive,
         CancellationToken cancellationToken)
     {
         var query = _context.Customers
             .Where(c => !c.IsDeleted)
             .AsQueryable();
+
+        if (isActive.HasValue) query = query.Where(c => c.IsActive == isActive.Value);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {
@@ -52,8 +64,12 @@ public class CustomerService : ICustomerService
             c.ContactPerson,
             c.Email,
             c.Phone,
+            c.Address,
             c.City,
             c.Country,
+            c.TaxId,
+            c.PaymentTerms,
+            c.CreditLimit,
             c.IsActive));
 
         return await PaginatedList<CustomerDto>.CreateAsync(
@@ -80,8 +96,12 @@ public class CustomerService : ICustomerService
             customer.ContactPerson,
             customer.Email,
             customer.Phone,
+            customer.Address,
             customer.City,
             customer.Country,
+            customer.TaxId,
+            customer.PaymentTerms,
+            customer.CreditLimit,
             customer.IsActive);
     }
 
@@ -89,6 +109,8 @@ public class CustomerService : ICustomerService
         CreateCustomerRequest request,
         CancellationToken cancellationToken)
     {
+        await _createValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var customer = new CustomerInfo
         {
             TenantId = _currentUserService.TenantId!.Value,
@@ -108,7 +130,7 @@ public class CustomerService : ICustomerService
         };
 
         _context.Customers.Add(customer);
-        await _context.SaveChangesAsync(cancellationToken);
+        await SaveOrThrowConflictAsync(cancellationToken);
 
         return new CustomerDto(
             customer.Id,
@@ -118,8 +140,12 @@ public class CustomerService : ICustomerService
             customer.ContactPerson,
             customer.Email,
             customer.Phone,
+            customer.Address,
             customer.City,
             customer.Country,
+            customer.TaxId,
+            customer.PaymentTerms,
+            customer.CreditLimit,
             customer.IsActive);
     }
 
@@ -128,6 +154,8 @@ public class CustomerService : ICustomerService
         UpdateCustomerRequest request,
         CancellationToken cancellationToken)
     {
+        await _updateValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var customer = await _context.Customers
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -148,7 +176,7 @@ public class CustomerService : ICustomerService
         if (request.CreditLimit.HasValue) customer.CreditLimit = request.CreditLimit.Value;
         if (request.IsActive.HasValue) customer.IsActive = request.IsActive.Value;
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await SaveOrThrowConflictAsync(cancellationToken);
 
         return new CustomerDto(
             customer.Id,
@@ -158,9 +186,29 @@ public class CustomerService : ICustomerService
             customer.ContactPerson,
             customer.Email,
             customer.Phone,
+            customer.Address,
             customer.City,
             customer.Country,
+            customer.TaxId,
+            customer.PaymentTerms,
+            customer.CreditLimit,
             customer.IsActive);
+    }
+
+    /// <summary>
+    /// The unique filtered index on (TenantId, Code) is the real safety net against a duplicate
+    /// code (DATA-01); this turns that DB-level violation into a clean 409 instead of a 500.
+    /// </summary>
+    private async Task SaveOrThrowConflictAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("A customer with this code already exists.");
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)

@@ -396,6 +396,11 @@ public class InventoryService : IInventoryService
         if (request.NewQuantity < 0)
             throw new BadRequestException("Quantity cannot be negative.");
 
+        // The non-nullable-reference-type check on the DTO only rejects null, not "" - an empty
+        // reason defeats the point of requiring one for this audit-sensitive operation (INV-01).
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            throw new BadRequestException("Reason is required.");
+
         var product = await _context.Products
             .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken)
             ?? throw new NotFoundException(nameof(ProductInfo), request.ProductId);

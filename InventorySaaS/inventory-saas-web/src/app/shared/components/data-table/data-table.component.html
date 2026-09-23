@@ -15,6 +15,14 @@
     </div>
   }
 
+  @if (error) {
+    <div class="table-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error }}</span>
+      <button class="action-btn" (click)="onRetry()">Retry</button>
+    </div>
+  }
+
   <div class="table-wrap">
     <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSort($event)">
 
@@ -34,6 +42,7 @@
               @case ('boolean') {
                 <mat-slide-toggle
                   [checked]="row[col.key]"
+                  [disabled]="!canEdit"
                   (change)="onAction('toggle:' + col.key, row)"
                   color="primary">
                 </mat-slide-toggle>
@@ -53,12 +62,16 @@
             <button class="action-btn view-btn" (click)="onAction('view', row)" title="View">
               <mat-icon>visibility</mat-icon>
             </button>
-            <button class="action-btn edit-btn" (click)="onAction('edit', row)" title="Edit">
-              <mat-icon>edit_note</mat-icon>
-            </button>
-            <button class="action-btn delete-btn" (click)="onAction('delete', row)" title="Delete">
-              <mat-icon>delete_outline</mat-icon>
-            </button>
+            @if (canEdit) {
+              <button class="action-btn edit-btn" (click)="onAction('edit', row)" title="Edit">
+                <mat-icon>edit_note</mat-icon>
+              </button>
+            }
+            @if (canDelete) {
+              <button class="action-btn delete-btn" (click)="onAction('delete', row)" title="Delete">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            }
           </div>
         </td>
       </ng-container>

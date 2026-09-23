@@ -4,9 +4,11 @@
       <h1 class="page-title">Supplier Payments</h1>
       <p class="page-subtitle">Payments made to suppliers (accounts payable)</p>
     </div>
-    <button class="btn-primary" (click)="create()">
-      <mat-icon>add</mat-icon> Record Payment
-    </button>
+    @if (canWrite) {
+      <button class="btn-primary" (click)="create()">
+        <mat-icon>add</mat-icon> Record Payment
+      </button>
+    }
   </div>
   <app-data-table
     [columns]="columns"
@@ -14,6 +16,8 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canEdit]="false"
+    [canDelete]="false"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

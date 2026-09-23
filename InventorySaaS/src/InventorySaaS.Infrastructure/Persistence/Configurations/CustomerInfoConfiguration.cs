@@ -21,6 +21,12 @@ public class CustomerInfoConfiguration : IEntityTypeConfiguration<CustomerInfo>
         builder.Property(c => c.Email)
             .HasMaxLength(256);
 
+        // Mirrors ProductInfoConfiguration's Barcode index: most customers never get a Code, and
+        // a removed customer releases its code for reuse (DATA-01).
+        builder.HasIndex(c => new { c.TenantId, c.Code })
+            .IsUnique()
+            .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
+
         builder.Property(c => c.RowVersion)
             .IsRowVersion();
     }

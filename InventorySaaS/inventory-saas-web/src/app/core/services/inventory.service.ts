@@ -35,14 +35,14 @@ export class InventoryService {
     return this.api.getList<InventoryBalanceDto>(`${this.endpoint}/balances`, params as Record<string, string | number | boolean>);
   }
 
+  // transactionType/startDate/endDate were previously declared here but never bound by the
+  // backend controller (InventoryController.GetTransactions only accepts the params below) -
+  // trimmed rather than advertising filtering that silently did nothing (INV-02).
   getTransactions(params?: {
     pageNumber?: number;
     pageSize?: number;
     warehouseId?: string;
     productId?: string;
-    transactionType?: string;
-    startDate?: string;
-    endDate?: string;
   }): Observable<PaginatedList<InventoryTransactionDto>> {
     return this.api.getList<InventoryTransactionDto>(`${this.endpoint}/transactions`, params as Record<string, string | number | boolean>);
   }

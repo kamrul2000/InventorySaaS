@@ -4,9 +4,11 @@
       <h1 class="page-title">Supplier Bills</h1>
       <p class="page-subtitle">Vendor bills (accounts payable)</p>
     </div>
-    <button class="btn-primary" (click)="create()">
-      <mat-icon>add</mat-icon> New Bill
-    </button>
+    @if (canCreate) {
+      <button class="btn-primary" (click)="create()">
+        <mat-icon>add</mat-icon> New Bill
+      </button>
+    }
   </div>
   <app-data-table
     [columns]="columns"
@@ -14,6 +16,7 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canDelete]="false"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

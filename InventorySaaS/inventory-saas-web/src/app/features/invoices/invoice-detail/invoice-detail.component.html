@@ -8,7 +8,7 @@
         <span class="status-badge" [ngClass]="'status-' + invoice.status.toLowerCase()">{{ invoice.status }}</span>
       </div>
       <div class="btn-group">
-        @if (invoice.status === 'Draft') {
+        @if (canIssue) {
           <button class="btn-primary" (click)="issue()">
             <mat-icon>send</mat-icon> Issue
           </button>
@@ -18,7 +18,7 @@
             <mat-icon>payments</mat-icon> Record Payment
           </button>
         }
-        @if (invoice.status !== 'Cancelled' && invoice.amountPaid === 0) {
+        @if (canCancel) {
           <button class="btn-danger" (click)="cancel()">
             <mat-icon>cancel</mat-icon> Cancel
           </button>

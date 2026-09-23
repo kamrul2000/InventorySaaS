@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using FluentValidation;
 using InventorySaaS.Application.Features.Auth.DTOs;
 using InventorySaaS.Application.Features.Users.DTOs;
 using InventorySaaS.Application.Interfaces;
@@ -18,23 +19,31 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IEmailService _emailService;
+    private readonly IValidator<RegisterTenantRequest> _registerValidator;
+    private readonly IValidator<ResetPasswordRequest> _resetPasswordValidator;
 
     public AuthService(
         IApplicationDbContext context,
         ITokenService tokenService,
         IPasswordHasher passwordHasher,
-        IEmailService emailService)
+        IEmailService emailService,
+        IValidator<RegisterTenantRequest> registerValidator,
+        IValidator<ResetPasswordRequest> resetPasswordValidator)
     {
         _context = context;
         _tokenService = tokenService;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
+        _registerValidator = registerValidator;
+        _resetPasswordValidator = resetPasswordValidator;
     }
 
     public async Task<AuthResponse> RegisterAsync(
         RegisterTenantRequest request,
         CancellationToken cancellationToken)
     {
+        await _registerValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var normalizedEmail = request.AdminEmail.ToUpperInvariant();
 
         var emailExists = await _context.Users
@@ -83,7 +92,16 @@ public class AuthService : IAuthService
         var userRole = new UserRole { UserId = user.Id, RoleId = tenantAdminRole.Id };
         _context.UserRoles.Add(userRole);
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // The pre-check above is a best-effort guard; the unique index on NormalizedEmail is
+            // the real safety net against two concurrent registrations racing past it (DATA-02).
+            throw new ConflictException("An account with this email already exists.");
+        }
 
         var roles = new List<string> { AppRoles.TenantAdmin };
         var (accessToken, refreshToken) = await _tokenService.GenerateTokensAsync(user, roles);
@@ -92,7 +110,7 @@ public class AuthService : IAuthService
             user.Id, user.Email, user.FirstName, user.LastName, user.PhoneNumber,
             user.IsActive, roles, user.CreatedAt);
 
-        return new AuthResponse(accessToken, refreshToken, DateTime.UtcNow.AddHours(1), userDto);
+        return new AuthResponse(accessToken, refreshToken, DateTime.UtcNow.Add(_tokenService.GetAccessTokenLifetime()), userDto);
     }
 
     public async Task<AuthResponse> LoginAsync(
@@ -126,7 +144,7 @@ public class AuthService : IAuthService
             user.Id, user.Email, user.FirstName, user.LastName, user.PhoneNumber,
             user.IsActive, roles, user.CreatedAt);
 
-        return new AuthResponse(accessToken, refreshToken, DateTime.UtcNow.AddHours(1), userDto);
+        return new AuthResponse(accessToken, refreshToken, DateTime.UtcNow.Add(_tokenService.GetAccessTokenLifetime()), userDto);
     }
 
     public async Task<AuthResponse> RefreshTokenAsync(
@@ -153,7 +171,7 @@ public class AuthService : IAuthService
             user.Id, user.Email, user.FirstName, user.LastName, user.PhoneNumber,
             user.IsActive, roles, user.CreatedAt);
 
-        return new AuthResponse(accessToken, newRefreshToken, DateTime.UtcNow.AddHours(1), userDto);
+        return new AuthResponse(accessToken, newRefreshToken, DateTime.UtcNow.Add(_tokenService.GetAccessTokenLifetime()), userDto);
     }
 
     public async Task ForgotPasswordAsync(string email, CancellationToken cancellationToken)
@@ -186,6 +204,8 @@ public class AuthService : IAuthService
         ResetPasswordRequest request,
         CancellationToken cancellationToken)
     {
+        await _resetPasswordValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var normalizedEmail = request.Email.ToUpperInvariant();
 
         var user = await _context.Users

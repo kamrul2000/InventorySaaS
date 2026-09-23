@@ -5,10 +5,12 @@
       <h1 class="page-title">Units of Measure</h1>
       <p class="page-subtitle">Manage the units your products are counted in</p>
     </div>
-    <button class="btn-primary" routerLink="/units/new">
-      <mat-icon>add</mat-icon>
-      Add Unit
-    </button>
+    @if (canWrite) {
+      <button class="btn-primary" routerLink="/units/new">
+        <mat-icon>add</mat-icon>
+        Add Unit
+      </button>
+    }
   </div>
 
   <!-- Data Table -->
@@ -18,6 +20,8 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canEdit]="canWrite"
+    [canDelete]="canDelete"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

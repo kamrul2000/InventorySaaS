@@ -13,6 +13,8 @@ import {
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { BrandService } from '../../../core/services/brand.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP, MANAGER_UP } from '../../../core/constants/roles';
 import { BrandDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -44,7 +46,11 @@ export class BrandListComponent implements OnInit {
     private dialog: MatDialog,
     private notification: NotificationService,
     private router: Router,
+    private authService: AuthService,
   ) {}
+
+  get canWrite(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
+  get canDelete(): boolean { return this.authService.hasAnyRole(MANAGER_UP); }
 
   ngOnInit(): void {
     this.loadBrands();
@@ -94,7 +100,12 @@ export class BrandListComponent implements OnInit {
   onRowAction(event: { action: string; row: unknown }): void {
     const brand = event.row as BrandDto;
 
-    if (event.action === 'view' || event.action === 'edit') {
+    if (event.action === 'view') {
+      this.router.navigate(['/brands', brand.id]);
+      return;
+    }
+
+    if (event.action === 'edit') {
       this.router.navigate(['/brands', brand.id, 'edit']);
       return;
     }

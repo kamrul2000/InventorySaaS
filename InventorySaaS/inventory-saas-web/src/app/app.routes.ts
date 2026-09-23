@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { STAFF_UP, MANAGER_UP, TENANT_ADMIN_UP } from './core/constants/roles';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
@@ -14,8 +15,10 @@ import { CategoryListComponent } from './features/categories/category-list/categ
 import { CategoryFormComponent } from './features/categories/category-form/category-form.component';
 import { BrandListComponent } from './features/brands/brand-list/brand-list.component';
 import { BrandFormComponent } from './features/brands/brand-form/brand-form.component';
+import { BrandDetailComponent } from './features/brands/brand-detail/brand-detail.component';
 import { UnitListComponent } from './features/units/unit-list/unit-list.component';
 import { UnitFormComponent } from './features/units/unit-form/unit-form.component';
+import { UnitDetailComponent } from './features/units/unit-detail/unit-detail.component';
 import { WarehouseListComponent } from './features/warehouses/warehouse-list/warehouse-list.component';
 import { WarehouseFormComponent } from './features/warehouses/warehouse-form/warehouse-form.component';
 import { InventoryListComponent } from './features/inventory/inventory-list/inventory-list.component';
@@ -38,11 +41,14 @@ import { InvoiceFormComponent } from './features/invoices/invoice-form/invoice-f
 import { InvoiceDetailComponent } from './features/invoices/invoice-detail/invoice-detail.component';
 import { PaymentListComponent } from './features/payments/payment-list/payment-list.component';
 import { PaymentFormComponent } from './features/payments/payment-form/payment-form.component';
+import { PaymentDetailComponent } from './features/payments/payment-detail/payment-detail.component';
 import { SupplierBillListComponent } from './features/supplier-bills/supplier-bill-list/supplier-bill-list.component';
 import { SupplierBillFormComponent } from './features/supplier-bills/supplier-bill-form/supplier-bill-form.component';
 import { SupplierBillDetailComponent } from './features/supplier-bills/supplier-bill-detail/supplier-bill-detail.component';
 import { SupplierPaymentListComponent } from './features/supplier-payments/supplier-payment-list/supplier-payment-list.component';
 import { SupplierPaymentFormComponent } from './features/supplier-payments/supplier-payment-form/supplier-payment-form.component';
+import { SupplierPaymentDetailComponent } from './features/supplier-payments/supplier-payment-detail/supplier-payment-detail.component';
+import { ApprovalQueueComponent } from './features/approvals/approval-queue/approval-queue.component';
 import { ReportsComponent } from './features/reports/reports.component';
 import { NotificationsComponent } from './features/notifications/notifications.component';
 import { UserListComponent } from './features/users/user-list/user-list.component';
@@ -74,7 +80,7 @@ export const routes: Routes = [
         path: 'products/import',
         component: ProductImportComponent,
         canActivate: [roleGuard],
-        data: { roles: ['TenantAdmin', 'Manager', 'Staff', 'SuperAdmin'] },
+        data: { roles: STAFF_UP },
       },
       { path: 'products/:id/edit', component: ProductFormComponent },
       { path: 'products/:id', component: ProductDetailComponent },
@@ -85,9 +91,11 @@ export const routes: Routes = [
       { path: 'brands', component: BrandListComponent },
       { path: 'brands/new', component: BrandFormComponent },
       { path: 'brands/:id/edit', component: BrandFormComponent },
+      { path: 'brands/:id', component: BrandDetailComponent },
       { path: 'units', component: UnitListComponent },
       { path: 'units/new', component: UnitFormComponent },
       { path: 'units/:id/edit', component: UnitFormComponent },
+      { path: 'units/:id', component: UnitDetailComponent },
       { path: 'warehouses', component: WarehouseListComponent },
       { path: 'warehouses/new', component: WarehouseFormComponent },
       { path: 'warehouses/:id/edit', component: WarehouseFormComponent },
@@ -114,7 +122,7 @@ export const routes: Routes = [
         path: 'inventory/adjustment',
         component: StockAdjustmentComponent,
         canActivate: [roleGuard],
-        data: { roles: ['TenantAdmin', 'Manager', 'SuperAdmin'] },
+        data: { roles: MANAGER_UP },
       },
       { path: 'suppliers', component: SupplierListComponent },
       { path: 'suppliers/new', component: SupplierFormComponent },
@@ -135,42 +143,52 @@ export const routes: Routes = [
       { path: 'invoices/:id', component: InvoiceDetailComponent },
       { path: 'payments', component: PaymentListComponent },
       { path: 'payments/new', component: PaymentFormComponent },
+      { path: 'payments/:id', component: PaymentDetailComponent },
       { path: 'supplier-bills', component: SupplierBillListComponent },
       { path: 'supplier-bills/new', component: SupplierBillFormComponent },
       { path: 'supplier-bills/:id', component: SupplierBillDetailComponent },
       { path: 'supplier-payments', component: SupplierPaymentListComponent },
       { path: 'supplier-payments/new', component: SupplierPaymentFormComponent },
+      { path: 'supplier-payments/:id', component: SupplierPaymentDetailComponent },
+      {
+        // StaffUp is the lowest of the three policies the queue aggregates (SupplierBills' approve);
+        // items requiring Manager are still shown but their Approve/Confirm button stays hidden for Staff.
+        path: 'approvals',
+        component: ApprovalQueueComponent,
+        canActivate: [roleGuard],
+        data: { roles: STAFF_UP },
+      },
       { path: 'reports', component: ReportsComponent },
       { path: 'notifications', component: NotificationsComponent },
       {
         path: 'users',
         component: UserListComponent,
         canActivate: [roleGuard],
-        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+        data: { roles: TENANT_ADMIN_UP },
       },
       {
         path: 'users/new',
         component: UserFormComponent,
         canActivate: [roleGuard],
-        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+        data: { roles: TENANT_ADMIN_UP },
       },
       {
         path: 'users/:id/edit',
         component: UserFormComponent,
         canActivate: [roleGuard],
-        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+        data: { roles: TENANT_ADMIN_UP },
       },
       {
         path: 'users/:id',
         component: UserDetailComponent,
         canActivate: [roleGuard],
-        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+        data: { roles: TENANT_ADMIN_UP },
       },
       {
         path: 'settings',
         component: SettingsComponent,
         canActivate: [roleGuard],
-        data: { roles: ['TenantAdmin', 'SuperAdmin'] },
+        data: { roles: TENANT_ADMIN_UP },
       },
     ],
   },

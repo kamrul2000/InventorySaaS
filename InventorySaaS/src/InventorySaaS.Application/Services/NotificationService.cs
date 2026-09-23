@@ -51,8 +51,13 @@ public class NotificationService : INotificationService
 
     public async Task MarkReadAsync(Guid id, CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+
+        // Tenant isolation alone isn't ownership: without this, any user in the tenant could mark
+        // another user's per-user notification as read (RPT-06). Matches MarkAllReadAsync's
+        // existing (n.UserId == null || n.UserId == userId) rule for tenant-broadcast vs. per-user.
         var notification = await _context.Notifications
-            .FirstOrDefaultAsync(n => n.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(n => n.Id == id && (n.UserId == null || n.UserId == userId), cancellationToken)
             ?? throw new NotFoundException(nameof(NotificationInfo), id);
 
         if (notification.IsRead) return;

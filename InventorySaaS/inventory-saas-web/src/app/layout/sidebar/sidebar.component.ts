@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
+import { STAFF_UP, TENANT_ADMIN_UP } from '../../core/constants/roles';
 
 interface NavItem {
   label: string;
@@ -37,13 +38,14 @@ export class SidebarComponent {
     { label: 'Payments', icon: 'payments', route: '/payments' },
     { label: 'Supplier Bills', icon: 'request_quote', route: '/supplier-bills' },
     { label: 'Supplier Payments', icon: 'account_balance_wallet', route: '/supplier-payments' },
+    { label: 'Approval Queue', icon: 'fact_check', route: '/approvals', roles: STAFF_UP },
     { label: 'Reports', icon: 'bar_chart', route: '/reports' },
     { label: 'Notifications', icon: 'notifications', route: '/notifications' },
   ];
 
   private accountItems: NavItem[] = [
-    { label: 'User Management', icon: 'manage_accounts', route: '/users', roles: ['TenantAdmin', 'SuperAdmin'] },
-    { label: 'Settings', icon: 'settings', route: '/settings', roles: ['TenantAdmin', 'SuperAdmin'] },
+    { label: 'User Management', icon: 'manage_accounts', route: '/users', roles: TENANT_ADMIN_UP },
+    { label: 'Settings', icon: 'settings', route: '/settings', roles: TENANT_ADMIN_UP },
   ];
 
   constructor(private authService: AuthService) {}

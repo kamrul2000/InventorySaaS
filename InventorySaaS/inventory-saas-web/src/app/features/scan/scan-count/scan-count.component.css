@@ -22,14 +22,14 @@
 .count-meta {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .status-chip {
   padding: 3px 10px;
   border-radius: 10px;
-  background: var(--mat-sys-surface-container-high);
-  color: var(--mat-sys-on-surface-variant);
+  background: #edf2f7;
+  color: #718096;
   font-size: 0.7rem;
   font-weight: 700;
 }
@@ -61,7 +61,7 @@
   gap: 2px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--mat-sys-surface-container);
+  background: #f7fafc;
   text-align: center;
 }
 
@@ -76,7 +76,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .variance-tile.is-short {
@@ -108,15 +108,15 @@
   min-height: 60px;
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface);
+  border: 1px solid #e2e8f0;
+  background: #fff;
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .count-row:hover {
-  border-color: var(--mat-sys-primary);
+  border-color: #e8602c;
 }
 
 .count-row-main {
@@ -134,7 +134,7 @@
 
 .count-row-scope {
   font-size: 0.78rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 /* --- counted lines --- */
@@ -155,8 +155,8 @@
   min-height: 76px;
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface);
+  border: 1px solid #e2e8f0;
+  background: #fff;
   /* A left bar carries the shortage/overage signal without relying on colour alone
      being noticed at a glance across a long list. */
   border-left-width: 5px;
@@ -173,7 +173,7 @@
 }
 
 .count-line.is-last {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, #e8602c 16%, transparent);
 }
 
 .count-line-main {
@@ -192,7 +192,7 @@
 
 .count-line-meta {
   font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .count-line-meta code {
@@ -224,7 +224,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .count-input {
@@ -232,9 +232,9 @@
   min-height: 44px;
   padding: 0 8px;
   border-radius: 8px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #1a202c;
   font-size: 1.1rem;
   font-weight: 700;
   text-align: center;
@@ -243,7 +243,7 @@
 
 .count-input:focus {
   outline: none;
-  border-color: var(--mat-sys-primary);
+  border-color: #e8602c;
 }
 
 .count-input:disabled {

@@ -6,6 +6,8 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { PaymentService } from '../../../core/services/payment.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP } from '../../../core/constants/roles';
 import { PaymentDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -33,7 +35,9 @@ export class PaymentListComponent implements OnInit {
   sortBy = '';
   sortDescending = false;
 
-  constructor(private paymentService: PaymentService, private router: Router) {}
+  constructor(private paymentService: PaymentService, private router: Router, private authService: AuthService) {}
+
+  get canWrite(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
 
   ngOnInit(): void { this.load(); }
 
@@ -56,5 +60,12 @@ export class PaymentListComponent implements OnInit {
     this.load();
   }
   onSearch(t: string): void { this.searchTerm = t; this.pageNumber = 1; this.load(); }
-  onRowAction(_event: { action: string; row: unknown }): void { /* read-only list */ }
+
+  onRowAction(event: { action: string; row: unknown }): void {
+    if (event.action === 'view') {
+      const payment = event.row as PaymentDto;
+      this.router.navigate(['/payments', payment.id]);
+    }
+    // Payments have no edit/delete endpoint — they're immutable once recorded.
+  }
 }

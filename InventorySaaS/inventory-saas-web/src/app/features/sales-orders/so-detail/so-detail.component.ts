@@ -2,9 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { SalesOrderService } from '../../../core/services/sales-order.service';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP, MANAGER_UP } from '../../../core/constants/roles';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { SalesOrderDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -21,8 +25,28 @@ export class SoDetailComponent implements OnInit {
   constructor(
     private soService: SalesOrderService, private route: ActivatedRoute,
     private router: Router, private notification: NotificationService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService, private authService: AuthService,
+    private dialog: MatDialog
   ) {}
+
+  /** Mirrors the API's ManagerUp policy on POST /SalesOrders/{id}/confirm. */
+  get canConfirm(): boolean {
+    if (!this.order || this.order.status !== 'Draft') return false;
+    return this.authService.hasAnyRole(MANAGER_UP);
+  }
+
+  /** Mirrors the API's StaffUp policy on POST /SalesOrders/{id}/deliver. */
+  get canDeliver(): boolean {
+    if (!this.order || this.order.status !== 'Confirmed') return false;
+    return this.authService.hasAnyRole(STAFF_UP);
+  }
+
+  /** Mirrors the API's ManagerUp policy on POST /SalesOrders/{id}/cancel. */
+  get canCancel(): boolean {
+    if (!this.order) return false;
+    if (!['Draft', 'Confirmed', 'PartiallyDelivered'].includes(this.order.status)) return false;
+    return this.authService.hasAnyRole(MANAGER_UP);
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -58,15 +82,30 @@ export class SoDetailComponent implements OnInit {
 
   cancel(): void {
     if (!this.order) return;
-    if (!confirm('Cancel this sales order? Any reserved stock will be released.')) return;
-    this.soService.cancel(this.order.id).subscribe({
-      next: () => { this.notification.success('Sales order cancelled'); this.ngOnInit(); },
+    const orderId = this.order.id;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '420px',
+      panelClass: 'confirm-dialog-panel',
+      data: {
+        title: 'Cancel Sales Order',
+        message: 'Cancel this sales order? Any reserved stock will be released.',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.soService.cancel(orderId).subscribe({
+        next: () => { this.notification.success('Sales order cancelled'); this.ngOnInit(); },
+      });
     });
   }
 
+  /** Mirrors the API's StaffUp policy on POST /Invoices/from-sales-order. */
   get canInvoice(): boolean {
     if (!this.order) return false;
-    return this.order.status === 'Delivered' || this.order.status === 'PartiallyDelivered';
+    if (this.order.status !== 'Delivered' && this.order.status !== 'PartiallyDelivered') return false;
+    return this.authService.hasAnyRole(STAFF_UP);
   }
 
   generateInvoice(): void {

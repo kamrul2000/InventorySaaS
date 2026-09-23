@@ -6,6 +6,8 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { SupplierBillService } from '../../../core/services/supplier-bill.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP } from '../../../core/constants/roles';
 import { SupplierBillDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -35,7 +37,9 @@ export class SupplierBillListComponent implements OnInit {
   sortBy = '';
   sortDescending = false;
 
-  constructor(private billService: SupplierBillService, private router: Router) {}
+  constructor(private billService: SupplierBillService, private router: Router, private authService: AuthService) {}
+
+  get canCreate(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
 
   ngOnInit(): void { this.load(); }
 
@@ -61,7 +65,7 @@ export class SupplierBillListComponent implements OnInit {
 
   onRowAction(event: { action: string; row: unknown }): void {
     const bill = event.row as SupplierBillDto;
-    if (event.action === 'edit') {
+    if (event.action === 'view' || event.action === 'edit') {
       this.router.navigate(['/supplier-bills', bill.id]);
     }
   }

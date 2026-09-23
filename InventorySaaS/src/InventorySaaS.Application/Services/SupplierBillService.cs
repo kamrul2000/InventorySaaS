@@ -1,3 +1,4 @@
+using FluentValidation;
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.Billing.DTOs;
 using InventorySaaS.Application.Interfaces;
@@ -17,11 +18,16 @@ public class SupplierBillService : ISupplierBillService
 
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IValidator<CreateSupplierBillRequest> _createValidator;
 
-    public SupplierBillService(IApplicationDbContext context, ICurrentUserService currentUserService)
+    public SupplierBillService(
+        IApplicationDbContext context,
+        ICurrentUserService currentUserService,
+        IValidator<CreateSupplierBillRequest> createValidator)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _createValidator = createValidator;
     }
 
     public async Task<PaginatedList<SupplierBillDto>> GetAllAsync(
@@ -89,6 +95,8 @@ public class SupplierBillService : ISupplierBillService
 
     public async Task<SupplierBillDto> CreateAsync(CreateSupplierBillRequest request, CancellationToken cancellationToken)
     {
+        await _createValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var supplier = await _context.Suppliers
             .FirstOrDefaultAsync(s => s.Id == request.SupplierId, cancellationToken)
             ?? throw new NotFoundException(nameof(SupplierInfo), request.SupplierId);

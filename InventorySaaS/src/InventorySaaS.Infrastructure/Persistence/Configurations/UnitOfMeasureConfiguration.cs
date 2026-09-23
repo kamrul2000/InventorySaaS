@@ -18,6 +18,10 @@ public class UnitOfMeasureConfiguration : IEntityTypeConfiguration<UnitOfMeasure
         builder.Property(u => u.Abbreviation)
             .HasMaxLength(20);
 
+        // Matches Category/Brand's (non-unique) name index - lookups and the name-search list
+        // query were doing a full table scan without this (DATA-03).
+        builder.HasIndex(u => new { u.TenantId, u.Name });
+
         builder.Property(u => u.RowVersion)
             .IsRowVersion();
     }

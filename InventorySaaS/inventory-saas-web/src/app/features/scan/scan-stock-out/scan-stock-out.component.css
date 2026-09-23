@@ -21,7 +21,7 @@
 .product-headline code {
   font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
   font-size: 0.8rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: #718096;
 }
 
 .product-flags {
@@ -33,8 +33,8 @@
 .flag {
   padding: 3px 9px;
   border-radius: 9px;
-  background: var(--mat-sys-surface-container-high);
-  color: var(--mat-sys-on-surface-variant);
+  background: #edf2f7;
+  color: #718096;
   font-size: 0.7rem;
   font-weight: 700;
 }

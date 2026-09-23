@@ -1,5 +1,6 @@
 using FluentAssertions;
 using InventorySaaS.Application.Features.PurchaseOrders.DTOs;
+using InventorySaaS.Application.Features.PurchaseOrders.Validators;
 using InventorySaaS.Application.Services;
 using InventorySaaS.Domain.Common.Enums;
 using InventorySaaS.Domain.Common.Interfaces;
@@ -85,7 +86,7 @@ public class PurchaseReturnTests
         // Partial return of 20 → still Received.
         using (var ctx = CreateContext(dbName))
         {
-            var service = new PurchaseOrderService(ctx, new FakeCurrentUserService());
+            var service = new PurchaseOrderService(ctx, new FakeCurrentUserService(), new CreatePurchaseOrderRequestValidator());
             var request = new ReturnPurchaseOrderRequest(poId,
                 [new ReturnPurchaseOrderItemRequest(productId, 20, "Damaged")], "Damaged batch");
 
@@ -101,7 +102,7 @@ public class PurchaseReturnTests
         // Return remaining 30 → Returned.
         using (var ctx = CreateContext(dbName))
         {
-            var service = new PurchaseOrderService(ctx, new FakeCurrentUserService());
+            var service = new PurchaseOrderService(ctx, new FakeCurrentUserService(), new CreatePurchaseOrderRequestValidator());
             var request = new ReturnPurchaseOrderRequest(poId,
                 [new ReturnPurchaseOrderItemRequest(productId, 30, null)], null);
 
@@ -156,7 +157,7 @@ public class PurchaseReturnTests
 
         using (var ctx = CreateContext(dbName))
         {
-            var service = new PurchaseOrderService(ctx, new FakeCurrentUserService());
+            var service = new PurchaseOrderService(ctx, new FakeCurrentUserService(), new CreatePurchaseOrderRequestValidator());
             var request = new ReturnPurchaseOrderRequest(poId,
                 [new ReturnPurchaseOrderItemRequest(productId, 11, null)], null);
 

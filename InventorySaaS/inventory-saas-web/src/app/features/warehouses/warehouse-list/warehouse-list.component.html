@@ -5,10 +5,12 @@
       <h1 class="page-title">Warehouses</h1>
       <p class="page-subtitle">Manage your warehouse locations</p>
     </div>
-    <button class="btn-primary" (click)="addWarehouse()">
-      <mat-icon>add</mat-icon>
-      Add Warehouse
-    </button>
+    @if (canWrite) {
+      <button class="btn-primary" (click)="addWarehouse()">
+        <mat-icon>add</mat-icon>
+        Add Warehouse
+      </button>
+    }
   </div>
 
   <!-- Data Table -->
@@ -18,6 +20,8 @@
     [totalCount]="totalCount"
     [pageSize]="pageSize"
     [loading]="loading"
+    [canEdit]="canWrite"
+    [canDelete]="canWrite"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)"
     (searchChange)="onSearch($event)"

@@ -7,6 +7,7 @@ public interface ISupplierService
 {
     Task<PaginatedList<SupplierDto>> GetAllAsync(
         PaginationParams pagination,
+        bool? isActive,
         CancellationToken cancellationToken);
 
     Task<SupplierDto> GetByIdAsync(

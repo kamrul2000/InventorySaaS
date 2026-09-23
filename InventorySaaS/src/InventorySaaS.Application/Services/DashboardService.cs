@@ -21,8 +21,10 @@ public class DashboardService : IDashboardService
         var totalSuppliers = await _context.Suppliers.CountAsync(cancellationToken);
         var totalCustomers = await _context.Customers.CountAsync(cancellationToken);
 
+        // Out-of-stock (QuantityOnHand == 0) counts as low stock too (RPT-01) - matches
+        // ReportService.GetLowStockAsync and InventoryAlertJob's definitions.
         var lowStockCount = await _context.InventoryBalances
-            .Where(ib => ib.QuantityOnHand > 0 && ib.QuantityOnHand <= ib.Product.ReorderLevel)
+            .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel)
             .Select(ib => ib.ProductId)
             .Distinct()
             .CountAsync(cancellationToken);
@@ -83,7 +85,7 @@ public class DashboardService : IDashboardService
             .ToList();
 
         var stockAlerts = await _context.InventoryBalances
-            .Where(ib => ib.QuantityOnHand > 0 && ib.QuantityOnHand <= ib.Product.ReorderLevel)
+            .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel)
             .OrderBy(ib => ib.QuantityOnHand)
             .Take(10)
             .Select(ib => new StockAlertDto(
@@ -106,7 +108,7 @@ public class DashboardService : IDashboardService
             .ToListAsync(cancellationToken);
 
         var lowStockRaw = await _context.InventoryBalances
-            .Where(ib => ib.QuantityOnHand > 0 && ib.QuantityOnHand <= ib.Product.ReorderLevel)
+            .Where(ib => ib.QuantityOnHand <= ib.Product.ReorderLevel)
             .Select(ib => new { ib.Product.Name, ib.Product.Sku, ib.QuantityOnHand, ib.Product.ReorderLevel })
             .ToListAsync(cancellationToken);
 

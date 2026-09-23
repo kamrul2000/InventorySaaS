@@ -747,6 +747,10 @@ namespace InventorySaaS.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique()
+                        .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
+
                     b.ToTable("Customers", (string)null);
                 });
 
@@ -813,7 +817,8 @@ namespace InventorySaaS.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedEmail");
+                    b.HasIndex("NormalizedEmail")
+                        .IsUnique();
 
                     b.HasIndex("TenantId");
 
@@ -1975,6 +1980,8 @@ namespace InventorySaaS.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId", "Name");
+
                     b.ToTable("UnitsOfMeasure", (string)null);
                 });
 
@@ -2790,6 +2797,10 @@ namespace InventorySaaS.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique()
+                        .HasFilter("[Code] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("Suppliers", (string)null);
                 });

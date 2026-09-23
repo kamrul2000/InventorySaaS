@@ -124,6 +124,14 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 method.Invoke(null, [modelBuilder]);
             }
         }
+
+        // ApplicationUser is deliberately not a TenantEntity: a SuperAdmin account has no tenant at all
+        // (TenantId is nullable), unlike every other tenant-scoped entity where TenantId is required.
+        // It still needs the same tenant-isolation guarantee as everything else, so it gets its own
+        // filter here rather than being silently skipped by the reflection loop above (that gap let
+        // any TenantAdmin read/write every other tenant's users - see AUTH-01/02/03).
+        modelBuilder.Entity<ApplicationUser>().HasQueryFilter(u =>
+            (_tenantAccessor.TenantId == null || u.TenantId == _tenantAccessor.TenantId) && !u.IsDeleted);
     }
 
     // Instance method so the filter can reference the (per-request) resolved tenant.
@@ -156,6 +164,14 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 case EntityState.Modified:
                     entry.Entity.UpdatedAt = DateTime.UtcNow;
                     entry.Entity.UpdatedBy = userId;
+
+                    // A soft delete is just a Modified entry with IsDeleted flipped to true.
+                    // Every *Service.DeleteAsync sets IsDeleted/DeletedAt itself, but none of them
+                    // set DeletedBy, so it was permanently null (DATA-04) - stamp it here once,
+                    // the same way CreatedBy/UpdatedBy already are, instead of relying on each
+                    // service to remember it individually.
+                    if (entry.Entity.IsDeleted && entry.Property(nameof(BaseEntity.IsDeleted)).IsModified)
+                        entry.Entity.DeletedBy = userId;
                     break;
             }
         }

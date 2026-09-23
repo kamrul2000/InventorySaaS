@@ -21,12 +21,15 @@ public class WarehouseService : IWarehouseService
 
     public async Task<PaginatedList<WarehouseDto>> GetAllAsync(
         PaginationParams pagination,
+        bool? isActive,
         CancellationToken cancellationToken)
     {
         var query = _context.Warehouses
             .Include(w => w.Locations)
             .Where(w => !w.IsDeleted)
             .AsQueryable();
+
+        if (isActive.HasValue) query = query.Where(w => w.IsActive == isActive.Value);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {
@@ -44,7 +47,8 @@ public class WarehouseService : IWarehouseService
         };
 
         var projected = query.Select(w => new WarehouseDto(
-            w.Id, w.Name, w.Code, w.Address, w.City, w.IsDefault, w.IsActive, w.Locations.Count));
+            w.Id, w.Name, w.Code, w.Address, w.City, w.Country, w.ContactPerson, w.ContactPhone,
+            w.IsDefault, w.IsActive, w.Locations.Count));
 
         return await PaginatedList<WarehouseDto>.CreateAsync(
             projected, pagination.PageNumber, pagination.PageSize, cancellationToken);
@@ -60,6 +64,7 @@ public class WarehouseService : IWarehouseService
 
         return new WarehouseDto(
             warehouse.Id, warehouse.Name, warehouse.Code, warehouse.Address, warehouse.City,
+            warehouse.Country, warehouse.ContactPerson, warehouse.ContactPhone,
             warehouse.IsDefault, warehouse.IsActive, warehouse.Locations.Count);
     }
 
@@ -102,6 +107,7 @@ public class WarehouseService : IWarehouseService
 
         return new WarehouseDto(
             warehouse.Id, warehouse.Name, warehouse.Code, warehouse.Address, warehouse.City,
+            warehouse.Country, warehouse.ContactPerson, warehouse.ContactPhone,
             warehouse.IsDefault, warehouse.IsActive, 0);
     }
 
@@ -140,6 +146,7 @@ public class WarehouseService : IWarehouseService
 
         return new WarehouseDto(
             warehouse.Id, warehouse.Name, warehouse.Code, warehouse.Address, warehouse.City,
+            warehouse.Country, warehouse.ContactPerson, warehouse.ContactPhone,
             warehouse.IsDefault, warehouse.IsActive, warehouse.Locations.Count);
     }
 

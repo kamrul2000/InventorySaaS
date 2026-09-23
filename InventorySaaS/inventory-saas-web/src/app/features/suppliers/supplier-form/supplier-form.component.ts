@@ -26,7 +26,7 @@ export class SupplierFormComponent implements OnInit {
     private router: Router, private route: ActivatedRoute, private notification: NotificationService
   ) {
     this.form = this.fb.group({
-      name: ['', [Validators.required]], code: [''], contactPerson: [''], email: [''],
+      name: ['', [Validators.required]], code: [''], contactPerson: [''], email: ['', [Validators.email]],
       phone: [''], address: [''], city: [''], country: [''], isActive: [true],
     });
   }

@@ -6,6 +6,8 @@ import { PageEvent } from '@angular/material/paginator';
 import { Sort } from '@angular/material/sort';
 import { DataTableComponent, TableColumn } from '../../../shared/components/data-table/data-table.component';
 import { SupplierPaymentService } from '../../../core/services/supplier-payment.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP } from '../../../core/constants/roles';
 import { SupplierPaymentDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -33,7 +35,9 @@ export class SupplierPaymentListComponent implements OnInit {
   sortBy = '';
   sortDescending = false;
 
-  constructor(private paymentService: SupplierPaymentService, private router: Router) {}
+  constructor(private paymentService: SupplierPaymentService, private router: Router, private authService: AuthService) {}
+
+  get canWrite(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
 
   ngOnInit(): void { this.load(); }
 
@@ -56,5 +60,12 @@ export class SupplierPaymentListComponent implements OnInit {
     this.load();
   }
   onSearch(t: string): void { this.searchTerm = t; this.pageNumber = 1; this.load(); }
-  onRowAction(_event: { action: string; row: unknown }): void { /* read-only list */ }
+
+  onRowAction(event: { action: string; row: unknown }): void {
+    if (event.action === 'view') {
+      const payment = event.row as SupplierPaymentDto;
+      this.router.navigate(['/supplier-payments', payment.id]);
+    }
+    // Supplier payments have no edit/delete endpoint — they're immutable once recorded.
+  }
 }

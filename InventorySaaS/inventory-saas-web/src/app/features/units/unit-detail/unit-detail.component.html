@@ -1,0 +1,43 @@
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else if (unit) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">{{ unit.name }}</h1>
+          <span class="status-badge" [class]="unit.isActive ? 'status-active' : 'status-inactive'">
+            {{ unit.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="page-subtitle">Unit of measure details</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" (click)="edit()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Unit Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Name</span>
+          <span class="detail-value">{{ unit.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Abbreviation</span>
+          <span class="detail-value">{{ unit.abbreviation }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Products</span>
+          <span class="detail-value">{{ unit.productCount }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

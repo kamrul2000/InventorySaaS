@@ -6,6 +6,9 @@ public record WarehouseDto(
     string Code,
     string? Address,
     string? City,
+    string? Country,
+    string? ContactPerson,
+    string? ContactPhone,
     bool IsDefault,
     bool IsActive,
     int LocationCount);

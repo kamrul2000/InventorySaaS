@@ -1,3 +1,4 @@
+using FluentValidation;
 using InventorySaaS.Application.Common.Models;
 using InventorySaaS.Application.Features.Suppliers.DTOs;
 using InventorySaaS.Application.Interfaces;
@@ -12,20 +13,31 @@ public class SupplierService : ISupplierService
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IValidator<CreateSupplierRequest> _createValidator;
+    private readonly IValidator<UpdateSupplierRequest> _updateValidator;
 
-    public SupplierService(IApplicationDbContext context, ICurrentUserService currentUserService)
+    public SupplierService(
+        IApplicationDbContext context,
+        ICurrentUserService currentUserService,
+        IValidator<CreateSupplierRequest> createValidator,
+        IValidator<UpdateSupplierRequest> updateValidator)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
     }
 
     public async Task<PaginatedList<SupplierDto>> GetAllAsync(
         PaginationParams pagination,
+        bool? isActive,
         CancellationToken cancellationToken)
     {
         var query = _context.Suppliers
             .Where(s => !s.IsDeleted)
             .AsQueryable();
+
+        if (isActive.HasValue) query = query.Where(s => s.IsActive == isActive.Value);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {
@@ -51,8 +63,11 @@ public class SupplierService : ISupplierService
             s.ContactPerson,
             s.Email,
             s.Phone,
+            s.Address,
             s.City,
             s.Country,
+            s.TaxId,
+            s.PaymentTerms,
             s.IsActive));
 
         return await PaginatedList<SupplierDto>.CreateAsync(
@@ -78,8 +93,11 @@ public class SupplierService : ISupplierService
             supplier.ContactPerson,
             supplier.Email,
             supplier.Phone,
+            supplier.Address,
             supplier.City,
             supplier.Country,
+            supplier.TaxId,
+            supplier.PaymentTerms,
             supplier.IsActive);
     }
 
@@ -87,6 +105,8 @@ public class SupplierService : ISupplierService
         CreateSupplierRequest request,
         CancellationToken cancellationToken)
     {
+        await _createValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var supplier = new SupplierInfo
         {
             TenantId = _currentUserService.TenantId!.Value,
@@ -104,7 +124,7 @@ public class SupplierService : ISupplierService
         };
 
         _context.Suppliers.Add(supplier);
-        await _context.SaveChangesAsync(cancellationToken);
+        await SaveOrThrowConflictAsync(cancellationToken);
 
         return new SupplierDto(
             supplier.Id,
@@ -113,8 +133,11 @@ public class SupplierService : ISupplierService
             supplier.ContactPerson,
             supplier.Email,
             supplier.Phone,
+            supplier.Address,
             supplier.City,
             supplier.Country,
+            supplier.TaxId,
+            supplier.PaymentTerms,
             supplier.IsActive);
     }
 
@@ -123,6 +146,8 @@ public class SupplierService : ISupplierService
         UpdateSupplierRequest request,
         CancellationToken cancellationToken)
     {
+        await _updateValidator.ValidateAndThrowAsync(request, cancellationToken);
+
         var supplier = await _context.Suppliers
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
@@ -141,7 +166,7 @@ public class SupplierService : ISupplierService
         if (request.PaymentTerms is not null) supplier.PaymentTerms = request.PaymentTerms;
         if (request.IsActive.HasValue) supplier.IsActive = request.IsActive.Value;
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await SaveOrThrowConflictAsync(cancellationToken);
 
         return new SupplierDto(
             supplier.Id,
@@ -150,9 +175,28 @@ public class SupplierService : ISupplierService
             supplier.ContactPerson,
             supplier.Email,
             supplier.Phone,
+            supplier.Address,
             supplier.City,
             supplier.Country,
+            supplier.TaxId,
+            supplier.PaymentTerms,
             supplier.IsActive);
+    }
+
+    /// <summary>
+    /// The unique filtered index on (TenantId, Code) is the real safety net against a duplicate
+    /// code (DATA-01); this turns that DB-level violation into a clean 409 instead of a 500.
+    /// </summary>
+    private async Task SaveOrThrowConflictAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            throw new ConflictException("A supplier with this code already exists.");
+        }
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)

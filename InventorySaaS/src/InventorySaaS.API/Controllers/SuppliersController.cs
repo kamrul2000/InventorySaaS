@@ -22,10 +22,11 @@ public class SuppliersController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false,
+        [FromQuery] bool? isActive = null,
         CancellationToken cancellationToken = default)
     {
         var pagination = new PaginationParams(pageNumber, pageSize, search, sortBy, sortDescending);
-        var result = await _supplierService.GetAllAsync(pagination, cancellationToken);
+        var result = await _supplierService.GetAllAsync(pagination, isActive, cancellationToken);
         return Ok(result);
     }
 

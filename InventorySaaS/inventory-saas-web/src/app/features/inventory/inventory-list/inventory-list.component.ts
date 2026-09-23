@@ -10,10 +10,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { WarehouseService } from '../../../core/services/warehouse.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MANAGER_UP } from '../../../core/constants/roles';
 import { InventoryBalanceDto, InventoryTransactionDto, WarehouseDto } from '../../../core/models/domain.models';
-
-/** Roles the API's ManagerUp policy lets post a stock adjustment. */
-const ADJUSTMENT_ROLES = ['TenantAdmin', 'Manager', 'SuperAdmin'];
 
 @Component({
   selector: 'app-inventory-list',
@@ -53,9 +51,9 @@ export class InventoryListComponent implements OnInit {
     private router: Router
   ) {}
 
+  /** Mirrors the API's ManagerUp policy on POST /Inventory/adjustment. */
   get canAdjust(): boolean {
-    const roles = this.authService.getUserRoles();
-    return ADJUSTMENT_ROLES.some((role) => roles.includes(role));
+    return this.authService.hasAnyRole(MANAGER_UP);
   }
 
   ngOnInit(): void {

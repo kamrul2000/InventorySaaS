@@ -7,6 +7,7 @@ public interface ICustomerService
 {
     Task<PaginatedList<CustomerDto>> GetAllAsync(
         PaginationParams pagination,
+        bool? isActive,
         CancellationToken cancellationToken);
 
     Task<CustomerDto> GetByIdAsync(

@@ -32,15 +32,19 @@ export class PurchaseOrderService {
     return this.api.post<PurchaseOrderDto>(this.endpoint, order);
   }
 
-  approve(id: string): Observable<void> {
-    return this.api.post<void>(`${this.endpoint}/${id}/approve`, {});
+  approve(id: string): Observable<PurchaseOrderDto> {
+    return this.api.post<PurchaseOrderDto>(`${this.endpoint}/${id}/approve`, {});
   }
 
-  receiveGoods(id: string, data?: unknown): Observable<void> {
-    return this.api.post<void>(`${this.endpoint}/${id}/receive`, data || {});
+  cancel(id: string): Observable<PurchaseOrderDto> {
+    return this.api.post<PurchaseOrderDto>(`${this.endpoint}/${id}/cancel`, {});
   }
 
-  returnGoods(id: string, data: unknown): Observable<void> {
-    return this.api.post<void>(`${this.endpoint}/${id}/return`, data);
+  receiveGoods(id: string, data?: unknown): Observable<PurchaseOrderDto> {
+    return this.api.post<PurchaseOrderDto>(`${this.endpoint}/${id}/receive`, data || {});
+  }
+
+  returnGoods(id: string, data: unknown): Observable<PurchaseOrderDto> {
+    return this.api.post<PurchaseOrderDto>(`${this.endpoint}/${id}/return`, data);
   }
 }

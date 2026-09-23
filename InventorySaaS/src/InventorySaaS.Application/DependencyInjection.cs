@@ -1,3 +1,4 @@
+using FluentValidation;
 using InventorySaaS.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,6 +8,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        // FluentValidation validators (see Features/**/Validators) - invoked explicitly by the
+        // Application services that need them, not via MVC auto-validation.
+        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+
         // Services (Controller → Service pattern)
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IBrandService, BrandService>();

@@ -77,6 +77,9 @@ export interface WarehouseDto {
   code: string;
   address?: string;
   city?: string;
+  country?: string;
+  contactPerson?: string;
+  contactPhone?: string;
   isDefault: boolean;
   isActive: boolean;
   locationCount: number;
@@ -138,8 +141,11 @@ export interface SupplierDto {
   contactPerson?: string;
   email?: string;
   phone?: string;
+  address?: string;
   city?: string;
   country?: string;
+  taxId?: string;
+  paymentTerms?: string;
   isActive: boolean;
 }
 
@@ -151,8 +157,12 @@ export interface CustomerDto {
   contactPerson?: string;
   email?: string;
   phone?: string;
+  address?: string;
   city?: string;
   country?: string;
+  taxId?: string;
+  paymentTerms?: string;
+  creditLimit?: number;
   isActive: boolean;
 }
 
@@ -197,6 +207,7 @@ export interface SalesOrderItemDto {
   productSku: string;
   quantity: number;
   deliveredQuantity: number;
+  returnedQuantity: number;
   unitPrice: number;
   lineTotal: number;
 }

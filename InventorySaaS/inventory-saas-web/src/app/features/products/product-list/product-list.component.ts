@@ -11,6 +11,8 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { ProductService } from '../../../core/services/product.service';
 import { ProductImportService } from '../../../core/services/product-import.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { STAFF_UP, MANAGER_UP } from '../../../core/constants/roles';
 import { ProductDto } from '../../../core/models/domain.models';
 
 @Component({
@@ -36,6 +38,7 @@ export class ProductListComponent implements OnInit {
   pageSize = 10;
   pageNumber = 1;
   loading = false;
+  error: string | null = null;
   searchTerm = '';
   sortBy = '';
   sortDescending = false;
@@ -46,8 +49,12 @@ export class ProductListComponent implements OnInit {
     private importService: ProductImportService,
     private router: Router,
     private dialog: MatDialog,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private authService: AuthService
   ) {}
+
+  get canWrite(): boolean { return this.authService.hasAnyRole(STAFF_UP); }
+  get canDelete(): boolean { return this.authService.hasAnyRole(MANAGER_UP); }
 
   importProducts(): void {
     this.router.navigate(['/products/import']);
@@ -76,6 +83,7 @@ export class ProductListComponent implements OnInit {
 
   loadProducts(): void {
     this.loading = true;
+    this.error = null;
     this.productService.getAll({
       pageNumber: this.pageNumber,
       pageSize: this.pageSize,
@@ -90,6 +98,10 @@ export class ProductListComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
+        // A failed fetch used to leave products/totalCount at their prior value, rendering
+        // the table's "No data found" empty state - indistinguishable from a real empty
+        // result (FE-02). Surface it distinctly instead.
+        this.error = 'Failed to load products. Please try again.';
       },
     });
   }

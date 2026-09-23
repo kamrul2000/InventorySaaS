@@ -1,0 +1,47 @@
+@if (loading) {
+  <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+} @else if (brand) {
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <div class="title-row">
+          <h1 class="page-title">{{ brand.name }}</h1>
+          <span class="status-badge" [class]="brand.isActive ? 'status-active' : 'status-inactive'">
+            {{ brand.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="page-subtitle">Brand details</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" (click)="edit()">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button class="btn-secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="section-title">Brand Information</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Name</span>
+          <span class="detail-value">{{ brand.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Description</span>
+          <span class="detail-value">{{ brand.description || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Logo URL</span>
+          <span class="detail-value">{{ brand.logoUrl || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Products</span>
+          <span class="detail-value">{{ brand.productCount }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

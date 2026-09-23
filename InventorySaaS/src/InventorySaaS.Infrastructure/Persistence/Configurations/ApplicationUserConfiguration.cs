@@ -19,7 +19,9 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
         builder.Property(u => u.NormalizedEmail)
             .HasMaxLength(256);
 
-        builder.HasIndex(u => u.NormalizedEmail);
+        // Unique so a concurrent duplicate-email registration/invite fails atomically at the DB
+        // layer instead of relying solely on the application's check-then-insert race (DATA-02).
+        builder.HasIndex(u => u.NormalizedEmail).IsUnique();
 
         builder.Property(u => u.PasswordHash)
             .IsRequired();
@@ -46,7 +48,9 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
             .HasForeignKey(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasQueryFilter(u => !u.IsDeleted);
+        // Tenant + soft-delete query filter is set centrally in ApplicationDbContext.OnModelCreating,
+        // since ApplicationUser is intentionally not a TenantEntity (SuperAdmin accounts have no tenant)
+        // and needs a nullable-TenantId-aware version of the same filter every other entity gets.
 
         builder.Ignore(u => u.FullName);
     }

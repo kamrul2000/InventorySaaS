@@ -2,6 +2,7 @@ using System.Text;
 using AspNetCoreRateLimit;
 using Hangfire;
 using InventorySaaS.API.Middleware;
+using Microsoft.AspNetCore.Mvc;
 using InventorySaaS.Application;
 using InventorySaaS.Infrastructure;
 using InventorySaaS.Infrastructure.Persistence;
@@ -110,6 +111,34 @@ builder.Services.AddInMemoryRateLimiting();
 
 // Controllers & Swagger
 builder.Services.AddControllers();
+
+// ASP.NET Core's own [FromBody]/[FromQuery] model-validation 400s used to have a different shape
+// (a bare "errors"/"traceId" ProblemDetails) than every hand-thrown exception's ProblemResponse
+// (which carries a "correlationId"), so a client couldn't rely on one consistent error contract
+// (MASTER-08). Route both through the same shape.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var correlationId = context.HttpContext.Items["CorrelationId"]?.ToString();
+        var errors = context.ModelState
+            .Where(kvp => kvp.Value?.Errors.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+
+        var response = new ProblemResponse
+        {
+            Type = "BadRequest",
+            Title = "One or more validation errors occurred.",
+            Status = StatusCodes.Status400BadRequest,
+            Errors = errors,
+            CorrelationId = correlationId
+        };
+
+        return new BadRequestObjectResult(response);
+    };
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

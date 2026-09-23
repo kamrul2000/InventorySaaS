@@ -55,9 +55,12 @@ export class NotificationsComponent implements OnInit {
   getIcon(type: string): string {
     const icons: Record<string, string> = {
       'LowStock': 'warning',
-      'Expiry': 'event_busy',
-      'Order': 'shopping_cart',
-      'System': 'info',
+      'ExpiryAlert': 'event_busy',
+      'PurchaseOrderCreated': 'shopping_cart',
+      'SalesOrderCreated': 'shopping_cart',
+      'StockTransfer': 'swap_horiz',
+      'SystemAlert': 'info',
+      'UserInvitation': 'person_add',
     };
     return icons[type] || 'notifications';
   }

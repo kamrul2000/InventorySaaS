@@ -1,0 +1,58 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Approval Queue</h1>
+      <p class="page-subtitle">Purchase orders, sales orders and supplier bills waiting on a role-eligible approver</p>
+    </div>
+    <button class="btn-secondary" (click)="load()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="loading-center"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else if (items.length === 0) {
+    <div class="empty-state">
+      <mat-icon>task_alt</mat-icon>
+      <p>Nothing is waiting on approval right now.</p>
+    </div>
+  } @else {
+    <div class="queue-card">
+      <table class="queue-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Number</th>
+            <th>Party</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Requires</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.id) {
+            <tr>
+              <td><span class="type-badge" [ngClass]="'type-' + item.type.toLowerCase().replace(' ', '-')">{{ item.type }}</span></td>
+              <td><a class="number-link" (click)="open(item)">{{ item.number }}</a></td>
+              <td>{{ item.party }}</td>
+              <td>{{ item.date | date:'mediumDate' }}</td>
+              <td>{{ item.amount | currency:'BDT':'৳':'1.2-2' }}</td>
+              <td><span class="role-badge">{{ item.requiredRoleLabel }}+</span></td>
+              <td class="action-cell">
+                @if (canAct(item)) {
+                  <button class="btn-primary" [disabled]="acting === item.id" (click)="approve(item)">
+                    <mat-icon>check</mat-icon>
+                    {{ acting === item.id ? 'Working…' : item.actionLabel }}
+                  </button>
+                } @else {
+                  <span class="awaiting">Awaiting {{ item.requiredRoleLabel }} approval</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

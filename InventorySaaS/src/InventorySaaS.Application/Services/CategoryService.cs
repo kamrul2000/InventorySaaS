@@ -21,12 +21,15 @@ public class CategoryService : ICategoryService
 
     public async Task<PaginatedList<CategoryDto>> GetAllAsync(
         PaginationParams pagination,
+        bool? isActive,
         CancellationToken cancellationToken)
     {
         var query = _context.Categories
             .Include(c => c.Products)
             .Where(c => !c.IsDeleted)
             .AsQueryable();
+
+        if (isActive.HasValue) query = query.Where(c => c.IsActive == isActive.Value);
 
         if (!string.IsNullOrWhiteSpace(pagination.SearchTerm))
         {
@@ -89,6 +92,8 @@ public class CategoryService : ICategoryService
                 throw new BadRequestException("Parent category not found.");
         }
 
+        await EnsureNameIsUniqueAsync(request.Name, null, cancellationToken);
+
         var category = new Category
         {
             TenantId = _currentUserService.TenantId!.Value,
@@ -122,7 +127,11 @@ public class CategoryService : ICategoryService
         if (category is null)
             throw new NotFoundException(nameof(Category), id);
 
-        if (request.Name is not null) category.Name = request.Name;
+        if (request.Name is not null)
+        {
+            await EnsureNameIsUniqueAsync(request.Name, id, cancellationToken);
+            category.Name = request.Name;
+        }
         if (request.Description is not null) category.Description = request.Description;
         if (request.ParentCategoryId.HasValue) category.ParentCategoryId = request.ParentCategoryId.Value;
         if (request.IsActive.HasValue) category.IsActive = request.IsActive.Value;
@@ -153,5 +162,22 @@ public class CategoryService : ICategoryService
         category.IsActive = false;
 
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Mirrors BrandService/UnitOfMeasureService: a tenant may not hold two categories with the
+    /// same name (case-insensitive) - MASTER-02.
+    /// </summary>
+    private async Task EnsureNameIsUniqueAsync(string name, Guid? excludeId, CancellationToken cancellationToken)
+    {
+        var lowered = name.ToLowerInvariant();
+
+        var duplicateExists = await _context.Categories
+            .AnyAsync(c => !c.IsDeleted
+                && c.Name.ToLower() == lowered
+                && (excludeId == null || c.Id != excludeId), cancellationToken);
+
+        if (duplicateExists)
+            throw new ConflictException($"A category named '{name}' already exists.");
     }
 }
